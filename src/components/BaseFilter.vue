@@ -1,10 +1,9 @@
 <template>
-	<div class="base-filter">
+	<div class="base-filter" :class="filter_class">
 		<select
 			v-if="filter_type === 'select'"
 			v-model="filter_value"
 			class="custom-select"
-			:class="filter_class"
 		>
 			<option
 				:value="ops.value"
@@ -21,21 +20,33 @@
 				:placeholder="placeholder"
 				v-model="filter_value"
 				class="form-control"
-				:class="filter_class"
 			/>
-			<div
-				class="input-group-append"
-				:class="filter_class"
-				@click="filterAction"
-			>
+			<div class="input-group-append" @click="filterAction">
 				<icon-component iconName="search" :size="16" colorIcon="#000" />
 			</div>
 		</div>
+		<date-picker
+			v-else-if="filter_type === 'date'"
+			format="DD-MM-YYYY"
+			value-type="format"
+			placeholder="All"
+			v-model="filter_value"
+			@closed="setNullString"
+		>
+			<template slot="icon-clear">
+				<b-icon-x-circle-fill></b-icon-x-circle-fill>
+			</template>
+			<template slot="icon-calendar">
+				<b-icon icon="calendar-month-fill"></b-icon>
+			</template>
+		</date-picker>
 	</div>
 </template>
 
 <script>
+	// Component
 	import IconComponent from '@/components/IconComponent.vue'
+
 	export default {
 		name: 'base-filter',
 		components: { IconComponent },
@@ -66,6 +77,9 @@
 		methods: {
 			filterAction() {
 				this.$emit('filterAction')
+			},
+			setNullString() {
+				this.filter_value = ''
 			},
 		},
 	}
@@ -99,6 +113,10 @@
 					margin-top: -2px;
 				}
 			}
+		}
+
+		.mx-datepicker {
+			width: 100%;
 		}
 
 		@media screen and (max-width: 992px) {

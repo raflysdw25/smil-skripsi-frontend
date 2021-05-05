@@ -2,7 +2,7 @@
 	<div class="list-jenis-alat-lab">
 		<!-- START: BUTTON GROUP -->
 		<div class="button-group d-flex">
-			<button class="smil-btn smil-bg-primary">
+			<button class="smil-btn smil-bg-primary" @click="openModalPopup('add')">
 				Tambah Data
 			</button>
 		</div>
@@ -161,6 +161,27 @@
 			</div>
 		</div>
 		<!-- END: PAGINATION INFO SECTION -->
+
+		<!-- START: MODAL POPUP -->
+
+		<b-modal
+			ref="modal-popup"
+			hide-footer
+			hide-header
+			centered
+			no-close-on-backdrop
+			no-close-on-esc
+		>
+			<base-modal-add
+				v-if="baseModalType === 'add'"
+				modalTitle="Tambah Jenis Alat"
+				:formList="formAdd"
+				:closeFunction="closeModalPopup"
+				:formFilled="buttonActive"
+			/>
+		</b-modal>
+
+		<!-- END: MODAL POPUP -->
 	</div>
 </template>
 
@@ -169,10 +190,11 @@
 	import IconComponent from '@/components/IconComponent.vue'
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
+	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
 
 	export default {
 		name: 'list-jenis-alat-lab',
-		components: { IconComponent, FormFilterData, BaseFilter },
+		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAdd },
 		data() {
 			return {
 				headsJenisAlat: [
@@ -240,7 +262,39 @@
 						isRequired: false,
 					},
 				],
+				baseModalType: '',
+				// Data Add Jenis Alat
+				formAdd: [
+					{
+						id: 1,
+						label: 'Nama Jenis Alat',
+						type: 'text',
+						disabled: false,
+						model: '',
+						canAddValue: false,
+					},
+					{
+						id: 2,
+						label: 'Attribut Spesifikasi Alat',
+						type: 'text',
+						model: [{ id: 1, value: '', disabled: false }],
+						canAddValue: true,
+					},
+				],
+				buttonActive: false,
 			}
+		},
+		watch: {
+			formAdd: {
+				deep: true,
+				handler: function() {
+					// let attributSpek = this.formAdd[1].model.some((model) => {
+					// 	model.value === ''
+					// })
+					// console.log(attributSpek)
+					this.buttonActive = this.formAdd[0].model !== ''
+				},
+			},
 		},
 		computed: {
 			listTable() {
@@ -286,6 +340,14 @@
 			},
 			jumpPage(pageNo) {
 				this.listInfo.pageNo = pageNo
+			},
+			// Modal Interaction
+			openModalPopup(type) {
+				this.baseModalType = type
+				this.$refs['modal-popup'].show()
+			},
+			closeModalPopup() {
+				this.$refs['modal-popup'].hide()
 			},
 		},
 	}

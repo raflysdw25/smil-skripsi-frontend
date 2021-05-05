@@ -10,11 +10,15 @@ import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
+import DatePicker from 'vue2-datepicker'
+import 'vue2-datepicker/index.css'
+
 // Make BootstrapVue available throughout your project
 Vue.use(BootstrapVue)
 // Optionally install the BootstrapVue icon components plugin
 Vue.use(IconsPlugin)
 
+Vue.component('date-picker', DatePicker)
 Vue.config.productionTip = false
 
 new Vue({

@@ -14,6 +14,7 @@ import ListAlatLab from '@/views/pages/admin/alat/ListAlatLab.vue'
 import ListJenisAlatLab from '@/views/pages/admin/alat/ListJenisAlatLab.vue'
 import ListKerusakanAlatLab from '@/views/pages/admin/alat/ListKerusakanAlatLab.vue'
 import AddAlatLab from '@/views/pages/admin/alat/AddAlatLab.vue'
+import UploadImage from '@/views/pages/admin/alat/UploadImage.vue'
 
 // Pages - Supplier
 import ListSupplier from '@/views/pages/admin/supplier/ListSupplier.vue'
@@ -68,6 +69,11 @@ const routes = [
 				path: 'alatlab/tambah',
 				name: 'TambahAlatLab',
 				component: AddAlatLab,
+			},
+			{
+				path: 'alatlab/upload/image/:alat_id',
+				name: 'UploadFotoAlat',
+				component: UploadImage,
 			},
 			// Pagegroup - Supplier
 			{

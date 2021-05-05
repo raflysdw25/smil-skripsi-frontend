@@ -18,93 +18,102 @@
 		<!-- END: BUTTON GROUP -->
 
 		<!-- START: LIST DATA -->
-		<table class="table table-responsive-lg smil-table">
-			<thead class="smil-thead">
-				<tr>
-					<th
-						v-for="(head, indexHds) in headsAlatLab"
-						:key="`header-table-${head.id}-${indexHds}`"
+		<div class="table-responsive-sm">
+			<table class="table smil-table">
+				<thead class="smil-thead">
+					<tr>
+						<th
+							v-for="(head, indexHds) in headsAlatLab"
+							:key="`header-table-${head.id}-${indexHds}`"
+						>
+							{{ head.label }}
+							<base-filter
+								filter_class="d-none d-lg-block"
+								@changeValue="changeFilterValue"
+								@filterAction="getListAlat"
+								:filter_type="head.filter_type"
+								:default_value="filterAlat[head.model]"
+								:placeholder="head.placeholder"
+								:options="head.options"
+								:modelFilter="head.model"
+							/>
+						</th>
+					</tr>
+				</thead>
+				<tbody class="smil-tbody" v-if="listAlatLab.length === 0">
+					<tr>
+						<td :colspan="headsAlatLab.length" class="text-center empty-table">
+							<icon-component
+								iconName="empty-files"
+								:size="64"
+								colorIcon="#c5c5c5"
+								iconClass="icon-table"
+							/>
+							<span class="empty-table-description">
+								Tidak ada data yang dapat ditampilkan
+							</span>
+						</td>
+					</tr>
+				</tbody>
+				<tbody class="smil-tbody" v-else>
+					<tr
+						v-for="(rows, indexRow) in listTable"
+						:key="`content-table-${indexRow}`"
 					>
-						{{ head.label }}
-						<base-filter
-							filter_class="d-none d-lg-block"
-							@changeValue="changeFilterValue"
-							@filterAction="getListAlat"
-							:filter_type="head.filter_type"
-							:default_value="filterAlat[head.model]"
-							:placeholder="head.placeholder"
-							:options="head.options"
-							:modelFilter="head.model"
-						/>
-					</th>
-				</tr>
-			</thead>
-			<tbody class="smil-tbody" v-if="listAlatLab.length === 0">
-				<tr>
-					<td :colspan="headsAlatLab.length" class="text-center empty-table">
-						<icon-component
-							iconName="empty-files"
-							:size="64"
-							colorIcon="#c5c5c5"
-							iconClass="icon-table"
-						/>
-						<span class="empty-table-description">
-							Tidak ada data yang dapat ditampilkan
-						</span>
-					</td>
-				</tr>
-			</tbody>
-			<tbody class="smil-tbody" v-else>
-				<tr
-					v-for="(rows, indexRow) in listTable"
-					:key="`content-table-${indexRow}`"
-				>
-					<td
-						v-for="(content, indexContent) in rows"
-						:key="`column-${content}${indexContent}`"
-						:width="indexContent === rows.length - 1 ? 10 : null"
-					>
-						<template v-if="indexContent === rows.length - 1">
-							<b-dropdown
-								size="lg"
-								right
-								variant="smil-drop-dots"
-								toggle-class="text-decoration-none"
-								no-caret
-								class="drop-dropdown smil-dot"
-							>
-								<template v-slot:button-content>
-									<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-								</template>
-								<b-dropdown-item @click="lihatDetail(content)">
-									Lihat Detail Alat
-								</b-dropdown-item>
-								<b-dropdown-item>
-									Upload Foto Alat
-								</b-dropdown-item>
-								<b-dropdown-item>
-									Edit Data Alat
-								</b-dropdown-item>
-								<b-dropdown-item>
-									<span class="smil-text-danger">
-										Hapus Data Alat
-									</span>
-								</b-dropdown-item>
-							</b-dropdown>
-						</template>
-						<template v-else>
-							{{ content }}
-						</template>
-					</td>
-				</tr>
-				<tr>
-					<td
-						:colspan="Object.keys(headsAlatLab).length"
-						:style="{ 'padding-bottom': `${listAlatLab.length * 50}px` }"
-					></td>
-				</tr>
-			</tbody>
-		</table>
+						<td
+							v-for="(content, indexContent) in rows"
+							:key="`column-${content}${indexContent}`"
+							:width="indexContent === rows.length - 1 ? 10 : null"
+						>
+							<template v-if="indexContent === rows.length - 1">
+								<b-dropdown
+									size="lg"
+									right
+									variant="smil-drop-dots"
+									toggle-class="text-decoration-none"
+									no-caret
+									class="drop-dropdown smil-dot"
+								>
+									<template v-slot:button-content>
+										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+									</template>
+									<b-dropdown-item @click="lihatDetail(content)">
+										Lihat Detail Alat
+									</b-dropdown-item>
+									<b-dropdown-item
+										@click="
+											$router.push({
+												name: 'UploadFotoAlat',
+												params: { alat_id: 1 },
+											})
+										"
+									>
+										Upload Foto Alat
+									</b-dropdown-item>
+									<b-dropdown-item>
+										Edit Data Alat
+									</b-dropdown-item>
+									<b-dropdown-item>
+										<span class="smil-text-danger">
+											Hapus Data Alat
+										</span>
+									</b-dropdown-item>
+								</b-dropdown>
+							</template>
+							<template v-else>
+								{{ content }}
+							</template>
+						</td>
+					</tr>
+					<tr>
+						<td
+							:colspan="Object.keys(headsAlatLab).length"
+							:style="{ 'padding-bottom': `${listAlatLab.length * 50}px` }"
+						></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 		<!-- END: LIST DATA -->
 
 		<!-- START: PAGINATION INFO SECTION -->
@@ -227,9 +236,9 @@
 						options: [
 							{
 								id: 1,
-								text: 'Pilih Asal Pengadaan Alat',
+								text: 'All',
 								value: '',
-								disabled: true,
+								disabled: false,
 							},
 						],
 					},
@@ -241,7 +250,7 @@
 						options: [
 							{
 								id: 1,
-								text: 'Pilih Asal Pengadaan Alat',
+								text: 'All',
 								value: '',
 								disabled: true,
 							},

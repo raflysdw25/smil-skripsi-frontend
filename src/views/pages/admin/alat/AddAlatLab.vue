@@ -308,6 +308,7 @@
 			background-color: #fff;
 			border-color: #c5c5c5;
 			border-radius: 5px;
+			font-size: 12px;
 			&:focus {
 				box-shadow: 0 0 0 5px #c5c5c5;
 			}
@@ -316,7 +317,7 @@
 				border-color: #696969;
 			}
 
-			height: 50px;
+			height: 40px;
 		}
 	}
 </style>
