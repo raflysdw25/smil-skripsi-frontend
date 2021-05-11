@@ -1,32 +1,32 @@
 <template>
-	<div class="list-kerusakan-alat-lab">
+	<div class="list-staff-jurusan">
 		<!-- START: BUTTON GROUP -->
 		<div class="button-group d-flex">
 			<button
-				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openModal('filter')"
+				class="smil-btn smil-bg-primary"
+				@click="$router.push({ name: 'TambahStaffJurusan' })"
 			>
-				Filter Data
+				Tambah Data
 			</button>
 		</div>
 		<!-- END: BUTTON GROUP -->
 
 		<!-- START: LIST DATA -->
-		<div class="table-responsive">
+		<div class="table-responsive-sm">
 			<table class="table smil-table">
 				<thead class="smil-thead">
 					<tr>
 						<th
-							v-for="(head, indexHds) in headsAlatLab"
+							v-for="(head, indexHds) in headsTable"
 							:key="`header-table-${head.id}-${indexHds}`"
 						>
 							{{ head.label }}
 							<base-filter
 								filter_class="d-none d-lg-block"
 								@changeValue="changeFilterValue"
-								@filterAction="getLaporanKerusakan"
+								@filterAction="getListStaffLab"
 								:filter_type="head.filter_type"
-								:default_value="filterLaporanKerusakan[head.model]"
+								:default_value="filterStaff[head.model]"
 								:placeholder="head.placeholder"
 								:options="head.options"
 								:modelFilter="head.model"
@@ -34,9 +34,9 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listLaporanKerusakan.length === 0">
+				<tbody class="smil-tbody" v-if="listStaff.length === 0">
 					<tr>
-						<td :colspan="headsAlatLab.length" class="text-center empty-table">
+						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
 								iconName="empty-files"
 								:size="64"
@@ -71,24 +71,23 @@
 									<template v-slot:button-content>
 										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 									</template>
-									<b-dropdown-item @click="openModal('action')">
-										Tindakan Laporan
+									<b-dropdown-item>
+										Cetak QR Code
 									</b-dropdown-item>
 									<b-dropdown-item>
-										Detail Alat
+										List Alat Tersimpan
+									</b-dropdown-item>
+									<b-dropdown-item>
+										Edit Data Lokasi
 									</b-dropdown-item>
 									<b-dropdown-item>
 										<span class="smil-text-danger">
-											Hapus Laporan Kerusakan
+											Hapus Data Lokasi
 										</span>
 									</b-dropdown-item>
 								</b-dropdown>
 							</template>
-							<template v-else-if="indexContent === rows.length - 2">
-								<span class="smil-status" :class="content.background">
-									{{ content.text }}
-								</span>
-							</template>
+
 							<template v-else>
 								{{ content }}
 							</template>
@@ -96,10 +95,8 @@
 					</tr>
 					<tr>
 						<td
-							:colspan="Object.keys(headsAlatLab).length"
-							:style="{
-								'padding-bottom': `${listLaporanKerusakan.length * 50}px`,
-							}"
+							:colspan="Object.keys(headsTable).length"
+							:style="{ 'padding-bottom': `${listStaff.length * 50}px` }"
 						></td>
 					</tr>
 				</tbody>
@@ -110,9 +107,7 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{
-					`${listLaporanKerusakan.length} dari ${listLaporanKerusakan.length} Data`
-				}}
+				{{ `${listStaff.length} dari ${listStaff.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
@@ -174,7 +169,6 @@
 		<!-- END: PAGINATION INFO SECTION -->
 
 		<!-- START: MODAL POPUP -->
-
 		<b-modal
 			ref="modal-popup"
 			hide-footer
@@ -183,26 +177,15 @@
 			no-close-on-backdrop
 			no-close-on-esc
 		>
-			<!-- START: MODAL FILTER DATA FOR MOBILE -->
-
 			<form-filter-data
 				v-if="baseModalType === 'filter'"
 				title="Filter Data Alat"
-				:closeModal="closeModal"
-				:formInput="filterLaporanKerusakan"
+				:closeModal="closeModalPopup"
+				:formInput="filterStaff"
 				:form="formFilter"
 				@submitFilter="submitFilterData"
 			/>
-			<!-- END: MODAL FILTER DATA FOR MOBILE -->
-			<base-modal-add
-				v-if="baseModalType === 'action'"
-				modalTitle="Tindakan Laporan"
-				:formList="formAction"
-				:closeFunction="closeModal"
-				:formFilled="formTindakanFill"
-			/>
 		</b-modal>
-
 		<!-- END: MODAL POPUP -->
 	</div>
 </template>
@@ -212,54 +195,39 @@
 	import IconComponent from '@/components/IconComponent.vue'
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
-	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
 
-	// Mixins
-	import FormInputMixins from '@/mixins/FormInputMixins'
 	export default {
-		name: 'list-kerusakan-alat-lab',
-		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAdd },
-		mixins: [FormInputMixins],
+		name: 'list-staff-jurusan',
+		components: {
+			IconComponent,
+			FormFilterData,
+			BaseFilter,
+		},
 		data() {
 			return {
-				headsAlatLab: [
+				headsTable: [
 					{
 						id: 1,
-						label: 'Tanggal Pelaporan',
-						filter_type: 'date',
-						placeholder: 'Filter Tanggal Pelaporan',
-						model: 'tgl_lapor',
+						label: 'Nomor Induk Pegawai',
+						filter_type: 'search',
+						placeholder: 'Filter Nomor Induk Pegawai',
+						model: 'nip',
 						options: null,
 					},
 					{
 						id: 2,
-						label: 'Nama Pelapor',
+						label: 'Nama Staff',
 						filter_type: 'search',
-						placeholder: 'Filter Nama Pelapor',
+						placeholder: 'Filter Nama Staff',
 						model: 'nama',
 						options: null,
 					},
 					{
 						id: 3,
-						label: 'Barcode Alat',
-						filter_type: 'search',
-						placeholder: 'Filter Barcode Alat',
-						model: 'barcode_alat',
-						options: null,
-					},
-					{
-						id: 4,
-						label: 'Kronologi',
-						filter_type: 'search',
-						placeholder: 'Filter Tahun Pengadaan',
-						model: 'tahun_alat',
-						options: null,
-					},
-					{
-						id: 5,
-						label: 'Status Laporan',
+						label: 'Program Studi',
 						filter_type: 'select',
-						model: 'status_laporan',
+						placeholder: 'Filter Program Studi',
+						model: 'prodi_id',
 						options: [
 							{
 								id: 1,
@@ -267,36 +235,24 @@
 								value: '',
 								disabled: false,
 							},
-							{
-								id: 2,
-								text: 'Menunggu Tindakan',
-								value: 1,
-								disabled: false,
-							},
-							{
-								id: 3,
-								text: 'Diperbaiki',
-								value: 2,
-								disabled: false,
-							},
-							{
-								id: 4,
-								text: 'Tidak Diperbaiki',
-								value: 3,
-								disabled: false,
-							},
 						],
+					},
+					{
+						id: 4,
+						label: 'Email',
+						filter_type: 'search',
+						placeholder: 'Filter Email',
+						model: 'email',
+						options: null,
 					},
 					'',
 				],
-				listLaporanKerusakan: [
+				listStaff: [
 					{
-						tgl_lapor: new Date().toString(),
-						nama_pelapor: 'Muhammad Rafly Sadewa',
-						barcode_alat: 'BA44BHP',
-						kronologi:
-							'Laptop tiba-tiba blue screen, dan terdengar bunyi di mesin laptop',
-						status_lapor: 1,
+						nip: '3271032506990001',
+						nama: 'Muhammad Rafly Sadewa',
+						prodi_id: 1,
+						email: 'raflysdw25@gmail.com',
 					},
 				],
 				listInfo: {
@@ -305,12 +261,11 @@
 					pageNo: 1,
 					pageSize: 10,
 				},
-				filterLaporanKerusakan: {
-					tgl_lapor: '',
+				filterStaff: {
+					nip: '',
 					nama: '',
-					barcode_alat: '',
-					kronologi: '',
-					status_laporan: '',
+					prodi_id: '',
+					email: '',
 				},
 				formFilter: [
 					{
@@ -388,66 +343,21 @@
 						isRequired: false,
 					},
 				],
-				// Form Action - Tindakan Kerusakan
+				// Data Add Jenis Alat
 				baseModalType: '',
-				formAction: [
-					{
-						id: 1,
-						label: 'Tanggal Tindakan',
-						type: 'date',
-						disabled: true,
-						model: this.formatDate(new Date()),
-						canAddValue: false,
-					},
-					{
-						id: 2,
-						label: 'Nama Alat',
-						type: 'text',
-						disabled: true,
-						model: '',
-						canAddValue: false,
-					},
-					{
-						id: 3,
-						label: 'Tindakan',
-						type: 'radio',
-
-						model: '',
-						canAddValue: false,
-						child: [
-							{ id: 1, text: 'Diperbaiki', value: 2, disabled: false },
-							{ id: 2, text: 'Tidak Diperbaiki', value: 3, disabled: false },
-						],
-					},
-					{
-						id: 2,
-						label: 'Catatan Laporan',
-						type: 'text-area',
-						disabled: false,
-						model: '',
-						canAddValue: false,
-					},
-				],
+				buttonActive: false,
 			}
 		},
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listLaporanKerusakan.forEach((list, indexList) => {
-					// {
-					// 	tgl_lapor: new Date().toString(),
-					// 	nama_pelapor: 'Muhammad Rafly Sadewa',
-					// 	barcode_alat: 'BA44BHP',
-					// 	kronologi: '',
-					// 	status_lapor: 1,
-					// }
+				this.listStaff.forEach((list, indexList) => {
 					let rowTable = [
-						list.tgl_lapor, //Tanggal Laporan
-						list.nama_pelapor, //Nama Pelapor
-						list.barcode_alat, //Barcode Alat
-						list.kronologi,
-						this.statusLaporan(list.status_lapor),
-						indexList, //Index Data
+						list.nip, //Nip Peminjam Alat
+						list.nama, //Nama Staff
+						list.prodi_id, //Program Studi
+						list.email, //Email
+						'',
 					]
 
 					listTable.push(rowTable)
@@ -455,31 +365,60 @@
 
 				return listTable
 			},
-			formTindakanFill() {
-				return this.formAction[2].model !== ''
-			},
 		},
 		async mounted() {
-			await this.getLaporanKerusakan()
+			await this.getListStaffLab()
+			await this.getProdi()
 		},
 		methods: {
 			// Call API
-			async getLaporanKerusakan() {
-				// alert(`Get Data Alat ${this.filterLaporanKerusakan.asal_alat}`)
+			async getListStaffLab() {
+				// alert(`Get Data Alat ${this.filterStaff.asal_alat}`)
 				this.listInfo.pageSize =
-					this.listLaporanKerusakan.length < this.listInfo.listSize
+					this.listStaff.length < this.listInfo.listSize
 						? 1
-						: this.listLaporanKerusakan.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listLaporanKerusakan.length
+						: this.listStaff.length / this.listInfo.listSize
+				this.listInfo.listTotal = this.listStaff.length
 				// Nembak API Get List Alat
 			},
+			async getProdi() {
+				// Hit API List Jabatan from Jabatan Table
+				let prodi = [
+					{
+						id: 1,
+						name: 'Teknik Multimedia dan Digital',
+					},
+					{
+						id: 2,
+						name: 'Teknik Multimedia Jaringan',
+					},
+					{
+						id: 3,
+						name: 'Teknik Informatika',
+					},
+					{
+						id: 4,
+						name: 'Teknik Jaringan dan Komputer',
+					},
+				]
+
+				let listHeadProdi = this.headsTable.find((form) => form.id === 3)
+				prodi.forEach((pd, indexJns) => {
+					listHeadProdi.options.push({
+						id: indexJns + 2,
+						text: pd.name,
+						value: pd.id,
+						disabled: false,
+					})
+				})
+			},
 			submitFilterData(formInput) {
-				this.filterLaporanKerusakan = formInput
-				alert(this.filterLaporanKerusakan)
-				// this.getLaporanKerusakan()
+				this.filterStaff = formInput
+				alert(this.filterStaff)
+				// this.getListStaffLab()
 			},
 			changeFilterValue(objFilter) {
-				this.filterLaporanKerusakan[objFilter.model] = objFilter.value
+				this.filterStaff[objFilter.model] = objFilter.value
 			},
 			// Table Page Interaction
 			nextPage() {
@@ -496,40 +435,42 @@
 				this.listInfo.pageNo = pageNo
 			},
 			// Value Change
-			statusLaporan(status_id) {
-				let listStatusLaporan = [
+			// Value Change
+			statusAkunStaff(status_id) {
+				let listStatus = [
 					{
 						id: 1,
-						text: 'Menunggu Tindakan',
-						background: 'smil-bg-pending',
+						text: 'Pending',
+						background: 'smil-bg-default',
 					},
 					{
 						id: 2,
-						text: 'Diperbaiki',
+						text: 'Punya Akses',
 						background: 'smil-bg-success',
 					},
 					{
 						id: 3,
-						text: 'Tidak Diperbaiki',
+						text: 'Kadaluarse',
 						background: 'smil-bg-danger',
+					},
+					{
+						id: 4,
+						text: 'Belum Login',
+						background: 'smil-bg-default',
 					},
 				]
 
-				return listStatusLaporan.find((status) => status.id === status_id)
+				return listStatus.find((status) => status.id === status_id)
 			},
 
 			// Action Dropdown
-			lihatDetail(indexData) {
-				let data = this.listLaporanKerusakan[indexData]
-				console.log(data)
-			},
+			lihatDetail(indexData) {},
 			// Modal Interaction
-			openModal(type) {
+			openModalPopup(type) {
 				this.baseModalType = type
 				this.$refs['modal-popup'].show()
 			},
-			closeModal() {
-				this.baseModalType = ''
+			closeModalPopup() {
 				this.$refs['modal-popup'].hide()
 			},
 		},

@@ -1,7 +1,8 @@
+let moment = require('moment')
 export default {
 	data() {
 		return {
-			inputType: ['number', 'text', 'password'],
+			inputType: ['number', 'text', 'password', 'email', 'tel'],
 		}
 	},
 	methods: {
@@ -11,6 +12,19 @@ export default {
 			} else {
 				return type
 			}
+		},
+		formConstraint(e, type) {
+			if (type === 'tel') {
+				let char = String.fromCharCode(e.keyCode) // Get the character
+				if (/^[0-9]+$/.test(char)) return true
+				// Match with regex
+				else e.preventDefault() // If not match, don't add to input text
+			} else {
+				return true
+			}
+		},
+		formatDate(date, format = 'DD-MM-YYYY') {
+			return moment(date).format(format)
 		},
 	},
 }

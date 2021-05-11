@@ -76,31 +76,6 @@
 			</template>
 			<b-nav vertical>
 				<template v-for="(menu, indexMn) in listMenu">
-					<!-- <b-nav-item-dropdown
-						right
-						v-if="menu.child"
-						:key="`sidebarmenu-dropdown-${indexMn}${menu.id}`"
-						class="mr-4"
-					>
-						<template slot="button-content">
-							<icon-component
-								v-if="menu.icon"
-								:iconName="menu.icon.iconName"
-								:size="menu.icon.size"
-								:colorIcon="menu.icon.color"
-							/>
-							{{ menu.text }}
-						</template>
-						<b-dropdown-item
-							href="#"
-							v-for="dropdown in menu.child"
-							:key="`dropdown-${dropdown.id}`"
-							dropleft
-						>
-							{{ dropdown.text }}
-						</b-dropdown-item>
-					</b-nav-item-dropdown> -->
-
 					<b-nav-item
 						v-if="menu.child"
 						@click="collapseMenu(`collapse-menu-${indexMn}-${menu.id}`)"

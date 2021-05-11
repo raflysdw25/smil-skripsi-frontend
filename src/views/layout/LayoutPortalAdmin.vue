@@ -64,6 +64,7 @@
 				<router-view />
 			</div>
 			<!-- Content Admin -->
+
 			<!-- START: FOOTER -->
 			<footer-layout
 				:newClass="toggleSideBar ? `open-sidebar` : `close-sidebar`"
@@ -152,6 +153,13 @@
 					},
 					{
 						id: 6,
+						text: 'Staff Jurusan',
+						to: 'ListStaffJurusan',
+						icon: { iconName: 'graduated', size: 32, color: '#fff' },
+						activeMenu: 'jurusan',
+					},
+					{
+						id: 7,
 						text: 'Staff Laboratorium',
 						to: 'ListStaffLaboratorium',
 						icon: { iconName: 'users', size: 32, color: '#fff' },
@@ -243,8 +251,6 @@
 <style lang="scss" scoped>
 	.layout-portal-admin {
 		.content-view {
-			// padding-left: 10px;
-			min-height: 100vh;
 			display: grid;
 			grid-template-rows: auto 1fr auto;
 
@@ -283,10 +289,10 @@
 			}
 
 			.content-admin {
-				margin-top: 45px;
+				overflow-y: auto !important;
+				margin: 45px 0;
 				padding: 0 20px 0 20px;
-				height: 100%;
-				// overflow-y: auto !important;
+				min-height: 100%;
 			}
 			.footer-layout {
 				padding-left: 10px;

@@ -163,7 +163,6 @@
 		<!-- END: PAGINATION INFO SECTION -->
 
 		<!-- START: MODAL POPUP -->
-
 		<b-modal
 			ref="modal-popup"
 			hide-footer
@@ -180,7 +179,6 @@
 				:formFilled="buttonActive"
 			/>
 		</b-modal>
-
 		<!-- END: MODAL POPUP -->
 	</div>
 </template>

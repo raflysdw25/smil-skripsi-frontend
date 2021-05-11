@@ -121,8 +121,14 @@
 				for (let file of files) {
 					let uploadFile = {}
 					uploadFile.filename = file.name
-					uploadFile.size = this.bytesToSize(file.size)
+					let fileSize = this.bytesToSize(file.size)
+					if (fileSize.sizes === 'MB' && fileSize.total > 3) {
+						continue
+					} else {
+						uploadFile.size = fileSize.total
+					}
 					uploadFile.file = file
+					uploadFile.image = ''
 					this.uploadFiles.push(uploadFile)
 					this.createImage(this.uploadFiles.length - 1, file)
 				}
@@ -132,11 +138,13 @@
 				let sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
 				if (bytes == 0) return '0 Byte'
 				let i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
-				return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i]
+				return {
+					total: Math.round(bytes / Math.pow(1024, i), 2),
+					sizes: sizes[i],
+				}
 			},
 			createImage(index, file) {
-				let image = new Image()
-				let reader = new FileReader()
+				const reader = new FileReader()
 
 				reader.onload = (e) => {
 					this.uploadFiles[index].image = e.target.result

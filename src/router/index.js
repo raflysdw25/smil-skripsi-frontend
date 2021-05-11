@@ -15,6 +15,7 @@ import ListJenisAlatLab from '@/views/pages/admin/alat/ListJenisAlatLab.vue'
 import ListKerusakanAlatLab from '@/views/pages/admin/alat/ListKerusakanAlatLab.vue'
 import AddAlatLab from '@/views/pages/admin/alat/AddAlatLab.vue'
 import UploadImage from '@/views/pages/admin/alat/UploadImage.vue'
+import DetailAlatLab from '@/views/pages/admin/alat/DetailAlatLab.vue'
 
 // Pages - Supplier
 import ListSupplier from '@/views/pages/admin/supplier/ListSupplier.vue'
@@ -28,6 +29,11 @@ import ListLokasiPenyimpanan from '@/views/pages/admin/penyimpanan/ListLokasiPen
 
 // Pages - Staff Laboratorium
 import ListStaffLaboratorium from '@/views/pages/admin/staff/ListStaffLaboratorium.vue'
+import AddStaffLaboratorium from '@/views/pages/admin/staff/AddStaffLaboratorium.vue'
+
+// Pages - Staff Jurusan
+import ListStaffJurusan from '@/views/pages/admin/staff/ListStaffJurusan.vue'
+import AddStaffJurusan from '@/views/pages/admin/staff/AddStaffJurusan.vue'
 
 Vue.use(VueRouter)
 
@@ -75,6 +81,11 @@ const routes = [
 				name: 'UploadFotoAlat',
 				component: UploadImage,
 			},
+			{
+				path: 'alatlab/list/detail/:alat_id',
+				name: 'DetailAlat',
+				component: DetailAlatLab,
+			},
 			// Pagegroup - Supplier
 			{
 				path: 'supplier',
@@ -103,6 +114,22 @@ const routes = [
 				path: 'staff',
 				name: 'ListStaffLaboratorium',
 				component: ListStaffLaboratorium,
+			},
+			{
+				path: 'staff/add',
+				name: 'TambahStaffLaboratorium',
+				component: AddStaffLaboratorium,
+			},
+			// Pagegroup - Staff Jurusan
+			{
+				path: 'jurusan',
+				name: 'ListStaffJurusan',
+				component: ListStaffJurusan,
+			},
+			{
+				path: 'jurusan/add',
+				name: 'TambahStaffJurusan',
+				component: AddStaffJurusan,
 			},
 		],
 	},

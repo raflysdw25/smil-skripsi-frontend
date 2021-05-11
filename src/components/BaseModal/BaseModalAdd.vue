@@ -20,6 +20,20 @@
 						:disabled="form.disabled"
 						v-model="form.model"
 					/>
+					<select
+						v-if="form.type === 'select'"
+						class="custom-select"
+						v-model="form.model"
+					>
+						<option
+							v-for="(op, indexOp) in form.options"
+							:key="`options-${indexOp}`"
+							:value="op.value"
+							:disabled="op.disabled"
+						>
+							{{ op.text }}
+						</option>
+					</select>
 					<textarea
 						class="form-control"
 						v-if="form.type === 'text-area'"
@@ -56,13 +70,50 @@
 				</template>
 				<template v-else>
 					<template v-if="formInputType(form.type) === 'input'">
-						<input
-							type="text"
-							class="form-control form-child-add"
+						<div
+							class="add-value-group"
 							v-for="(child, indexChild) in form.model"
 							:key="`child-input-${child.id}-${indexChild}`"
-							v-model="child.value"
-						/>
+						>
+							<input
+								type="text"
+								class="form-control form-child-add"
+								v-model="child.value"
+							/>
+							<button
+								class="smil-btn smil-btn-small smil-bg-danger"
+								@click="deleteAddValue(indexChild, form.model)"
+							>
+								<b-icon icon="trash-fill"></b-icon>
+							</button>
+						</div>
+					</template>
+					<template v-if="form.type === 'select'">
+						<div
+							class="add-value-group"
+							v-for="(child, indexChild) in form.model"
+							:key="`child-select-${child.id}-${indexChild}`"
+						>
+							<select
+								class="custom-select form-child-add"
+								v-model="child.value"
+							>
+								<option
+									v-for="(op, indexOp) in form.options"
+									:key="`options-${indexOp}`"
+									:value="op.value"
+									:disabled="op.disabled"
+								>
+									{{ op.text }}
+								</option>
+							</select>
+							<button
+								class="smil-btn smil-btn-small smil-bg-danger"
+								@click="deleteAddValue(indexChild, form.model)"
+							>
+								<b-icon icon="trash-fill"></b-icon>
+							</button>
+						</div>
 					</template>
 					<p class="add-input smil-text-primary" @click="addInput(form.model)">
 						+ Tambah {{ form.label }}
@@ -127,6 +178,9 @@
 				object.id = arrayInput.length + 1
 				arrayInput.push(object)
 			},
+			deleteAddValue(indexChild, arrayInput) {
+				arrayInput.splice(indexChild, 1)
+			},
 			closeModal() {
 				this.formList.forEach((form) => {
 					if (typeof form.model !== 'object') {
@@ -165,12 +219,17 @@
 				}
 				.form-child-add {
 					margin-bottom: 10px;
+					margin-right: 10px;
 				}
 				.form-radio-group {
 					display: flex;
 					.custom-radio {
 						margin-right: 20px;
 					}
+				}
+
+				.add-value-group {
+					display: flex;
 				}
 			}
 			.add-input {
@@ -190,6 +249,13 @@
 		}
 		.mx-datepicker {
 			width: 100%;
+		}
+	}
+</style>
+<style lang="scss">
+	.smil-btn {
+		&.smil-btn-small {
+			height: 33.5px;
 		}
 	}
 </style>

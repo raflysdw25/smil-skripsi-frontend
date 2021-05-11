@@ -30,7 +30,7 @@
 		border-top: 1px solid #c5c5c5;
 		padding: 21px 40px;
 		width: 100%;
-		margin-top: 20px;
+
 		.copyright-section {
 			font-weight: 700;
 		}

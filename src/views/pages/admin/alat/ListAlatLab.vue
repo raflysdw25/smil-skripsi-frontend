@@ -524,7 +524,7 @@
 			// Action Dropdown
 			lihatDetail(indexData) {
 				let data = this.listAlatLab[indexData]
-				console.log(data)
+				this.$router.push({ name: 'DetailAlat', params: { alat_id: 1 } })
 			},
 			// Modal Interaction
 			openFilterData() {
