@@ -1,6 +1,5 @@
 import Vue from 'vue'
-// import VueRouter from 'vue-router'
-import { createRouter, createWebHistory } from 'vue-router'
+import VueRouter from 'vue-router'
 
 // Layout
 import LayoutPortalAdmin from '@/views/layout/LayoutPortalAdmin.vue'
@@ -178,13 +177,9 @@ const routes = [
 	},
 ]
 
-// const router = new VueRouter({
-// 	// mode: 'history',
-// 	base: process.env.BASE_URL,
-// 	routes,
-// })
-const router = createRouter({
-	history: createWebHistory(),
+const router = new VueRouter({
+	mode: 'history',
+	base: process.env.BASE_URL,
 	routes,
 })
 

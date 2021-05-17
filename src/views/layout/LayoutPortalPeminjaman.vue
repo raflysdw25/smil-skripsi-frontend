@@ -57,6 +57,16 @@
 						},
 						child: [{ id: 1, text: 'Mahasiswa', to: 'BuatAkunMahasiswa' }],
 					},
+					{
+						id: 4,
+						text: '',
+						to: 'LoginAdmin',
+						icon: {
+							iconName: 'user',
+							size: 24,
+							color: '#fff',
+						},
+					},
 				],
 			}
 		},
