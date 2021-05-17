@@ -110,6 +110,8 @@
 
 				// Get Data Admin via API
 
+				// Save Token into Local Storage or Cookies
+
 				// Save data admin into Vuex
 				this.$store.dispatch(types.UPDATE_ADMIN, adminData)
 				this.$router.push({ name: 'DashboardAdmin' })

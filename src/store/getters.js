@@ -4,4 +4,7 @@ export default {
 	[types.ADMIN]: (state) => {
 		return state.admin
 	},
+	[types.PEMINJAM]: (state) => {
+		return state.peminjam
+	},
 }

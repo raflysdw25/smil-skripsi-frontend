@@ -4,7 +4,7 @@
 		<div class="button-group d-flex align-items-center justify-content-end">
 			<button
 				class="smil-btn smil-bg-danger mr-4"
-				@click="backToList('ListAlatLaboratorium')"
+				@click="$router.push({ name: 'ListAlatLaboratorium' })"
 			>
 				Batal
 			</button>
@@ -88,15 +88,6 @@
 			}
 		},
 		methods: {
-			// Page Interaction
-			backToList(routeTo) {
-				let confirmCancel = confirm(
-					'Apakah anda yakin ingin membatalkan upload foto?'
-				)
-				if (confirmCancel) {
-					this.$router.push({ name: routeTo })
-				}
-			},
 			// Upload Area Interaction
 			setIsOver(is_over) {
 				this.isOverUploadArea = is_over
@@ -125,9 +116,9 @@
 					if (fileSize.sizes === 'MB' && fileSize.total > 3) {
 						continue
 					} else {
-						uploadFile.size = fileSize.total
+						uploadFile.size = `${fileSize.total} ${fileSize.sizes}`
 					}
-					uploadFile.file = file
+
 					uploadFile.image = ''
 					this.uploadFiles.push(uploadFile)
 					this.createImage(this.uploadFiles.length - 1, file)
@@ -159,6 +150,29 @@
 			uploadFilled() {
 				return this.uploadFiles.length > 0
 			},
+			alatId() {
+				return this.$route.params.alat_id
+			},
+			submitRequest() {
+				let uploadFiles = this.uploadFiles
+				let submit = []
+				uploadFiles.forEach((file) => {
+					submit.push({
+						alat_id: this.alatId,
+						image_data: file.image,
+					})
+				})
+
+				return submit
+			},
+		},
+		beforeRouteLeave(to, from, next) {
+			let confirmCancel = confirm(
+				'Apakah anda yakin ingin membatalkan upload foto? Foto yang sudah diunggah tidak akan tersimpan'
+			)
+			if (confirmCancel) {
+				next()
+			}
 		},
 	}
 </script>

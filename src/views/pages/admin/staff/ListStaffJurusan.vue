@@ -180,10 +180,17 @@
 			<form-filter-data
 				v-if="baseModalType === 'filter'"
 				title="Filter Data Alat"
-				:closeModal="closeModalPopup"
+				:closeModal="closePopup"
 				:formInput="filterStaff"
 				:form="formFilter"
 				@submitFilter="submitFilterData"
+			/>
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
 			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
@@ -195,13 +202,19 @@
 	import IconComponent from '@/components/IconComponent.vue'
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
 
 	export default {
 		name: 'list-staff-jurusan',
+		mixins: [ModalMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
 			BaseFilter,
+			BaseModalAlert,
 		},
 		data() {
 			return {
@@ -250,9 +263,12 @@
 				listStaff: [
 					{
 						nip: '3271032506990001',
-						nama: 'Muhammad Rafly Sadewa',
+						staff_fullname: 'Muhammad Rafly Sadewa',
 						prodi_id: 1,
+						prodi_name: 'Teknik Multimedia Digital',
 						email: 'raflysdw25@gmail.com',
+						address: 'Jl. Panaragan Penggilingan No. 07',
+						phone_number: '081218860714',
 					},
 				],
 				listInfo: {
@@ -344,8 +360,6 @@
 					},
 				],
 				// Data Add Jenis Alat
-				baseModalType: '',
-				buttonActive: false,
 			}
 		},
 		computed: {
@@ -353,9 +367,9 @@
 				let listTable = []
 				this.listStaff.forEach((list, indexList) => {
 					let rowTable = [
-						list.nip, //Nip Peminjam Alat
-						list.nama, //Nama Staff
-						list.prodi_id, //Program Studi
+						list.nip, //NIP
+						list.staff_fullname, //Nama Staff
+						list.prodi_name, //Program Studi
 						list.email, //Email
 						'',
 					]
@@ -369,6 +383,7 @@
 		async mounted() {
 			await this.getListStaffLab()
 			await this.getProdi()
+			// this.showAlert(false, false, 'Alert Berhasil')
 		},
 		methods: {
 			// Call API
@@ -465,14 +480,6 @@
 
 			// Action Dropdown
 			lihatDetail(indexData) {},
-			// Modal Interaction
-			openModalPopup(type) {
-				this.baseModalType = type
-				this.$refs['modal-popup'].show()
-			},
-			closeModalPopup() {
-				this.$refs['modal-popup'].hide()
-			},
 		},
 	}
 </script>

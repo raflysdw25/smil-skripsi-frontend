@@ -9,7 +9,8 @@ import mutations from '@/store/mutations'
 
 export const store = new Vuex.Store({
 	state: {
-		admin: null,
+		admin: {},
+		peminjam: {},
 	},
 	getters,
 	mutations,

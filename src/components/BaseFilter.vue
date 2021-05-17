@@ -14,6 +14,7 @@
 				{{ ops.text }}
 			</option>
 		</select>
+
 		<div class="input-group" v-else-if="filter_type === 'search'">
 			<input
 				type="text"

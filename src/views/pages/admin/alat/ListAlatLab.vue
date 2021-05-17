@@ -10,7 +10,7 @@
 			</button>
 			<button
 				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openFilterData()"
+				@click="openPopup('filter-data')"
 			>
 				Filter Data
 			</button>
@@ -23,7 +23,7 @@
 				<thead class="smil-thead">
 					<tr>
 						<th
-							v-for="(head, indexHds) in headsAlatLab"
+							v-for="(head, indexHds) in headsTable"
 							:key="`header-table-${head.id}-${indexHds}`"
 						>
 							{{ head.label }}
@@ -42,7 +42,7 @@
 				</thead>
 				<tbody class="smil-tbody" v-if="listAlatLab.length === 0">
 					<tr>
-						<td :colspan="headsAlatLab.length" class="text-center empty-table">
+						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
 								iconName="empty-files"
 								:size="64"
@@ -107,7 +107,7 @@
 					</tr>
 					<tr>
 						<td
-							:colspan="Object.keys(headsAlatLab).length"
+							:colspan="Object.keys(headsTable).length"
 							:style="{ 'padding-bottom': `${listAlatLab.length * 50}px` }"
 						></td>
 					</tr>
@@ -182,7 +182,7 @@
 
 		<!-- START: MODAL FILTER DATA FOR MOBILE -->
 		<b-modal
-			ref="filterData"
+			ref="modal-popup"
 			no-close-on-backdrop
 			no-close-on-esc
 			hide-header
@@ -190,11 +190,20 @@
 			centered
 		>
 			<form-filter-data
+				v-if="baseModalType === 'filter-data'"
 				title="Filter Data Alat"
-				:closeModal="closeFilterData"
+				:closeModal="closePopup"
 				:formInput="filterAlat"
 				:form="formFilter"
 				@submitFilter="submitFilterData"
+			/>
+
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
 			/>
 		</b-modal>
 		<!-- END: MODAL FILTER DATA FOR MOBILE -->
@@ -206,12 +215,17 @@
 	import IconComponent from '@/components/IconComponent.vue'
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
 	export default {
 		name: 'list-alat-lab',
-		components: { IconComponent, FormFilterData, BaseFilter },
+		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAlert },
+		mixins: [ModalMixins],
 		data() {
 			return {
-				headsAlatLab: [
+				headsTable: [
 					{
 						id: 1,
 						label: 'ID Alat',
@@ -449,7 +463,7 @@
 					},
 				]
 
-				let headsJenisAlat = this.headsAlatLab.find((head) => head.id === 3)
+				let headsJenisAlat = this.headsTable.find((head) => head.id === 3)
 				jenisAlat.forEach((alat, indexJns) => {
 					headsJenisAlat.options.push({
 						id: indexJns + 2,
@@ -525,13 +539,6 @@
 			lihatDetail(indexData) {
 				let data = this.listAlatLab[indexData]
 				this.$router.push({ name: 'DetailAlat', params: { alat_id: 1 } })
-			},
-			// Modal Interaction
-			openFilterData() {
-				this.$refs['filterData'].show()
-			},
-			closeFilterData() {
-				this.$refs['filterData'].hide()
 			},
 		},
 	}

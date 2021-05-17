@@ -2,7 +2,7 @@ let moment = require('moment')
 export default {
 	data() {
 		return {
-			inputType: ['number', 'text', 'password', 'email', 'tel'],
+			inputType: ['number', 'text', 'password', 'email', 'tel', 'text-barcode'],
 		}
 	},
 	methods: {
@@ -25,6 +25,15 @@ export default {
 		},
 		formatDate(date, format = 'DD-MM-YYYY') {
 			return moment(date).format(format)
+		},
+		dateRange(start, end) {
+			if (end !== null) {
+				let startDate = moment(start.split('-').reverse())
+				let endDate = moment(end.split('-').reverse())
+				return endDate.diff(startDate, 'days')
+			} else {
+				return null
+			}
 		},
 	},
 }

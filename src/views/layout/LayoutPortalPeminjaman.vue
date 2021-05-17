@@ -5,14 +5,18 @@
 		<!-- END: Navbar -->
 
 		<!-- START: CONTENT VIEW -->
-		<div class="content-peminjaman">
-			<router-view />
+		<div class="content-view">
+			<!-- START: CONTENT VIEW -->
+			<div class="content-peminjaman">
+				<router-view />
+			</div>
+			<!-- END: CONTENT VIEW -->
 		</div>
-		<!-- END: CONTENT VIEW -->
 
 		<!-- START: FOOTER -->
 		<footer-layout />
 		<!-- END: FOOTER -->
+		<!-- END: CONTENT VIEW -->
 	</div>
 </template>
 
@@ -30,7 +34,7 @@
 					{
 						id: 1,
 						text: 'Beranda',
-						to: '/',
+						to: 'BerandaPeminjaman',
 						icon: {
 							iconName: 'scanner',
 							size: 24,
@@ -40,7 +44,7 @@
 					{
 						id: 2,
 						text: 'Lapor Kerusakan Alat',
-						to: '/',
+						to: 'LaporKerusakanAlat',
 						icon: { iconName: 'fixing-tools', size: 24, color: '#fff' },
 					},
 					{
@@ -51,10 +55,7 @@
 							size: 24,
 							color: '#fff',
 						},
-						child: [
-							{ id: 1, text: 'Mahasiswa', to: '/' },
-							{ id: 2, text: 'Staff/Dosen', to: '/' },
-						],
+						child: [{ id: 1, text: 'Mahasiswa', to: 'BuatAkunMahasiswa' }],
 					},
 				],
 			}
@@ -64,11 +65,28 @@
 
 <style lang="scss" scoped>
 	.layout-portal-peminjaman {
-		min-height: 100vh;
-		display: grid;
-		grid-template-rows: auto 1fr auto;
-		.content-peminjaman {
-			height: 100%;
+		.content-view {
+			display: flex;
+			flex-direction: column;
+			// grid-template-rows: auto 1fr auto;
+			.content-peminjaman {
+				overflow-y: auto !important;
+				margin: 80px 0 45px;
+				padding: 0 20px;
+				height: 90%;
+			}
+
+			.footer-layout {
+				padding-left: 10px;
+			}
+		}
+	}
+
+	@media screen and (max-width: 992px) {
+		.content-view {
+			.content-peminjaman {
+				padding: 0 10px 0 10px !important;
+			}
 		}
 	}
 </style>

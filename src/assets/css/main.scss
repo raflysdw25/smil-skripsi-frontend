@@ -63,8 +63,9 @@ body {
 // Status Style
 .smil-status {
 	width: 80px;
-	height: 30px;
-	padding: 10px 20px;
+	height: max-content;
+	padding: 8px;
+	text-align: center;
 	font-weight: bold;
 	font-size: 10px;
 }
@@ -336,11 +337,14 @@ button.btn-smil-drop:before {
 	font-size: 14px !important;
 }
 
+// FORM
+
 // Mobile Style
 @media screen and (max-width: 992px) {
 	.smil-status {
 		width: 50px;
 		// height: 30px;
+		text-align: center;
 		padding: 5px;
 		text-align: center;
 		font-weight: bold;

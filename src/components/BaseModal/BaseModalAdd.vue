@@ -130,6 +130,7 @@
 				<button
 					class="smil-btn smil-btn-small smil-bg-primary"
 					:disabled="!formFilled"
+					@click="submit"
 				>
 					Submit
 				</button>
@@ -180,6 +181,9 @@
 			},
 			deleteAddValue(indexChild, arrayInput) {
 				arrayInput.splice(indexChild, 1)
+			},
+			async submit() {
+				await this.submitFunction()
 			},
 			closeModal() {
 				this.formList.forEach((form) => {

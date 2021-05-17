@@ -4,7 +4,7 @@
 		<div class="button-group d-flex">
 			<button
 				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openModal('filter')"
+				@click="openPopup('filter')"
 			>
 				Filter Data
 			</button>
@@ -17,7 +17,7 @@
 				<thead class="smil-thead">
 					<tr>
 						<th
-							v-for="(head, indexHds) in headsAlatLab"
+							v-for="(head, indexHds) in headsTable"
 							:key="`header-table-${head.id}-${indexHds}`"
 						>
 							{{ head.label }}
@@ -36,7 +36,7 @@
 				</thead>
 				<tbody class="smil-tbody" v-if="listLaporanKerusakan.length === 0">
 					<tr>
-						<td :colspan="headsAlatLab.length" class="text-center empty-table">
+						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
 								iconName="empty-files"
 								:size="64"
@@ -71,7 +71,7 @@
 									<template v-slot:button-content>
 										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 									</template>
-									<b-dropdown-item @click="openModal('action')">
+									<b-dropdown-item @click="tindakLaporan(indexRow)">
 										Tindakan Laporan
 									</b-dropdown-item>
 									<b-dropdown-item>
@@ -96,7 +96,7 @@
 					</tr>
 					<tr>
 						<td
-							:colspan="Object.keys(headsAlatLab).length"
+							:colspan="Object.keys(headsTable).length"
 							:style="{
 								'padding-bottom': `${listLaporanKerusakan.length * 50}px`,
 							}"
@@ -188,7 +188,7 @@
 			<form-filter-data
 				v-if="baseModalType === 'filter'"
 				title="Filter Data Alat"
-				:closeModal="closeModal"
+				:closePopup="closePopup"
 				:formInput="filterLaporanKerusakan"
 				:form="formFilter"
 				@submitFilter="submitFilterData"
@@ -198,8 +198,17 @@
 				v-if="baseModalType === 'action'"
 				modalTitle="Tindakan Laporan"
 				:formList="formAction"
-				:closeFunction="closeModal"
+				:submitFunction="sendTindakanLaporan"
+				:closeFunction="closePopup"
 				:formFilled="formTindakanFill"
+			/>
+
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
 			/>
 		</b-modal>
 
@@ -213,16 +222,24 @@
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
 
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
+	import ModalMixins from '@/mixins/ModalMixins'
 	export default {
 		name: 'list-kerusakan-alat-lab',
-		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAdd },
-		mixins: [FormInputMixins],
+		components: {
+			IconComponent,
+			FormFilterData,
+			BaseFilter,
+			BaseModalAdd,
+			BaseModalAlert,
+		},
+		mixins: [FormInputMixins, ModalMixins],
 		data() {
 			return {
-				headsAlatLab: [
+				headsTable: [
 					{
 						id: 1,
 						label: 'Tanggal Pelaporan',
@@ -291,12 +308,20 @@
 				],
 				listLaporanKerusakan: [
 					{
-						tgl_lapor: new Date().toString(),
-						nama_pelapor: 'Muhammad Rafly Sadewa',
+						laporan_id: 1,
+						report_date: new Date().toString(),
 						barcode_alat: 'BA44BHP',
-						kronologi:
+						nim_mahasiswa: '4617010058',
+						nip_staff: null,
+						mahasiswa_fullname: 'Muhammad Rafly Sadewa',
+						staff_fullname: '',
+						report_status: 1,
+						chronology:
 							'Laptop tiba-tiba blue screen, dan terdengar bunyi di mesin laptop',
-						status_lapor: 1,
+						report_action: null,
+						report_notes: '',
+						created_at: new Date().toString(),
+						deleted_at: null,
 					},
 				],
 				listInfo: {
@@ -388,8 +413,6 @@
 						isRequired: false,
 					},
 				],
-				// Form Action - Tindakan Kerusakan
-				baseModalType: '',
 				formAction: [
 					{
 						id: 1,
@@ -428,25 +451,24 @@
 						canAddValue: false,
 					},
 				],
+				// Selected Data
+				selected_data: {},
 			}
 		},
 		computed: {
 			listTable() {
 				let listTable = []
 				this.listLaporanKerusakan.forEach((list, indexList) => {
-					// {
-					// 	tgl_lapor: new Date().toString(),
-					// 	nama_pelapor: 'Muhammad Rafly Sadewa',
-					// 	barcode_alat: 'BA44BHP',
-					// 	kronologi: '',
-					// 	status_lapor: 1,
-					// }
+					let nama_pelapor =
+						list.nim_mahasiswa !== null
+							? list.mahasiswa_fullname
+							: list.staff_fullname
 					let rowTable = [
-						list.tgl_lapor, //Tanggal Laporan
-						list.nama_pelapor, //Nama Pelapor
+						list.report_date, //Tanggal Laporan
+						nama_pelapor, //Nama Pelapor
 						list.barcode_alat, //Barcode Alat
-						list.kronologi,
-						this.statusLaporan(list.status_lapor),
+						list.chronology,
+						this.statusLaporan(list.report_status),
 						indexList, //Index Data
 					]
 
@@ -457,6 +479,16 @@
 			},
 			formTindakanFill() {
 				return this.formAction[2].model !== ''
+			},
+			submitTindakanRequest() {
+				let laporan = this.selected_data
+				let form = this.formAction
+				return {
+					laporan_id: laporan.laporan_id,
+					report_status: form[2].model,
+					report_notes: form[3].model,
+					report_action: form[0].model,
+				}
 			},
 		},
 		async mounted() {
@@ -473,6 +505,7 @@
 				this.listInfo.listTotal = this.listLaporanKerusakan.length
 				// Nembak API Get List Alat
 			},
+			sendTindakanLaporan() {},
 			submitFilterData(formInput) {
 				this.filterLaporanKerusakan = formInput
 				alert(this.filterLaporanKerusakan)
@@ -517,20 +550,18 @@
 
 				return listStatusLaporan.find((status) => status.id === status_id)
 			},
-
+			tindakLaporan(row) {
+				this.selected_data = this.listLaporanKerusakan[row]
+				this.formAction[1].model =
+					this.selected_data.nim_mahasiswa !== null
+						? this.selected_data.mahasiswa_fullname
+						: this.selected_data.staff_fullname
+				this.openPopup('action')
+			},
 			// Action Dropdown
 			lihatDetail(indexData) {
 				let data = this.listLaporanKerusakan[indexData]
 				console.log(data)
-			},
-			// Modal Interaction
-			openModal(type) {
-				this.baseModalType = type
-				this.$refs['modal-popup'].show()
-			},
-			closeModal() {
-				this.baseModalType = ''
-				this.$refs['modal-popup'].hide()
 			},
 		},
 	}

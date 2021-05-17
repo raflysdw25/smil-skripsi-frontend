@@ -2,7 +2,7 @@
 	<div class="list-jenis-alat-lab">
 		<!-- START: BUTTON GROUP -->
 		<div class="button-group d-flex">
-			<button class="smil-btn smil-bg-primary" @click="openModalPopup('add')">
+			<button class="smil-btn smil-bg-primary" @click="openPopup('add')">
 				Tambah Data
 			</button>
 		</div>
@@ -14,7 +14,7 @@
 			<thead class="smil-thead">
 				<tr>
 					<th
-						v-for="(head, indexHds) in headsJenisAlat"
+						v-for="(head, indexHds) in headsTable"
 						:key="`header-table-${head.id}-${indexHds}`"
 					>
 						{{ head.label }}
@@ -34,7 +34,7 @@
 			<!-- START: EMPTY TABLE -->
 			<tbody class="smil-tbody" v-if="listJenisAlat.length === 0">
 				<tr>
-					<td :colspan="headsJenisAlat.length" class="text-center empty-table">
+					<td :colspan="headsTable.length" class="text-center empty-table">
 						<icon-component
 							iconName="empty-files"
 							:size="64"
@@ -89,7 +89,7 @@
 				</tr>
 				<tr>
 					<td
-						:colspan="Object.keys(headsJenisAlat).length"
+						:colspan="Object.keys(headsTable).length"
 						:style="{ 'padding-bottom': `${listJenisAlat.length * 50}px` }"
 					></td>
 				</tr>
@@ -175,8 +175,16 @@
 				v-if="baseModalType === 'add'"
 				modalTitle="Tambah Jenis Alat"
 				:formList="formAdd"
-				:closeFunction="closeModalPopup"
 				:formFilled="buttonActive"
+				:submitFunction="sendAddJenis"
+				:closeFunction="closePopup"
+			/>
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
 			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
@@ -189,13 +197,24 @@
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
 
 	export default {
 		name: 'list-jenis-alat-lab',
-		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAdd },
+		components: {
+			IconComponent,
+			FormFilterData,
+			BaseFilter,
+			BaseModalAdd,
+			BaseModalAlert,
+		},
+		mixins: [ModalMixins],
 		data() {
 			return {
-				headsJenisAlat: [
+				headsTable: [
 					{
 						id: 1,
 						label: 'ID Jenis Alat',
@@ -226,7 +245,7 @@
 					{
 						id: 1,
 						nama_jenis: 'Smartphone',
-						attr_spek: 'Processor, RAM, Storage, Kamera',
+						attr_spek: ['Processor', 'RAM', 'Storage', 'Kamera'],
 					},
 				],
 				listInfo: {
@@ -298,10 +317,18 @@
 			listTable() {
 				let listTable = []
 				this.listJenisAlat.forEach((list, indexList) => {
+					let spec_attr = ''
+					list.attr_spek.forEach((spec) => {
+						if (spec_attr === '') {
+							spec_attr += spec
+						} else {
+							spec_attr += `, ${spec}`
+						}
+					})
 					let rowTable = [
 						list.id, //ID Jenis Alat
 						list.nama_jenis, //Nama Jenis Alat
-						list.attr_spek, // Attribute Spesifikasi
+						spec_attr, // Attribute Spesifikasi
 						indexList,
 					]
 
@@ -309,6 +336,18 @@
 				})
 
 				return listTable
+			},
+			submitRequest() {
+				let spec_attr = []
+				this.formAdd[1].model.forEach((attr) => {
+					if (attr.value !== '') {
+						spec_attr.push(attr.value)
+					}
+				})
+				return {
+					jenis_name: this.formAdd[0].model,
+					spec_attributes: JSON.stringify(spec_attr),
+				}
 			},
 		},
 		async mounted() {
@@ -325,6 +364,29 @@
 				this.listInfo.listTotal = this.listJenisAlat.length
 				// Nembak API Get List Alat
 			},
+			async sendAddJenis() {
+				this.closePopup()
+				this.showAlert(true)
+				setTimeout(() => {
+					alert(
+						`${this.submitRequest.jenis_name} - ${this.submitRequest.spec_attributes}`
+					)
+					this.showAlert(false, true, 'Tambah Jenis Alat Berhasil')
+					this.formAdd.forEach((form) => {
+						if (typeof form.model !== 'object') {
+							form.model = ''
+						} else {
+							form.model = [
+								{
+									id: 1,
+									value: '',
+									disabled: false,
+								},
+							]
+						}
+					})
+				}, 1500)
+			},
 			//Table Page Interaction
 			nextPage() {
 				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
@@ -340,13 +402,6 @@
 				this.listInfo.pageNo = pageNo
 			},
 			// Modal Interaction
-			openModalPopup(type) {
-				this.baseModalType = type
-				this.$refs['modal-popup'].show()
-			},
-			closeModalPopup() {
-				this.$refs['modal-popup'].hide()
-			},
 		},
 	}
 </script>

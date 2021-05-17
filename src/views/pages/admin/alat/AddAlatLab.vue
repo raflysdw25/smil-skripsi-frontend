@@ -4,11 +4,15 @@
 		<div class="button-group d-flex align-items-center justify-content-end">
 			<button
 				class="smil-btn smil-bg-danger mr-4"
-				@click="backToList('ListAlatLaboratorium')"
+				@click="$router.push({ name: 'ListAlatLaboratorium' })"
 			>
 				Batal
 			</button>
-			<button class="smil-btn smil-bg-primary" :disabled="!formFilled">
+			<button
+				class="smil-btn smil-bg-primary"
+				:disabled="!formFilled"
+				@click="sendAddAlat"
+			>
 				Simpan
 			</button>
 		</div>
@@ -19,10 +23,10 @@
 			<div class="smil-row">
 				<div
 					class="form-group col-lg-6 col-12"
-					v-for="(form, indexInput) in formGroupList"
-					:key="`form-input-${indexInput}-${form.id}`"
+					v-for="(form, idxInput) in formGroupList"
+					:key="`form-input-${idxInput}`"
 				>
-					<label class="form-label" :for="`input-${indexInput + 1}`">
+					<label class="form-label" :for="`input-${idxInput + 1}`">
 						{{ form.label }}
 						<span
 							v-if="form.isRequired"
@@ -36,48 +40,99 @@
 						:type="form.type"
 						v-if="formInputType(form.type) === 'input'"
 						class="form-control"
-						v-model="formInput[form.model]"
+						v-model="form.model"
 						:placeholder="form.placeholder"
 						:required="form.isRequired"
+						@change="changeValue"
 					/>
 					<!-- END: INPUT TAG -->
 
 					<!-- START: SELECT TAG -->
 					<select
-						v-if="form.type === 'select'"
+						v-model="form.model"
 						class="custom-select"
-						v-model="formInput[form.model]"
-						:required="form.isRequired"
+						v-if="form.type === 'select'"
+						@change="changeValue"
 					>
+						<option value="" disabled> Pilih {{ form.label }} </option>
 						<option
-							v-for="(ops, indexOps) in form.options"
-							:key="`option-${form.model}-${indexOps}-${ops.id}`"
-							:disabled="ops.disabled"
-							:value="ops.value"
+							:value="ops.id"
+							v-for="(ops, idxOps) in form.options"
+							:key="`options-${idxOps}`"
 						>
-							{{ ops.name }}
+							{{ ops.text }}
 						</option>
 					</select>
+
 					<!-- END: SELECT TAG -->
 				</div>
 			</div>
-			<div class="smil-row">
-				<div class="form-group col-lg-6 col-12">
-					<label class="form-label">Spesifikasi Alat</label>
+			<!-- START: SPESIFIKASI SECTION -->
+			<div class="spesifikasi-section">
+				<h5 class="label">Spesifikasi Alat</h5>
+				<div class="smil-row">
+					<template v-if="Object.keys(spesifikasi).length > 0">
+						<div
+							class="form-group col-lg-6 col-12"
+							v-for="(spec, idxSpek) in Object.keys(spesifikasi)"
+							:key="`spesifikasi-${idxSpek}`"
+						>
+							<label class="form-label" :for="`input-${idxSpek + 1}`">
+								{{ spesifikasi[spec].label }}
+							</label>
+							<input
+								type="text"
+								class="form-control"
+								@change="changeSpec($event, spec)"
+								:placeholder="spesifikasi[spec].label"
+							/>
+						</div>
+					</template>
+					<template v-else>
+						<div class="form-group col-12">
+							<h5 class="empty-desc">
+								Jenis Alat belum ditentukan
+							</h5>
+						</div>
+					</template>
 				</div>
 			</div>
+			<!-- END: SPESIFIKASI SECTION -->
 		</section>
 		<!-- FORM GROUP -->
+
+		<!-- START: POPUP -->
+		<b-modal
+			ref="modal-popup"
+			id="modal-popup"
+			centered
+			hide-footer
+			hide-header
+			no-close-on-backdrop
+			no-close-on-esc
+		>
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
+			/>
+		</b-modal>
+		<!-- END: POPUP -->
 	</div>
 </template>
 
 <script>
+	// Components
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert'
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
+	import ModalMixins from '@/mixins/ModalMixins'
 	export default {
 		name: 'add-alat-lab',
-		components: {},
-		mixins: [FormInputMixins],
+		components: { BaseModalAlert },
+		mixins: [FormInputMixins, ModalMixins],
 		data() {
 			return {
 				formInput: {
@@ -91,95 +146,55 @@
 				},
 				formGroupList: [
 					{
-						id: 1,
 						label: 'Nama Alat',
 						type: 'text',
-						model: 'nama',
+						model: '',
 						description: '',
 						placeholder: 'Nama Alat Baru',
 						isRequired: true,
 					},
 					{
-						id: 2,
 						label: 'Asal Pengadaan Alat',
 						type: 'select',
-						model: 'asal',
+						model: '',
 						description: '',
 						placeholder: 'Pilih Asal Pengadaan Alat',
 						isRequired: true,
-						options: [
-							{
-								id: 1,
-								name: 'Pilih Asal Pengadaan Alat',
-								value: '',
-								disabled: true,
-							},
-							{
-								id: 2,
-								name: 'Barang Habis Pakai',
-								value: 'BHP',
-								disabled: false,
-							},
-							{
-								id: 3,
-								name: 'Hibah Tugas Akhir',
-								value: 'HTA',
-								disabled: false,
-							},
-							{
-								id: 4,
-								name: 'Supplier',
-								value: 'SUP',
-								disabled: false,
-							},
-							{
-								id: 5,
-								name: 'Direktorat PNJ',
-								value: 'DRP',
-								disabled: false,
-							},
-							{
-								id: 6,
-								name: 'Hibah Pemerintah',
-								value: 'HPM',
-								disabled: false,
-							},
-						],
+						options: [],
 					},
 					{
-						id: 3,
 						label: 'Tahun Pengadaan Alat',
 						type: 'text',
-						model: 'tahun',
+						model: '',
 						description: '',
 						placeholder: 'Tahun Pengadaan Alat',
 						isRequired: true,
 					},
 					{
-						id: 5,
+						label: 'Supplier Alat',
+						type: 'select',
+						model: '',
+						description: '',
+						placeholder: 'Pilih Supplier Alat',
+						isRequired: false,
+						options: [],
+					},
+					{
 						label: 'Jumlah Alat',
 						type: 'number',
-						model: 'jumlahAlat',
+						model: '',
 						description: '',
 						placeholder: 'Jumlah Alat Baru',
 						isRequired: true,
 					},
 					{
-						id: 6,
 						label: 'Jenis Alat',
 						type: 'select',
-						model: 'jenisAlat',
+						model: '',
 						description: '',
 						placeholder: 'Pilih Jenis Alat',
 						isRequired: true,
-						options: [
-							{
-								id: 1,
-								name: 'Pilih Jenis Alat',
-								value: '',
-								disabled: true,
-							},
-						],
+						options: [],
 					},
 				],
 				jenisAlatList: [
@@ -194,100 +209,146 @@
 		},
 		mounted() {
 			this.getJenisAlat()
+			this.supplierList()
+			this.getAsalAlat()
 		},
 		watch: {
-			'formInput.asal': {
+			spesifikasi: {
+				immediate: true,
 				deep: true,
-				handler: function(newVal) {
-					if (newVal === 'SUP') {
-						let dataForm = {
-							id: 4,
-							label: 'Supplier Alat',
-							type: 'select',
-							model: 'supplier',
-							description: '',
-							placeholder: 'Pilih Supplier Alat',
-							isRequired: false,
-							options: this.supplierList(),
-						}
-
-						this.formGroupList.splice(3, 0, dataForm)
-					} else {
-						let indexSupplier = this.formGroupList.findIndex(
-							(list) => list.id === 4
-						)
-						if (indexSupplier > -1) {
-							this.formGroupList.splice(indexSupplier, 1)
-						}
-					}
-				},
+				handler: function() {},
 			},
-			'formInput.jenisAlat': {
-				handler: function() {
-					let getJenisAlat = this.jenisAlatList.find(
-						(jal) => jal.id === this.formInput.jenisAlat
+		},
+		computed: {
+			formFilled() {
+				return (
+					this.submitRequest.alat_name !== '' &&
+					this.submitRequest.asal_pengadaan_id !== '' &&
+					this.submitRequest.alat_year !== '' &&
+					this.submitRequest.alat_total !== '' &&
+					this.submitRequest.jenis_alat_id !== ''
+				)
+			},
+			submitRequest() {
+				let form = this.formGroupList
+
+				return {
+					alat_name: form[0].model,
+					asal_pengadaan_id: form[1].model,
+					alat_year: form[2].model,
+					supplier_id: form[3].model,
+					alat_total: form[4].model,
+					jenis_alat_id: form[5].model,
+					alat_specs: null,
+				}
+			},
+		},
+		methods: {
+			// Call API
+			supplierList() {
+				// Akan memanggil API Supplier
+				let listSupplier = [
+					{
+						id: 1,
+						text: 'PT Anugerah Sejahtera',
+						disabled: false,
+					},
+				]
+
+				this.formGroupList[3].options = listSupplier
+			},
+			getJenisAlat() {
+				// Akan memanggil API Jenis Alat
+				let listJenis = [
+					{
+						id: 1,
+						text: 'Laptop',
+						attr_spek: ['Processor', 'Ukuran Layar', 'RAM', 'VGA'],
+						disabled: false,
+					},
+					{
+						id: 2,
+						text: 'Smartphone',
+						attr_spek: [
+							'Processor',
+							'Resolusi Kamera',
+							'RAM',
+							'Android Version',
+						],
+						disabled: false,
+					},
+				]
+
+				this.formGroupList[5].options = listJenis
+			},
+			getAsalAlat() {
+				// Memanggil API Asal Alat
+				let listAsal = [
+					{
+						id: 1,
+						text: 'Barang Habis Pakai',
+						disabled: false,
+					},
+					{
+						id: 2,
+						text: 'Hibah Tugas Akhir',
+						disabled: false,
+					},
+					{
+						id: 3,
+						text: 'Supplier',
+						disabled: false,
+					},
+					{
+						id: 4,
+						text: 'PNJ',
+						disabled: false,
+					},
+					{
+						id: 5,
+						text: 'Hibah Pemerintah',
+						disabled: false,
+					},
+				]
+
+				this.formGroupList[1].options = listAsal
+			},
+			sendAddAlat() {
+				this.submitRequest.alat_specs = JSON.stringify(this.spesifikasi)
+				alert(this.submitRequest.alat_specs)
+			},
+			// Form Interaction
+			changeValue() {
+				let form = this.formGroupList
+				// Ketika Jenis Alat Disi
+				if (form[5].model !== '') {
+					this.spesifikasi = {}
+					let getJenisAlat = form[5].options.find(
+						(jal) => jal.id === form[5].model
 					)
 
 					getJenisAlat.attr_spek.forEach((spek) => {
 						let key = spek.replace(/\s/, '_').toLowerCase() //Mengubah spek yg terdapat spasi dengan _
 						this.spesifikasi[key] = {
 							label: spek,
-							value: key,
+							value: '',
 						}
-						this.formInput.spesifikasi[key] = ''
 					})
-				},
-			},
-		},
-		computed: {
-			formFilled() {
-				return (
-					this.formInput.nama !== '' &&
-					this.formInput.asal !== '' &&
-					this.formInput.tahun !== '' &&
-					this.formInput.jumlahAlat !== 0 &&
-					this.formInput.jenisAlat !== ''
-				)
-			},
-		},
-		methods: {
-			supplierList() {
-				// Akan memanggil API Supplier
-				return [
-					{
-						id: 1,
-						name: 'Pilih Supplier Alat',
-						value: '',
-						disabled: true,
-					},
-					{
-						id: 2,
-						name: 'PT Anugerah Sejahtera',
-						value: 1,
-						disabled: false,
-					},
-				]
-			},
-			getJenisAlat() {
-				// Akan memanggil API Jenis Alat
-				let jenisAlat = this.formGroupList.find((list) => list.id === 6)
-
-				// Looping berdasarkan jenis alat yg didapatkan
-				jenisAlat.options.push({
-					id: 2,
-					name: 'Laptop',
-					value: 1,
-					disabled: false,
-				})
-			},
-			backToList(routeTo) {
-				let confirmCancel = confirm(
-					'Apakah anda yakin ingin membatalkan tambah data?'
-				)
-				if (confirmCancel) {
-					this.$router.push({ name: routeTo })
 				}
 			},
+			changeSpec(event, key) {
+				if (Object.keys(this.spesifikasi).length > 0) {
+					this.spesifikasi[key]['value'] = event.target.value
+				}
+			},
+		},
+		beforeRouteLeave(to, from, next) {
+			let confirmCancel = confirm(
+				'Apakah anda yakin ingin membatalkan tambah data?'
+			)
+			if (confirmCancel) {
+				next()
+			}
 		},
 	}
 </script>
@@ -296,6 +357,19 @@
 	.add-alat-lab {
 		.section-form-group {
 			margin-top: 30px;
+		}
+		.spesifikasi-section {
+			.label {
+				font-size: 14px;
+				font-weight: 700;
+				padding-left: 15px;
+				margin-top: 35px;
+				margin-bottom: 20px;
+			}
+			.empty-desc {
+				font-size: 14px;
+				color: #696969;
+			}
 		}
 	}
 </style>

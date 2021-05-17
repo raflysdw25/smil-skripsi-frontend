@@ -4,7 +4,7 @@
 		<div class="button-group d-flex">
 			<button
 				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openModalPopup('filter')"
+				@click="openPopup('filter')"
 			>
 				Filter Data
 			</button>
@@ -34,7 +34,7 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listLokasi.length === 0">
+				<tbody class="smil-tbody" v-if="listPeminjaman.length === 0">
 					<tr>
 						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
@@ -71,18 +71,24 @@
 									<template v-slot:button-content>
 										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 									</template>
-									<b-dropdown-item>
-										Cetak QR Code
+									<b-dropdown-item @click="tindakPeminjaman(true, indexRow)">
+										Approve Request
+									</b-dropdown-item>
+									<b-dropdown-item @click="tindakPeminjaman(false, indexRow)">
+										Reject Request
 									</b-dropdown-item>
 									<b-dropdown-item>
-										List Alat Tersimpan
+										Detail Peminjaman
 									</b-dropdown-item>
 									<b-dropdown-item>
-										Edit Data Lokasi
+										List Alat Dipinjam
+									</b-dropdown-item>
+									<b-dropdown-item>
+										Informasi Peminjam
 									</b-dropdown-item>
 									<b-dropdown-item>
 										<span class="smil-text-danger">
-											Hapus Data Lokasi
+											Hapus Peminjaman
 										</span>
 									</b-dropdown-item>
 								</b-dropdown>
@@ -100,7 +106,7 @@
 					<tr>
 						<td
 							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listLokasi.length * 50}px` }"
+							:style="{ 'padding-bottom': `${listPeminjaman.length * 50}px` }"
 						></td>
 					</tr>
 				</tbody>
@@ -111,7 +117,7 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listLokasi.length} dari ${listLokasi.length} Data` }}
+				{{ `${listPeminjaman.length} dari ${listPeminjaman.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
@@ -181,18 +187,26 @@
 			no-close-on-backdrop
 			no-close-on-esc
 		>
-			<base-modal-add
-				v-if="baseModalType === 'add'"
-				modalTitle="Tambah Jenis Alat"
-				:formList="formAdd"
-				:closeFunction="closeModalPopup"
-				:formFilled="buttonActive"
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
+			/>
+
+			<base-modal-approve
+				v-if="baseModalType === 'approval'"
+				:isApprove="isApprove"
+				:peminjamanId="selected_pjm.pjm_id"
+				:closeModal="closePopup"
+				@approvalAlert="approvalAlert"
 			/>
 
 			<form-filter-data
 				v-if="baseModalType === 'filter'"
 				title="Filter Data Alat"
-				:closeModal="closeModalPopup"
+				:closeModal="closePopup"
 				:formInput="filterLokasi"
 				:form="formFilter"
 				@submitFilter="submitFilterData"
@@ -207,10 +221,21 @@
 	import IconComponent from '@/components/IconComponent.vue'
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
-	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalApprove from '@/components/BaseModal/BaseModalApprove.vue'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
 	export default {
 		name: 'list-peminjaman-alat',
-		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAdd },
+		mixins: [ModalMixins],
+		components: {
+			IconComponent,
+			FormFilterData,
+			BaseFilter,
+			BaseModalAlert,
+			BaseModalApprove,
+		},
 		data() {
 			return {
 				headsTable: [
@@ -273,8 +298,9 @@
 					},
 					'',
 				],
-				listLokasi: [
+				listPeminjaman: [
 					{
+						pjm_id: 1,
 						tgl_pinjam: new Date(),
 						tgl_pengembalian: new Date(),
 						nama: 'Muhammad Rafly Sadewa',
@@ -369,8 +395,6 @@
 						isRequired: false,
 					},
 				],
-				// Data Add Jenis Alat
-				baseModalType: '',
 				formAdd: [
 					{
 						id: 1,
@@ -405,12 +429,14 @@
 					},
 				],
 				buttonActive: false,
+				selected_pjm: {},
+				isApprove: '',
 			}
 		},
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listLokasi.forEach((list, indexList) => {
+				this.listPeminjaman.forEach((list, indexList) => {
 					let rowTable = [
 						list.tgl_pinjam, //ID Lokasi
 						list.tgl_pengembalian, //Nama Lokasi
@@ -428,16 +454,17 @@
 		async mounted() {
 			await this.getListPeminjaman()
 			await this.getListJenisAlat()
+			// this.showAlert(false, false, 'Alert Berhasil')
 		},
 		methods: {
 			// Call API
 			async getListPeminjaman() {
 				// alert(`Get Data Alat ${this.filterLokasi.asal_alat}`)
 				this.listInfo.pageSize =
-					this.listLokasi.length < this.listInfo.listSize
+					this.listPeminjaman.length < this.listInfo.listSize
 						? 1
-						: this.listLokasi.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listLokasi.length
+						: this.listPeminjaman.length / this.listInfo.listSize
+				this.listInfo.listTotal = this.listPeminjaman.length
 				// Nembak API Get List Alat
 			},
 			async getListJenisAlat() {
@@ -485,7 +512,6 @@
 				this.listInfo.pageNo = pageNo
 			},
 			// Value Change
-			// Value Change
 			statusPeminjaman(status_id) {
 				let listStatus = [
 					{
@@ -517,16 +543,16 @@
 
 				return listStatus.find((status) => status.id === status_id)
 			},
-
+			// Modal Interaction
+			approvalAlert(alert) {
+				this.showAlert(alert.isProcess, alert.isSuccess, alert.message)
+			},
 			// Action Dropdown
 			lihatDetail(indexData) {},
-			// Modal Interaction
-			openModalPopup(type) {
-				this.baseModalType = type
-				this.$refs['modal-popup'].show()
-			},
-			closeModalPopup() {
-				this.$refs['modal-popup'].hide()
+			tindakPeminjaman(tindakan, row) {
+				this.selected_pjm = this.listPeminjaman[row]
+				this.isApprove = tindakan
+				this.openPopup('approval')
 			},
 		},
 	}

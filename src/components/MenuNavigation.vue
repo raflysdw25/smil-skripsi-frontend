@@ -37,6 +37,7 @@
 								href="#"
 								v-for="dropdown in menu.child"
 								:key="`dropdown-${dropdown.id}`"
+								:to="{ name: dropdown.to }"
 							>
 								{{ dropdown.text }}
 							</b-dropdown-item>
@@ -44,8 +45,8 @@
 						<b-nav-item
 							v-else
 							:key="`menu-item-${indexMenu}${menu.id}`"
-							:to="menu.to"
-							:active="menu.to === $route.path"
+							:to="{ name: menu.to }"
+							:active="menu.to === $route.name"
 							class="mr-4"
 						>
 							<icon-component

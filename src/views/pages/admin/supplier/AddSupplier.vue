@@ -4,7 +4,7 @@
 		<div class="button-group d-flex align-items-center justify-content-end">
 			<button
 				class="smil-btn smil-bg-danger mr-4"
-				@click="backToList('ListSupplier')"
+				@click="$router.push({ name: 'ListSupplier' })"
 			>
 				Batal
 			</button>
@@ -71,24 +71,57 @@
 				</div>
 			</div>
 		</section>
+
+		<!-- START: POPUP -->
+		<b-modal
+			ref="modal-popup"
+			no-close-on-backdrop
+			no-close-on-esc
+			hide-header
+			hide-footer
+			centered
+		>
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
+			/>
+		</b-modal>
+		<!-- END: POPUP -->
 	</div>
 </template>
 
 <script>
+	// Components
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert'
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
+	import ModalMixins from '@/mixins/ModalMixins'
 	export default {
 		name: 'add-supplier',
-		mixins: [FormInputMixins],
+		components: { BaseModalAlert },
+		mixins: [FormInputMixins, ModalMixins],
 		computed: {
 			formFilled() {
+				let submit = this.submitRequest
 				return (
-					this.formGroupList[0].model !== '' &&
-					this.formGroupList[1].model !== '' &&
-					this.formGroupList[2].model !== ''
+					submit.supplier_name !== '' &&
+					submit.supplier_phone !== '' &&
+					submit.person_in_charge !== ''
 				)
 			},
-			addSupplierRequest() {},
+			submitRequest() {
+				let form = this.formGroupList
+				return {
+					supplier_name: form[0].model,
+					supplier_phone: form[1].model,
+					person_in_charge: form[2].model,
+					supplier_email: form[3].model,
+					supplier_address: form[4].model,
+				}
+			},
 		},
 		data() {
 			return {
@@ -141,15 +174,17 @@
 				],
 			}
 		},
-		methods: {
-			backToList(routeTo) {
-				let confirmCancel = confirm(
-					'Apakah anda yakin ingin membatalkan tambah supplier?'
-				)
-				if (confirmCancel) {
-					this.$router.push({ name: routeTo })
-				}
-			},
+		mounted() {
+			// this.showAlert(false, false, 'Alert Berhasil')
+		},
+		methods: {},
+		beforeRouteLeave(to, from, next) {
+			let confirmCancel = confirm(
+				'Apakah anda yakin ingin membatalkan tambah supplier? Data yang sudah diinputkan tidak akan disimpan'
+			)
+			if (confirmCancel) {
+				next()
+			}
 		},
 	}
 </script>

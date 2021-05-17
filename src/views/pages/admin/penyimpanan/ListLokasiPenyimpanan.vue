@@ -2,12 +2,12 @@
 	<div class="list-lokasi-penyimpanan">
 		<!-- START: BUTTON GROUP -->
 		<div class="button-group d-flex">
-			<button class="smil-btn smil-bg-primary" @click="openModalPopup('add')">
+			<button class="smil-btn smil-bg-primary" @click="openPopup('add')">
 				Tambah Data
 			</button>
 			<button
 				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openModalPopup('filter')"
+				@click="openPopup('filter')"
 			>
 				Filter Data
 			</button>
@@ -195,14 +195,23 @@
 				v-if="baseModalType === 'add'"
 				modalTitle="Tambah Jenis Alat"
 				:formList="formAdd"
-				:closeFunction="closeModalPopup"
-				:formFilled="buttonActive"
+				:submitFunction="sendAddLokasi"
+				:closeFunction="closePopup"
+				:formFilled="formAddFilled"
+			/>
+
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
 			/>
 
 			<form-filter-data
 				v-if="baseModalType === 'filter'"
 				title="Filter Data Alat"
-				:closeModal="closeModalPopup"
+				:closeModal="closePopup"
 				:formInput="filterLokasi"
 				:form="formFilter"
 				@submitFilter="submitFilterData"
@@ -218,9 +227,21 @@
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
+
 	export default {
 		name: 'list-lokasi-penyimpanan',
-		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAdd },
+		mixins: [ModalMixins],
+		components: {
+			IconComponent,
+			FormFilterData,
+			BaseFilter,
+			BaseModalAdd,
+			BaseModalAlert,
+		},
 		data() {
 			return {
 				headsTable: [
@@ -250,14 +271,6 @@
 					},
 					{
 						id: 4,
-						label: 'Jenis Alat Disimpan',
-						filter_type: 'search',
-						placeholder: 'Filter Jenis Alat Disimpan',
-						model: 'jenis',
-						options: null,
-					},
-					{
-						id: 5,
 						label: 'QR Code Lokasi',
 						filter_type: 'search',
 						placeholder: 'Filter QR Code Lokasi',
@@ -268,18 +281,12 @@
 				],
 				listLokasi: [
 					{
-						id: 1,
-						nama_lokasi: 'Lemari A',
-						kapasitas: 100,
-						jenis: 2,
-						qrcode: null,
-					},
-					{
-						id: 2,
-						nama_lokasi: 'Lemari B',
-						kapasitas: 50,
-						jenis: 1,
-						qrcode: null,
+						lokasi_id: 1,
+						location_name: 'Lemari A',
+						total_capacity: 100,
+						available_capacity: 100,
+						stored_capacity: 0,
+						path_qrcode: '',
 					},
 				],
 				listInfo: {
@@ -371,8 +378,6 @@
 						isRequired: false,
 					},
 				],
-				// Data Add Jenis Alat
-				baseModalType: '',
 				formAdd: [
 					{
 						id: 1,
@@ -390,23 +395,22 @@
 						model: '',
 						canAddValue: false,
 					},
-					{
-						id: 3,
-						label: 'Jenis Alat Disimpan',
-						type: 'select',
-						options: [
-							{
-								id: 1,
-								text: 'Pilih Jenis Alat Disimpan',
-								value: '',
-								disabled: true,
-							},
-						],
-						model: [{ id: 1, value: '', disabled: false }],
-						canAddValue: true,
-					},
+					// {
+					// 	id: 3,
+					// 	label: 'Jenis Alat Disimpan',
+					// 	type: 'select',
+					// 	options: [
+					// 		{
+					// 			id: 1,
+					// 			text: 'Pilih Jenis Alat Disimpan',
+					// 			value: '',
+					// 			disabled: true,
+					// 		},
+					// 	],
+					// 	model: [{ id: 1, value: '', disabled: false }],
+					// 	canAddValue: true,
+					// },
 				],
-				buttonActive: false,
 			}
 		},
 		computed: {
@@ -414,11 +418,10 @@
 				let listTable = []
 				this.listLokasi.forEach((list, indexList) => {
 					let rowTable = [
-						list.id, //ID Lokasi
-						list.nama_lokasi, //Nama Lokasi
-						list.kapasitas, //kapasitas
-						list.jenis, //jenis
-						list.qrcode, //qrcode
+						list.lokasi_id, //ID Lokasi
+						list.location_name, //Nama Lokasi
+						list.total_capacity, //kapasitas
+						list.path_qrcode, //qrcode
 						'',
 					]
 
@@ -427,10 +430,23 @@
 
 				return listTable
 			},
+			submitAddRequest() {
+				let form = this.formAdd
+				return {
+					location_name: form[0].model,
+					total_capacity: form[1].model !== '' ? parseInt(form[1].model) : null,
+					available_capacity:
+						form[1].model !== '' ? parseInt(form[1].model) : null,
+				}
+			},
+			formAddFilled() {
+				let submit = this.submitAddRequest
+				return submit.location_name !== '' && submit.total_capacity !== null
+			},
 		},
 		async mounted() {
 			await this.getListLokasi()
-			await this.getListJenisAlat()
+			// this.showAlert(false, false, 'Alert Berhasil')
 		},
 		methods: {
 			// Call API
@@ -443,28 +459,7 @@
 				this.listInfo.listTotal = this.listLokasi.length
 				// Nembak API Get List Alat
 			},
-			async getListJenisAlat() {
-				let jenisAlat = [
-					{
-						id: 1,
-						jenis: 'Smartphone',
-					},
-					{
-						id: 2,
-						jenis: 'Laptop',
-					},
-				]
-
-				let listJenis = this.formAdd.find((form) => form.id === 3)
-				jenisAlat.forEach((alat, indexJns) => {
-					listJenis.options.push({
-						id: indexJns + 2,
-						text: alat.jenis,
-						value: alat.id,
-						disabled: false,
-					})
-				})
-			},
+			async sendAddLokasi() {},
 			submitFilterData(formInput) {
 				this.filterLokasi = formInput
 				alert(this.filterLokasi)
@@ -491,21 +486,6 @@
 
 			// Action Dropdown
 			lihatDetail(indexData) {},
-			// Modal Interaction
-			openFilterData() {
-				this.$refs['filterData'].show()
-			},
-			closeFilterData() {
-				this.$refs['filterData'].hide()
-			},
-			// Modal Interaction
-			openModalPopup(type) {
-				this.baseModalType = type
-				this.$refs['modal-popup'].show()
-			},
-			closeModalPopup() {
-				this.$refs['modal-popup'].hide()
-			},
 		},
 	}
 </script>

@@ -5,6 +5,8 @@ import VueRouter from 'vue-router'
 import LayoutPortalAdmin from '@/views/layout/LayoutPortalAdmin.vue'
 import LayoutPortalPeminjaman from '@/views/layout/LayoutPortalPeminjaman.vue'
 
+// ADMIN
+
 // Pages
 import LoginAdmin from '@/views/pages/admin/LoginAdmin.vue'
 import DashboardAdmin from '@/views/pages/admin/DashboardAdmin.vue'
@@ -35,6 +37,14 @@ import AddStaffLaboratorium from '@/views/pages/admin/staff/AddStaffLaboratorium
 import ListStaffJurusan from '@/views/pages/admin/staff/ListStaffJurusan.vue'
 import AddStaffJurusan from '@/views/pages/admin/staff/AddStaffJurusan.vue'
 
+// PEMINJAMAN
+
+// Pages
+import BerandaPeminjaman from '@/views/pages/peminjaman/BerandaPeminjaman.vue'
+import LaporKerusakanAlat from '@/views/pages/peminjaman/LaporKerusakanAlat.vue'
+import BuatAkunMahasiswa from '@/views/pages/peminjaman/BuatAkunMahasiswa.vue'
+import ActionPeminjaman from '@/views/pages/peminjaman/ActionPeminjaman.vue'
+
 Vue.use(VueRouter)
 
 const routes = [
@@ -42,7 +52,32 @@ const routes = [
 	{
 		path: '/',
 		component: LayoutPortalPeminjaman,
-		children: [],
+		children: [
+			// Beranda
+			{
+				path: '',
+				name: 'BerandaPeminjaman',
+				component: BerandaPeminjaman,
+			},
+			// Form Peminjaman & Pengembalian
+			{
+				path: '/:actionType',
+				name: 'ActionPeminjaman',
+				component: ActionPeminjaman,
+			},
+			// Form Laporan Kerusakan
+			{
+				path: '/lapor-kerusakan',
+				name: 'LaporKerusakanAlat',
+				component: LaporKerusakanAlat,
+			},
+			// Form Buat Akun Mahasiswa
+			{
+				path: '/buat-akun',
+				name: 'BuatAkunMahasiswa',
+				component: BuatAkunMahasiswa,
+			},
+		],
 	},
 	// Portal Admin
 	{
@@ -51,7 +86,7 @@ const routes = [
 		children: [
 			// Dashboard
 			{
-				path: '',
+				path: 'dashboard',
 				name: 'DashboardAdmin',
 				component: DashboardAdmin,
 			},

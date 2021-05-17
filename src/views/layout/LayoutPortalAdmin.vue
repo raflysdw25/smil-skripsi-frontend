@@ -292,7 +292,7 @@
 				overflow-y: auto !important;
 				margin: 45px 0;
 				padding: 0 20px 0 20px;
-				min-height: 100%;
+				min-height: 100vh;
 			}
 			.footer-layout {
 				padding-left: 10px;
