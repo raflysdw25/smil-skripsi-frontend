@@ -49,259 +49,132 @@ Vue.use(VueRouter)
 
 const routes = [
 	// App Route
+
+	// Portal Peminjaman
 	{
 		path: '/',
+		component: LayoutPortalPeminjaman,
 		children: [
+			// Beranda
 			{
 				path: '',
-				component: LayoutPortalPeminjaman,
-				children: [
-					// Beranda
-					{
-						path: '',
-						name: 'BerandaPeminjaman',
-						component: BerandaPeminjaman,
-					},
-					// Form Peminjaman & Pengembalian
-					{
-						path: '/:actionType',
-						name: 'ActionPeminjaman',
-						component: ActionPeminjaman,
-					},
-					// Form Laporan Kerusakan
-					{
-						path: '/lapor-kerusakan',
-						name: 'LaporKerusakanAlat',
-						component: LaporKerusakanAlat,
-					},
-					// Form Buat Akun Mahasiswa
-					{
-						path: '/buat-akun',
-						name: 'BuatAkunMahasiswa',
-						component: BuatAkunMahasiswa,
-					},
-				],
+				name: 'BerandaPeminjaman',
+				component: BerandaPeminjaman,
 			},
+			// Form Peminjaman & Pengembalian
 			{
-				path: 'admin',
-				component: LayoutPortalAdmin,
-				children: [
-					// Dashboard
-					{
-						path: '/dashboard',
-						name: 'DashboardAdmin',
-						component: DashboardAdmin,
-					},
-					// Pagegroup - Alat Lab
-					{
-						path: '/alatlab/list',
-						name: 'ListAlatLaboratorium',
-						component: ListAlatLab,
-					},
-					{
-						path: '/alatlab/jenis',
-						name: 'JenisAlatLaboratorium',
-						component: ListJenisAlatLab,
-					},
-					{
-						path: '/alatlab/laporan/kerusakan',
-						name: 'LaporanKerusakanAlat',
-						component: ListKerusakanAlatLab,
-					},
-					{
-						path: '/alatlab/tambah',
-						name: 'TambahAlatLab',
-						component: AddAlatLab,
-					},
-					{
-						path: '/alatlab/upload/image/:alat_id',
-						name: 'UploadFotoAlat',
-						component: UploadImage,
-					},
-					{
-						path: '/alatlab/list/detail/:alat_id',
-						name: 'DetailAlat',
-						component: DetailAlatLab,
-					},
-					// Pagegroup - Supplier
-					{
-						path: '/supplier',
-						name: 'ListSupplier',
-						component: ListSupplier,
-					},
-					{
-						path: '/supplier/tambah',
-						name: 'TambahSupplier',
-						component: AddSupplier,
-					},
-					// Pagegroup - Peminjaman
-					{
-						path: '/peminjaman',
-						name: 'ListPeminjamanAlat',
-						component: ListPeminjamanAlat,
-					},
-					// Pagegroup - Lokasi Penyimpanan
-					{
-						path: '/penyimpanan',
-						name: 'ListLokasiPenyimpanan',
-						component: ListLokasiPenyimpanan,
-					},
-					// Pagegroup - Staff Laboratorium
-					{
-						path: '/staff',
-						name: 'ListStaffLaboratorium',
-						component: ListStaffLaboratorium,
-					},
-					{
-						path: '/staff/add',
-						name: 'TambahStaffLaboratorium',
-						component: AddStaffLaboratorium,
-					},
-					// Pagegroup - Staff Jurusan
-					{
-						path: '/jurusan',
-						name: 'ListStaffJurusan',
-						component: ListStaffJurusan,
-					},
-					{
-						path: '/jurusan/add',
-						name: 'TambahStaffJurusan',
-						component: AddStaffJurusan,
-					},
-				],
+				path: '/:actionType',
+				name: 'ActionPeminjaman',
+				component: ActionPeminjaman,
 			},
+			// Form Laporan Kerusakan
 			{
-				path: 'login',
-				name: 'LoginAdmin',
-				component: LoginAdmin,
+				path: '/lapor-kerusakan',
+				name: 'LaporKerusakanAlat',
+				component: LaporKerusakanAlat,
+			},
+			// Form Buat Akun Mahasiswa
+			{
+				path: '/buat-akun',
+				name: 'BuatAkunMahasiswa',
+				component: BuatAkunMahasiswa,
 			},
 		],
 	},
-	// Portal Peminjaman
-	// {
-	// 	path: '/',
-	// 	component: LayoutPortalPeminjaman,
-	// 	children: [
-	// 		// Beranda
-	// 		{
-	// 			path: '',
-	// 			name: 'BerandaPeminjaman',
-	// 			component: BerandaPeminjaman,
-	// 		},
-	// 		// Form Peminjaman & Pengembalian
-	// 		{
-	// 			path: '/:actionType',
-	// 			name: 'ActionPeminjaman',
-	// 			component: ActionPeminjaman,
-	// 		},
-	// 		// Form Laporan Kerusakan
-	// 		{
-	// 			path: '/lapor-kerusakan',
-	// 			name: 'LaporKerusakanAlat',
-	// 			component: LaporKerusakanAlat,
-	// 		},
-	// 		// Form Buat Akun Mahasiswa
-	// 		{
-	// 			path: '/buat-akun',
-	// 			name: 'BuatAkunMahasiswa',
-	// 			component: BuatAkunMahasiswa,
-	// 		},
-	// 	],
-	// },
 	// Portal Admin
-	// {
-	// 	path: '/admin/',
-	// 	component: LayoutPortalAdmin,
-	// 	children: [
-	// 		// Dashboard
-	// 		{
-	// 			path: 'dashboard',
-	// 			name: 'DashboardAdmin',
-	// 			component: DashboardAdmin,
-	// 		},
-	// 		// Pagegroup - Alat Lab
-	// 		{
-	// 			path: 'alatlab/list',
-	// 			name: 'ListAlatLaboratorium',
-	// 			component: ListAlatLab,
-	// 		},
-	// 		{
-	// 			path: 'alatlab/jenis',
-	// 			name: 'JenisAlatLaboratorium',
-	// 			component: ListJenisAlatLab,
-	// 		},
-	// 		{
-	// 			path: 'alatlab/laporan/kerusakan',
-	// 			name: 'LaporanKerusakanAlat',
-	// 			component: ListKerusakanAlatLab,
-	// 		},
-	// 		{
-	// 			path: 'alatlab/tambah',
-	// 			name: 'TambahAlatLab',
-	// 			component: AddAlatLab,
-	// 		},
-	// 		{
-	// 			path: 'alatlab/upload/image/:alat_id',
-	// 			name: 'UploadFotoAlat',
-	// 			component: UploadImage,
-	// 		},
-	// 		{
-	// 			path: 'alatlab/list/detail/:alat_id',
-	// 			name: 'DetailAlat',
-	// 			component: DetailAlatLab,
-	// 		},
-	// 		// Pagegroup - Supplier
-	// 		{
-	// 			path: 'supplier',
-	// 			name: 'ListSupplier',
-	// 			component: ListSupplier,
-	// 		},
-	// 		{
-	// 			path: 'supplier/tambah',
-	// 			name: 'TambahSupplier',
-	// 			component: AddSupplier,
-	// 		},
-	// 		// Pagegroup - Peminjaman
-	// 		{
-	// 			path: 'peminjaman',
-	// 			name: 'ListPeminjamanAlat',
-	// 			component: ListPeminjamanAlat,
-	// 		},
-	// 		// Pagegroup - Lokasi Penyimpanan
-	// 		{
-	// 			path: 'penyimpanan',
-	// 			name: 'ListLokasiPenyimpanan',
-	// 			component: ListLokasiPenyimpanan,
-	// 		},
-	// 		// Pagegroup - Staff Laboratorium
-	// 		{
-	// 			path: 'staff',
-	// 			name: 'ListStaffLaboratorium',
-	// 			component: ListStaffLaboratorium,
-	// 		},
-	// 		{
-	// 			path: 'staff/add',
-	// 			name: 'TambahStaffLaboratorium',
-	// 			component: AddStaffLaboratorium,
-	// 		},
-	// 		// Pagegroup - Staff Jurusan
-	// 		{
-	// 			path: 'jurusan',
-	// 			name: 'ListStaffJurusan',
-	// 			component: ListStaffJurusan,
-	// 		},
-	// 		{
-	// 			path: 'jurusan/add',
-	// 			name: 'TambahStaffJurusan',
-	// 			component: AddStaffJurusan,
-	// 		},
-	// 	],
-	// },
-	// {
-	// 	path: '/login',
-	// 	name: 'LoginAdmin',
-	// 	component: LoginAdmin,
-	// },
+	{
+		path: '/admin/',
+		component: LayoutPortalAdmin,
+		children: [
+			// Dashboard
+			{
+				path: 'dashboard',
+				name: 'DashboardAdmin',
+				component: DashboardAdmin,
+			},
+			// Pagegroup - Alat Lab
+			{
+				path: 'alatlab/list',
+				name: 'ListAlatLaboratorium',
+				component: ListAlatLab,
+			},
+			{
+				path: 'alatlab/jenis',
+				name: 'JenisAlatLaboratorium',
+				component: ListJenisAlatLab,
+			},
+			{
+				path: 'alatlab/laporan/kerusakan',
+				name: 'LaporanKerusakanAlat',
+				component: ListKerusakanAlatLab,
+			},
+			{
+				path: 'alatlab/tambah',
+				name: 'TambahAlatLab',
+				component: AddAlatLab,
+			},
+			{
+				path: 'alatlab/upload/image/:alat_id',
+				name: 'UploadFotoAlat',
+				component: UploadImage,
+			},
+			{
+				path: 'alatlab/list/detail/:alat_id',
+				name: 'DetailAlat',
+				component: DetailAlatLab,
+			},
+			// Pagegroup - Supplier
+			{
+				path: 'supplier',
+				name: 'ListSupplier',
+				component: ListSupplier,
+			},
+			{
+				path: 'supplier/tambah',
+				name: 'TambahSupplier',
+				component: AddSupplier,
+			},
+			// Pagegroup - Peminjaman
+			{
+				path: 'peminjaman',
+				name: 'ListPeminjamanAlat',
+				component: ListPeminjamanAlat,
+			},
+			// Pagegroup - Lokasi Penyimpanan
+			{
+				path: 'penyimpanan',
+				name: 'ListLokasiPenyimpanan',
+				component: ListLokasiPenyimpanan,
+			},
+			// Pagegroup - Staff Laboratorium
+			{
+				path: 'staff',
+				name: 'ListStaffLaboratorium',
+				component: ListStaffLaboratorium,
+			},
+			{
+				path: 'staff/add',
+				name: 'TambahStaffLaboratorium',
+				component: AddStaffLaboratorium,
+			},
+			// Pagegroup - Staff Jurusan
+			{
+				path: 'jurusan',
+				name: 'ListStaffJurusan',
+				component: ListStaffJurusan,
+			},
+			{
+				path: 'jurusan/add',
+				name: 'TambahStaffJurusan',
+				component: AddStaffJurusan,
+			},
+		],
+	},
+	{
+		path: '/login',
+		name: 'LoginAdmin',
+		component: LoginAdmin,
+	},
 ]
 
 const router = new VueRouter({
