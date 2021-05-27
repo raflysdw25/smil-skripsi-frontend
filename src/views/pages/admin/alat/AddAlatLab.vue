@@ -196,12 +196,14 @@
 						isRequired: true,
 						options: [],
 					},
-				],
-				jenisAlatList: [
 					{
-						id: 1,
-						nama: 'Laptop',
-						attr_spek: ['Processor', 'Ukuran Layar', 'RAM', 'VGA'],
+						label: 'Lokasi Penyimpanan',
+						type: 'select',
+						model: '',
+						description: '',
+						placeholder: 'Pilih Lokasi Penyimpanan',
+						isRequired: true,
+						options: [],
 					},
 				],
 				spesifikasi: {},
@@ -226,7 +228,8 @@
 					this.submitRequest.asal_pengadaan_id !== '' &&
 					this.submitRequest.alat_year !== '' &&
 					this.submitRequest.alat_total !== '' &&
-					this.submitRequest.jenis_alat_id !== ''
+					this.submitRequest.jenis_alat_id !== '' &&
+					this.submitRequest.lokasi_id !== ''
 				)
 			},
 			submitRequest() {
@@ -239,6 +242,7 @@
 					supplier_id: form[3].model,
 					alat_total: form[4].model,
 					jenis_alat_id: form[5].model,
+					lokasi_id: form[6].model,
 					alat_specs: null,
 				}
 			},
@@ -313,6 +317,22 @@
 
 				this.formGroupList[1].options = listAsal
 			},
+			getLokasiAlat() {
+				// Panggil API Lokasi Alat
+				let listLokasi = [
+					{
+						id: 1,
+						text: 'Lemari A',
+						disabled: false,
+					},
+					{
+						id: 2,
+						text: 'Lemari A Test',
+						disabled: false,
+					},
+				]
+				this.formGroupList[6].options = listLokasi
+			},
 			sendAddAlat() {
 				this.submitRequest.alat_specs = JSON.stringify(this.spesifikasi)
 				alert(this.submitRequest.alat_specs)
@@ -320,11 +340,12 @@
 			// Form Interaction
 			changeValue() {
 				let form = this.formGroupList
+				let payload = this.submitRequest
 				// Ketika Jenis Alat Disi
-				if (form[5].model !== '') {
+				if (payload.jenis_alat_id !== '' && payload.jenis_alat_id !== null) {
 					this.spesifikasi = {}
 					let getJenisAlat = form[5].options.find(
-						(jal) => jal.id === form[5].model
+						(jal) => jal.id === payload.jenis_alat_id
 					)
 
 					getJenisAlat.attr_spek.forEach((spek) => {
@@ -334,6 +355,13 @@
 							value: '',
 						}
 					})
+				}
+
+				// Total Alat
+				if (payload.alat_total !== '' && payload.alat_total !== null) {
+					this.getLokasiAlat()
+				} else {
+					this.formGroupList[6].options = []
 				}
 			},
 			changeSpec(event, key) {
@@ -376,22 +404,6 @@
 
 <style lang="scss">
 	.add-alat-lab {
-		.form-control,
-		.custom-select {
-			color: #000;
-			background-color: #fff;
-			border-color: #c5c5c5;
-			border-radius: 5px;
-			font-size: 12px;
-			&:focus {
-				box-shadow: 0 0 0 5px #c5c5c5;
-			}
-			&:disabled {
-				background-color: #c5c5c5;
-				border-color: #696969;
-			}
-
-			height: 40px;
-		}
+		@import '@/assets/css/global.scss';
 	}
 </style>

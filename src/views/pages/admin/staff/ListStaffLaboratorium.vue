@@ -9,8 +9,14 @@
 				Tambah Data
 			</button>
 			<button
-				class="smil-btn smil-bg-info ml-auto"
-				@click="openModalPopup('struktural')"
+				class="smil-btn smil-bg-info d-lg-none d-sm-block"
+				@click="openPopup('filter-data')"
+			>
+				Filter Data
+			</button>
+			<button
+				class="smil-btn smil-bg-secondary ml-auto"
+				@click="openPopup('jabatan')"
 			>
 				Struktural Lab
 			</button>
@@ -24,7 +30,7 @@
 					<tr>
 						<th
 							v-for="(head, indexHds) in headsTable"
-							:key="`header-table-${head.id}-${indexHds}`"
+							:key="`header-table-${indexHds}`"
 						>
 							{{ head.label }}
 							<base-filter
@@ -32,7 +38,7 @@
 								@changeValue="changeFilterValue"
 								@filterAction="getListStaffLab"
 								:filter_type="head.filter_type"
-								:default_value="filterStaff[head.model]"
+								:default_value="filterData[head.model]"
 								:placeholder="head.placeholder"
 								:options="head.options"
 								:modelFilter="head.model"
@@ -40,7 +46,7 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listStaff.length === 0">
+				<tbody class="smil-tbody" v-if="listData.length === 0">
 					<tr>
 						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
@@ -106,7 +112,7 @@
 					<tr>
 						<td
 							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listStaff.length * 50}px` }"
+							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
 						></td>
 					</tr>
 				</tbody>
@@ -117,47 +123,51 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listStaff.length} dari ${listStaff.length} Data` }}
+				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
 					<li>
 						<span
-							:style="listInfo.pageNo === 1 ? '' : 'cursor: pointer'"
+							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === 1"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
 								iconName="arrow-left"
 								:size="24"
-								:colorIcon="listInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
+								:colorIcon="tableInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
 							/>
 						</span>
 					</li>
-					<li v-for="num in listInfo.pageSize" :key="num">
+					<li v-for="num in tableInfo.totalPage" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
 							@click="jumpPage(num)"
-							:class="[num === listInfo.pageNo ? 'active' : '']"
+							:class="[num === tableInfo.pageNo ? 'active' : '']"
 							>{{ num }}
 						</a>
 					</li>
 					<li>
 						<span
 							:style="
-								listInfo.pageSize === listInfo.pageNo ? '' : 'cursor: pointer'
+								tableInfo.totalPage === tableInfo.pageNo
+									? ''
+									: 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === listInfo.pageSize"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === tableInfo.totalPage"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									listInfo.pageNo === listInfo.pageSize ? `#C5C5C5` : `#101939`
+									tableInfo.pageNo === tableInfo.totalPage
+										? `#C5C5C5`
+										: `#101939`
 								"
 							/>
 						</span>
@@ -166,13 +176,14 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="listInfo.listSize">
-					<option value="5">5</option>
-					<option value="10">10</option>
-					<option value="15">15</option>
-					<option value="20">20</option>
-					<option value="25">25</option>
-					<option value="30">30</option>
+				<select class="custom-select" v-model="tableInfo.listSize">
+					<option
+						:value="count"
+						v-for="count in tableCount"
+						:key="`page-size-${count}`"
+					>
+						{{ count }}
+					</option>
 				</select>
 			</div>
 		</div>
@@ -186,28 +197,31 @@
 			centered
 			no-close-on-backdrop
 			no-close-on-esc
-			:size="baseModalType === 'struktural' ? 'lg' : ''"
+			:size="baseModalType === 'jabatan' ? 'lg' : ''"
 		>
-			<base-modal-add
-				v-if="baseModalType === 'add'"
-				modalTitle="Tambah Jenis Alat"
-				:formList="formAdd"
-				:closeFunction="closeModalPopup"
-				:formFilled="buttonActive"
+			<base-modal-list-support
+				v-if="baseModalType === 'jabatan'"
+				title="Struktural Laboratorium"
+				supportType="jabatan"
+				:closeModal="closePopup"
 			/>
 
-			<base-modal-struktural
-				v-if="baseModalType === 'struktural'"
-				:closeModal="closeModalPopup"
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
 			/>
 
 			<form-filter-data
-				v-if="baseModalType === 'filter'"
-				title="Filter Data Alat"
-				:closeModal="closeModalPopup"
-				:formInput="filterStaff"
+				v-if="baseModalType === 'filter-data'"
+				title="Filter Data Staff Laboratorium"
+				:closeModal="closePopup"
+				:formInput="filterData"
 				:form="formFilter"
-				@submitFilter="submitFilterData"
+				@submitFilter="getListStaffLab"
+				:activeButton="filterActive"
 			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
@@ -220,21 +234,28 @@
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
-	import BaseModalStruktural from '@/components/BaseModal/BaseModalStruktural.vue'
+	import BaseModalListSupport from '@/components/BaseModal/BaseModalListSupport.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
+	import FormInputMixins from '@/mixins/FormInputMixins'
+	import TableMixins from '@/mixins/TableMixins'
 	export default {
 		name: 'list-staff-laboratorium',
+		mixins: [ModalMixins, FormInputMixins, TableMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
 			BaseFilter,
 			BaseModalAdd,
-			BaseModalStruktural,
+			BaseModalListSupport,
+			BaseModalAlert,
 		},
 		data() {
 			return {
 				headsTable: [
 					{
-						id: 1,
 						label: 'Nomor Induk Pegawai',
 						filter_type: 'search',
 						placeholder: 'Filter Nomor Induk Pegawai',
@@ -242,192 +263,112 @@
 						options: null,
 					},
 					{
-						id: 2,
-						label: 'Nama Staff',
-						filter_type: 'date',
-						placeholder: 'Filter Nama Staff',
-						model: 'nama',
-						options: null,
-					},
-					{
-						id: 3,
 						label: 'Jabatan Staff',
 						filter_type: 'select',
 						placeholder: 'Filter Jabatan Staff',
 						model: 'jabatan_id',
 						options: [
 							{
-								id: 1,
-								text: 'All',
-								value: '',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 						],
 					},
 					{
-						id: 4,
 						label: 'Hak Akses Admin',
 						filter_type: 'select',
 						placeholder: 'Filter Hak Akses Admin',
 						model: 'hak_akses',
 						options: [
 							{
-								text: 'All',
-								value: '',
+								name: 'All',
+								value: null,
 							},
 							{
-								text: 'Butuh Persetujuan',
+								name: 'Punya Akses',
 								value: 1,
 							},
 							{
-								text: 'Berhasil',
+								name: 'Kadaluarsa',
 								value: 2,
 							},
 							{
-								text: 'Ditolak',
+								name: 'Belum Login',
 								value: 3,
-							},
-							{
-								text: 'Belum Kembali',
-								value: 4,
-							},
-							{
-								text: 'Selesai',
-								value: 5,
 							},
 						],
 					},
 					'',
 				],
-				listStaff: [
+				listData: [
 					{
-						nip: '',
-						nama: 'Muhammad Rafly Sadewa',
+						nip: '3271032506990001',
+						staff_fullname: 'Muhammad Rafly Sadewa',
+						email: 'raflysdw25@gmail.com',
 						jabatan_id: 1,
-						hak_akses: 2,
+						active_period: new Date(['2021', '06', '25']).toString(),
+						first_login: true, //Didapatkan dari backend, dengan melihat apakah passwordnya masih default 'admin'
 					},
 				],
-				listInfo: {
-					listSize: 5,
-					listTotal: 0,
-					pageNo: 1,
-					pageSize: 10,
-				},
-				filterStaff: {
+
+				listJabatan: [],
+				filterData: {
 					nip: '',
-					nama: '',
-					jabatan_id: '',
-					hak_akses: '',
+					jabatan_id: null,
+					hak_akses: null,
 				},
 				formFilter: [
 					{
-						id: 1,
-						label: 'ID Alat',
-						type: 'number',
-						model: 'id',
-						description: '',
-						placeholder: 'Filter ID Alat',
-						isRequired: false,
-					},
-					{
-						id: 2,
-						label: 'Nama Alat',
+						label: 'Nomor Induk Pegawai',
 						type: 'text',
-						model: 'nama',
+						model: 'nip',
 						description: '',
-						placeholder: 'Filter Nama Alat',
+						placeholder: 'Filter Nomor Induk Pegawai',
 						isRequired: false,
 					},
 					{
-						id: 3,
-						label: 'Asal Pengadaan Alat',
+						label: 'Jabatan Staff',
 						type: 'select',
-						model: 'asal_alat',
+						model: 'jabatan_id',
 						description: '',
-						placeholder: 'Pilih Asal Pengadaan Alat',
+						placeholder: 'Pilih Jabatan Staff',
 						isRequired: false,
 						options: [
 							{
-								id: 1,
-								name: 'Pilih Asal Pengadaan Alat',
-								value: '',
-								disabled: true,
-							},
-							{
-								id: 2,
-								name: 'Barang Habis Pakai',
-								value: 'BHP',
-								disabled: false,
-							},
-							{
-								id: 3,
-								name: 'Hibah Tugas Akhir',
-								value: 'HTA',
-								disabled: false,
-							},
-							{
-								id: 4,
-								name: 'Supplier',
-								value: 'SUP',
-								disabled: false,
-							},
-							{
-								id: 5,
-								name: 'Direktorat PNJ',
-								value: 'DRP',
-								disabled: false,
-							},
-							{
-								id: 6,
-								name: 'Hibah Pemerintah',
-								value: 'HPM',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 						],
 					},
 					{
-						id: 4,
-						label: 'Tahun Pengadaan Alat',
-						type: 'text',
-						model: 'tahun_alat',
-						description: '',
-						placeholder: 'Filter Tahun Alat',
-						isRequired: false,
-					},
-				],
-				// Data Add Jenis Alat
-				baseModalType: '',
-				formAdd: [
-					{
-						id: 1,
-						label: 'Nama Lokasi Penyimpanan',
-						type: 'text',
-						disabled: false,
-						model: '',
-						canAddValue: false,
-					},
-					{
-						id: 2,
-						label: 'Kapasitas Penyimpanan',
-						type: 'number',
-						disabled: false,
-						model: '',
-						canAddValue: false,
-					},
-					{
-						id: 3,
-						label: 'Jenis Alat Disimpan',
+						label: 'Hak Akses Admin',
 						type: 'select',
+						model: 'hak_akses',
+						description: '',
+						placeholder: 'Filter Hak Akses Admin',
+						isRequired: false,
 						options: [
 							{
-								id: 1,
-								text: 'Pilih Jenis Alat Disimpan',
-								value: '',
-								disabled: true,
+								name: 'All',
+								value: null,
+							},
+							{
+								name: 'Punya Akses',
+								value: 1,
+							},
+							{
+								name: 'Kadaluarsa',
+								value: 2,
+							},
+							{
+								name: 'Belum Login',
+								value: 3,
 							},
 						],
-						model: [{ id: 1, value: '', disabled: false }],
-						canAddValue: true,
 					},
 				],
 				buttonActive: false,
@@ -436,12 +377,11 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listStaff.forEach((list, indexList) => {
+				this.listData.forEach((list, indexList) => {
 					let rowTable = [
 						list.nip, //Nip Peminjam Alat
-						list.nama, //Nama Staff
-						list.jabatan_id, //kapasitas
-						this.statusAkunStaff(list.hak_akses), //jenis
+						this.getJabatan(list.jabatan_id), //kapasitas
+						this.statusAkunStaff(list.active_period, list.first_login), //jenis
 						'',
 					]
 
@@ -450,20 +390,36 @@
 
 				return listTable
 			},
+			filterActive() {
+				let filter = this.filterPayload
+				return (
+					filter.nip !== '' ||
+					filter.jabatan_id !== null ||
+					filter.hak_akses !== null
+				)
+			},
+			filterPayload() {
+				return {
+					nip: this.filterData.nip,
+					jabatan_id: this.filterData.jabatan_id,
+					hak_akses: this.filterData.hak_akses,
+				}
+			},
 		},
 		async mounted() {
 			await this.getListStaffLab()
 			await this.getListJabatan()
+			// this.showAlert(false, false, 'Alert Berhasil')
 		},
 		methods: {
 			// Call API
 			async getListStaffLab() {
-				// alert(`Get Data Alat ${this.filterStaff.asal_alat}`)
-				this.listInfo.pageSize =
-					this.listStaff.length < this.listInfo.listSize
+				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
+				this.tableInfo.totalPage =
+					this.listData.length < this.tableInfo.listSize
 						? 1
-						: this.listStaff.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listStaff.length
+						: this.listData.length / this.tableInfo.listSize
+				this.tableInfo.listTotal = this.listData.length
 				// Nembak API Get List Alat
 			},
 			async getListJabatan() {
@@ -471,56 +427,54 @@
 				let jabatanStaff = [
 					{
 						id: 1,
-						jabatan: 'Kepala Laboratorium',
+						jabatan_name: 'Kepala Laboratorium',
+						value: 1,
 					},
 					{
 						id: 2,
-						jabatan: 'Pranata Laboratorium Pendidikan',
+						jabatan_name: 'Pranata Laboratorium Pendidikan',
+						value: 2,
 					},
 				]
 
-				let listHeadFilterJabatan = this.headsTable.find(
-					(form) => form.id === 3
-				)
-				jabatanStaff.forEach((staff, indexJns) => {
-					listHeadFilterJabatan.options.push({
-						id: indexJns + 2,
-						text: staff.jabatan,
-						value: staff.id,
-						disabled: false,
+				this.listJabatan = jabatanStaff
+
+				jabatanStaff.forEach((jabatan) => {
+					this.headsTable[1].options.push({
+						id: jabatan.id,
+						name: jabatan.jabatan_name,
+						value: jabatan.id,
+					})
+					this.formFilter[1].options.push({
+						id: jabatan.id,
+						name: jabatan.jabatan_name,
+						value: jabatan.id,
 					})
 				})
+
+				let filter
 			},
-			submitFilterData(formInput) {
-				this.filterStaff = formInput
-				alert(this.filterStaff)
-				// this.getListStaffLab()
-			},
-			changeFilterValue(objFilter) {
-				this.filterStaff[objFilter.model] = objFilter.value
-			},
-			// Table Page Interaction
-			nextPage() {
-				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
-					this.listInfo.pageNo += 1
-				}
-			},
-			previousPage() {
-				if (this.listInfo.pageNo !== 1) {
-					this.listInfo.pageNo -= 1
-				}
-			},
-			jumpPage(pageNo) {
-				this.listInfo.pageNo = pageNo
-			},
+
 			// Value Change
-			// Value Change
-			statusAkunStaff(status_id) {
+			statusAkunStaff(activePeriod, isFirstLogin) {
+				// Menentukan status dari akun berdasarkan active_period akun
+				let currentDate = this.formatDate(new Date())
+				let rangeDate = this.dateRange(
+					currentDate,
+					this.formatDate(activePeriod)
+				)
+				let status_id = null
+				if (rangeDate > 0) {
+					status_id = isFirstLogin ? 4 : 2
+				} else {
+					status_id = 3
+				}
+
 				let listStatus = [
 					{
 						id: 1,
 						text: 'Pending',
-						background: 'smil-bg-default',
+						background: 'smil-bg-pending',
 					},
 					{
 						id: 2,
@@ -529,29 +483,27 @@
 					},
 					{
 						id: 3,
-						text: 'Kadaluarse',
+						text: 'Kadaluarsa',
 						background: 'smil-bg-danger',
 					},
 					{
 						id: 4,
 						text: 'Belum Login',
-						background: 'smil-bg-default',
+						background: 'smil-bg-pending',
 					},
 				]
 
 				return listStatus.find((status) => status.id === status_id)
 			},
+			getJabatan(jabatanId) {
+				if (this.listJabatan.length > 0) {
+					return this.listJabatan.find((jabatan) => jabatan.id === jabatanId)
+						.jabatan_name
+				}
+			},
 
 			// Action Dropdown
 			lihatDetail(indexData) {},
-			// Modal Interaction
-			openModalPopup(type) {
-				this.baseModalType = type
-				this.$refs['modal-popup'].show()
-			},
-			closeModalPopup() {
-				this.$refs['modal-popup'].hide()
-			},
 		},
 	}
 </script>

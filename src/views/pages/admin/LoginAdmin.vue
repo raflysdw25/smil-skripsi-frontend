@@ -135,7 +135,6 @@
 		display: flex;
 		height: 100vh;
 		// background-color: #c5c5c5;
-		overflow-y: none;
 		font-family: Arial, Helvetica, sans-serif;
 		.login-form-section {
 			width: 550px;
@@ -144,11 +143,13 @@
 			align-items: center;
 			flex-flow: column;
 			.banner-jurusan {
+				width: 450px;
 				display: flex;
 				align-items: center;
 				margin-bottom: 28px;
 				img {
-					width: 40%;
+					width: 110px;
+					height: 110px;
 				}
 				.banner-title {
 					font-size: 18px;
@@ -156,6 +157,7 @@
 					text-transform: uppercase;
 					font-style: italic;
 					margin-bottom: 0;
+					margin-left: 10px;
 				}
 			}
 
@@ -175,20 +177,21 @@
 
 <style lang="scss">
 	.login-admin {
-		.form-control {
-			color: #000;
-			background-color: #fff;
-			border-color: #c5c5c5;
-			border-radius: 5px;
-			&:focus {
-				box-shadow: 0 0 0 5px #c5c5c5;
-			}
-			&:disabled {
-				background-color: #c5c5c5;
-				border-color: #696969;
-			}
+		// .form-control {
+		// 	color: #000;
+		// 	background-color: #fff;
+		// 	border-color: #c5c5c5;
+		// 	border-radius: 5px;
+		// 	&:focus {
+		// 		box-shadow: 0 0 0 5px #c5c5c5;
+		// 	}
+		// 	&:disabled {
+		// 		background-color: #c5c5c5;
+		// 		border-color: #696969;
+		// 	}
 
-			height: 50px;
-		}
+		// 	height: 40px;
+		// }
+		@import '@/assets/css/global.scss';
 	}
 </style>

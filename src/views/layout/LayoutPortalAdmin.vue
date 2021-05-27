@@ -153,8 +153,8 @@
 					},
 					{
 						id: 6,
-						text: 'Staff Jurusan',
-						to: 'ListStaffJurusan',
+						text: 'Civitas Jurusan',
+						to: 'ListCivitasJurusan',
 						icon: { iconName: 'graduated', size: 32, color: '#fff' },
 						activeMenu: 'jurusan',
 					},
@@ -331,7 +331,7 @@
 		.custom-select {
 			background: url(../../assets/images/Dropdown_Icon_Active.png) no-repeat
 				white;
-			background-position: calc(100% - 10px) 3px;
+			background-position: calc(100% - 10px) 5px;
 			-webkit-appearance: none;
 			-moz-appearance: none;
 		}
@@ -342,8 +342,30 @@
 		}
 		.smil-thead {
 			.custom-select {
-				background-position: calc(100%) 1px;
+				background-position: calc(100%) 5px;
 			}
+		}
+		// Custom Scrollbar
+		/* width */
+		::-webkit-scrollbar {
+			width: 7px;
+		}
+
+		/* Track */
+		::-webkit-scrollbar-track {
+			background: #f3f3f3;
+		}
+
+		/* Handle */
+		::-webkit-scrollbar-thumb {
+			background: #e1e1e1;
+			border-radius: 5px;
+			height: 94px;
+		}
+
+		/* Handle on hover */
+		::-webkit-scrollbar-thumb:hover {
+			background: #555;
 		}
 	}
 </style>

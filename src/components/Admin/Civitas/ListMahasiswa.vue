@@ -1,13 +1,8 @@
 <template>
-	<div class="list-staff-jurusan">
+	<div class="list-mahasiswa">
 		<!-- START: BUTTON GROUP -->
-		<div class="button-group d-flex">
-			<button
-				class="smil-btn smil-bg-primary"
-				@click="$router.push({ name: 'TambahStaffJurusan' })"
-			>
-				Tambah Data
-			</button>
+		<div class="button-group d-flex align-items-center">
+			<h1 class="tab-title">Mahasiswa</h1>
 		</div>
 		<!-- END: BUTTON GROUP -->
 
@@ -24,9 +19,9 @@
 							<base-filter
 								filter_class="d-none d-lg-block"
 								@changeValue="changeFilterValue"
-								@filterAction="getListStaffLab"
+								@filterAction="getListMahasiswa"
 								:filter_type="head.filter_type"
-								:default_value="filterStaff[head.model]"
+								:default_value="filterData[head.model]"
 								:placeholder="head.placeholder"
 								:options="head.options"
 								:modelFilter="head.model"
@@ -34,7 +29,7 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listStaff.length === 0">
+				<tbody class="smil-tbody" v-if="listData.length === 0">
 					<tr>
 						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
@@ -72,17 +67,15 @@
 										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 									</template>
 									<b-dropdown-item>
-										Cetak QR Code
+										Detail Mahasiswa
 									</b-dropdown-item>
 									<b-dropdown-item>
-										List Alat Tersimpan
+										Edit Data Mahasiswa
 									</b-dropdown-item>
-									<b-dropdown-item>
-										Edit Data Lokasi
-									</b-dropdown-item>
+
 									<b-dropdown-item>
 										<span class="smil-text-danger">
-											Hapus Data Lokasi
+											Hapus Data Mahasiswa
 										</span>
 									</b-dropdown-item>
 								</b-dropdown>
@@ -96,7 +89,7 @@
 					<tr>
 						<td
 							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listStaff.length * 50}px` }"
+							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
 						></td>
 					</tr>
 				</tbody>
@@ -107,47 +100,49 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listStaff.length} dari ${listStaff.length} Data` }}
+				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
 					<li>
 						<span
-							:style="listInfo.pageNo === 1 ? '' : 'cursor: pointer'"
+							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === 1"
+							v-if="tableInfo.pageSize > 1"
+							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
 								iconName="arrow-left"
 								:size="24"
-								:colorIcon="listInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
+								:colorIcon="tableInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
 							/>
 						</span>
 					</li>
-					<li v-for="num in listInfo.pageSize" :key="num">
+					<li v-for="num in tableInfo.pageSize" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
 							@click="jumpPage(num)"
-							:class="[num === listInfo.pageNo ? 'active' : '']"
+							:class="[num === tableInfo.pageNo ? 'active' : '']"
 							>{{ num }}
 						</a>
 					</li>
 					<li>
 						<span
 							:style="
-								listInfo.pageSize === listInfo.pageNo ? '' : 'cursor: pointer'
+								tableInfo.pageSize === tableInfo.pageNo ? '' : 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === listInfo.pageSize"
+							v-if="tableInfo.pageSize > 1"
+							:disabled="tableInfo.pageNo === tableInfo.pageSize"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									listInfo.pageNo === listInfo.pageSize ? `#C5C5C5` : `#101939`
+									tableInfo.pageNo === tableInfo.pageSize
+										? `#C5C5C5`
+										: `#101939`
 								"
 							/>
 						</span>
@@ -156,13 +151,14 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="listInfo.listSize">
-					<option value="5">5</option>
-					<option value="10">10</option>
-					<option value="15">15</option>
-					<option value="20">20</option>
-					<option value="25">25</option>
-					<option value="30">30</option>
+				<select class="custom-select" v-model="tableInfo.listSize">
+					<option
+						:value="count"
+						v-for="count in tableCount"
+						:key="`page-size-${count}`"
+					>
+						{{ count }}
+					</option>
 				</select>
 			</div>
 		</div>
@@ -181,9 +177,9 @@
 				v-if="baseModalType === 'filter'"
 				title="Filter Data Alat"
 				:closeModal="closePopup"
-				:formInput="filterStaff"
+				:formInput="filterData"
 				:form="formFilter"
-				@submitFilter="submitFilterData"
+				@submitFilter="getListMahasiswa"
 			/>
 			<base-modal-alert
 				v-if="baseModalType === 'alert'"
@@ -206,10 +202,11 @@
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
+	import TableMixins from '@/mixins/TableMixins'
 
 	export default {
-		name: 'list-staff-jurusan',
-		mixins: [ModalMixins],
+		name: 'list-mahasiswa',
+		mixins: [ModalMixins, TableMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
@@ -220,38 +217,34 @@
 			return {
 				headsTable: [
 					{
-						id: 1,
-						label: 'Nomor Induk Pegawai',
+						label: 'Nomor Induk Mahasiswa',
 						filter_type: 'search',
-						placeholder: 'Filter Nomor Induk Pegawai',
-						model: 'nip',
+						placeholder: 'Filter Nomor Induk Mahasiswa',
+						model: 'nim',
 						options: null,
 					},
 					{
-						id: 2,
-						label: 'Nama Staff',
+						label: 'Nama Mahasiswa',
 						filter_type: 'search',
-						placeholder: 'Filter Nama Staff',
-						model: 'nama',
+						placeholder: 'Filter Nama Mahasiswa',
+						model: 'mahasiswa_fullname',
 						options: null,
 					},
 					{
-						id: 3,
 						label: 'Program Studi',
 						filter_type: 'select',
 						placeholder: 'Filter Program Studi',
 						model: 'prodi_id',
 						options: [
 							{
-								id: 1,
-								text: 'All',
-								value: '',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 						],
 					},
 					{
-						id: 4,
 						label: 'Email',
 						filter_type: 'search',
 						placeholder: 'Filter Email',
@@ -260,10 +253,10 @@
 					},
 					'',
 				],
-				listStaff: [
+				listData: [
 					{
-						nip: '3271032506990001',
-						staff_fullname: 'Muhammad Rafly Sadewa',
+						nim: '4617010058',
+						mahasiswa_fullname: 'Muhammad Rafly Sadewa',
 						prodi_id: 1,
 						prodi_name: 'Teknik Multimedia Digital',
 						email: 'raflysdw25@gmail.com',
@@ -271,92 +264,44 @@
 						phone_number: '081218860714',
 					},
 				],
-				listInfo: {
-					listSize: 5,
-					listTotal: 0,
-					pageNo: 1,
-					pageSize: 10,
-				},
-				filterStaff: {
-					nip: '',
-					nama: '',
-					prodi_id: '',
+				filterData: {
+					nim: '',
+					mahasiswa_fullname: '',
+					prodi_id: null,
 					email: '',
 				},
 				formFilter: [
 					{
-						id: 1,
-						label: 'ID Alat',
-						type: 'number',
-						model: 'id',
-						description: '',
-						placeholder: 'Filter ID Alat',
-						isRequired: false,
-					},
-					{
-						id: 2,
-						label: 'Nama Alat',
+						label: 'Nomor Induk Mahasiswa',
 						type: 'text',
-						model: 'nama',
+						model: 'nim',
 						description: '',
-						placeholder: 'Filter Nama Alat',
+						placeholder: 'Filter Nomor Induk Mahasiswa',
 						isRequired: false,
 					},
 					{
-						id: 3,
-						label: 'Asal Pengadaan Alat',
-						type: 'select',
-						model: 'asal_alat',
+						label: 'Nama Mahasiswa',
+						type: 'text',
+						model: 'mahasiswa_fullname',
 						description: '',
-						placeholder: 'Pilih Asal Pengadaan Alat',
+						placeholder: 'Filter Nama Mahasiswa',
+						isRequired: false,
+					},
+					{
+						label: 'Program Studi',
+						type: 'text',
+						model: 'prodi_id',
+						description: '',
+						placeholder: 'Filter Program Studi',
 						isRequired: false,
 						options: [
 							{
-								id: 1,
-								name: 'Pilih Asal Pengadaan Alat',
-								value: '',
-								disabled: true,
-							},
-							{
-								id: 2,
-								name: 'Barang Habis Pakai',
-								value: 'BHP',
-								disabled: false,
-							},
-							{
-								id: 3,
-								name: 'Hibah Tugas Akhir',
-								value: 'HTA',
-								disabled: false,
-							},
-							{
-								id: 4,
-								name: 'Supplier',
-								value: 'SUP',
-								disabled: false,
-							},
-							{
-								id: 5,
-								name: 'Direktorat PNJ',
-								value: 'DRP',
-								disabled: false,
-							},
-							{
-								id: 6,
-								name: 'Hibah Pemerintah',
-								value: 'HPM',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 						],
-					},
-					{
-						id: 4,
-						label: 'Tahun Pengadaan Alat',
-						type: 'text',
-						model: 'tahun_alat',
-						description: '',
-						placeholder: 'Filter Tahun Alat',
-						isRequired: false,
 					},
 				],
 				// Data Add Jenis Alat
@@ -365,10 +310,10 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listStaff.forEach((list, indexList) => {
+				this.listData.forEach((list, indexList) => {
 					let rowTable = [
-						list.nip, //NIP
-						list.staff_fullname, //Nama Staff
+						list.nim, //NIM
+						list.mahasiswa_fullname, //Nama Mahasiswa
 						list.prodi_name, //Program Studi
 						list.email, //Email
 						'',
@@ -381,19 +326,19 @@
 			},
 		},
 		async mounted() {
-			await this.getListStaffLab()
+			await this.getListMahasiswa()
 			await this.getProdi()
-			// this.showAlert(false, false, 'Alert Berhasil')
+			// this.showAlert(false, true, 'Alert Berhasil')
 		},
 		methods: {
 			// Call API
-			async getListStaffLab() {
-				// alert(`Get Data Alat ${this.filterStaff.asal_alat}`)
-				this.listInfo.pageSize =
-					this.listStaff.length < this.listInfo.listSize
+			async getListMahasiswa() {
+				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
+				this.tableInfo.pageSize =
+					this.listData.length < this.tableInfo.listSize
 						? 1
-						: this.listStaff.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listStaff.length
+						: this.listData.length / this.tableInfo.listSize
+				this.tableInfo.listTotal = this.listData.length
 				// Nembak API Get List Alat
 			},
 			async getProdi() {
@@ -401,82 +346,39 @@
 				let prodi = [
 					{
 						id: 1,
-						name: 'Teknik Multimedia dan Digital',
+						prodi_name: 'Teknik Multimedia dan Digital',
 					},
 					{
 						id: 2,
-						name: 'Teknik Multimedia Jaringan',
+						prodi_name: 'Teknik Multimedia Jaringan',
 					},
 					{
 						id: 3,
-						name: 'Teknik Informatika',
+						prodi_name: 'Teknik Informatika',
 					},
 					{
 						id: 4,
-						name: 'Teknik Jaringan dan Komputer',
+						prodi_name: 'Teknik Jaringan dan Komputer',
 					},
 				]
 
-				let listHeadProdi = this.headsTable.find((form) => form.id === 3)
 				prodi.forEach((pd, indexJns) => {
-					listHeadProdi.options.push({
-						id: indexJns + 2,
-						text: pd.name,
+					this.headsTable[2].options.push({
+						id: pd.id,
+						name: pd.prodi_name,
+						value: pd.id,
+						disabled: false,
+					})
+					this.formFilter[2].options.push({
+						id: pd.id,
+						name: pd.prodi_name,
 						value: pd.id,
 						disabled: false,
 					})
 				})
 			},
-			submitFilterData(formInput) {
-				this.filterStaff = formInput
-				alert(this.filterStaff)
-				// this.getListStaffLab()
-			},
-			changeFilterValue(objFilter) {
-				this.filterStaff[objFilter.model] = objFilter.value
-			},
-			// Table Page Interaction
-			nextPage() {
-				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
-					this.listInfo.pageNo += 1
-				}
-			},
-			previousPage() {
-				if (this.listInfo.pageNo !== 1) {
-					this.listInfo.pageNo -= 1
-				}
-			},
-			jumpPage(pageNo) {
-				this.listInfo.pageNo = pageNo
-			},
-			// Value Change
-			// Value Change
-			statusAkunStaff(status_id) {
-				let listStatus = [
-					{
-						id: 1,
-						text: 'Pending',
-						background: 'smil-bg-default',
-					},
-					{
-						id: 2,
-						text: 'Punya Akses',
-						background: 'smil-bg-success',
-					},
-					{
-						id: 3,
-						text: 'Kadaluarse',
-						background: 'smil-bg-danger',
-					},
-					{
-						id: 4,
-						text: 'Belum Login',
-						background: 'smil-bg-default',
-					},
-				]
 
-				return listStatus.find((status) => status.id === status_id)
-			},
+			// Value Change
 
 			// Action Dropdown
 			lihatDetail(indexData) {},
@@ -487,6 +389,12 @@
 <style lang="scss" scoped>
 	.button-group {
 		margin-bottom: 40px;
+		.tab-title {
+			font-size: 32px;
+			color: #101939;
+			font-weight: 700;
+			margin-bottom: 0;
+		}
 		button {
 			margin-right: 15px;
 		}

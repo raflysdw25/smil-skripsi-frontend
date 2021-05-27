@@ -1,18 +1,13 @@
 <template>
-	<div class="list-supplier">
+	<div class="list-staff-jurusan">
 		<!-- START: BUTTON GROUP -->
-		<div class="button-group d-flex">
+		<div class="button-group d-flex align-items-center">
+			<h1 class="tab-title">Staff Jurusan</h1>
 			<button
-				class="smil-btn smil-bg-primary"
-				@click="$router.push({ name: 'TambahSupplier' })"
+				class="smil-btn smil-bg-primary ml-auto"
+				@click="$router.push({ name: 'TambahStaffJurusan' })"
 			>
 				Tambah Data
-			</button>
-			<button
-				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openPopup('filter-data')"
-			>
-				Filter Data
 			</button>
 		</div>
 		<!-- END: BUTTON GROUP -->
@@ -24,13 +19,13 @@
 					<tr>
 						<th
 							v-for="(head, indexHds) in headsTable"
-							:key="`header-table-${indexHds}`"
+							:key="`header-table-${head.id}-${indexHds}`"
 						>
 							{{ head.label }}
 							<base-filter
 								filter_class="d-none d-lg-block"
 								@changeValue="changeFilterValue"
-								@filterAction="getListSupplier"
+								@filterAction="getListStaffLab"
 								:filter_type="head.filter_type"
 								:default_value="filterData[head.model]"
 								:placeholder="head.placeholder"
@@ -77,19 +72,21 @@
 									<template v-slot:button-content>
 										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 									</template>
-									<b-dropdown-item @click="lihatDetail(content)">
-										Lihat Detail Supplier
+									<b-dropdown-item>
+										Detail Staff
 									</b-dropdown-item>
 									<b-dropdown-item>
-										Edit Supplier
+										Edit Data Staff
 									</b-dropdown-item>
+
 									<b-dropdown-item>
 										<span class="smil-text-danger">
-											Hapus Supplier
+											Hapus Data Staff
 										</span>
 									</b-dropdown-item>
 								</b-dropdown>
 							</template>
+
 							<template v-else>
 								{{ content }}
 							</template>
@@ -117,7 +114,7 @@
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="tableInfo.totalPage > 1"
+							v-if="tableInfo.pageSize > 1"
 							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
@@ -127,7 +124,7 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li v-for="num in tableInfo.pageSize" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
@@ -139,19 +136,17 @@
 					<li>
 						<span
 							:style="
-								tableInfo.totalPage === tableInfo.pageNo
-									? ''
-									: 'cursor: pointer'
+								tableInfo.pageSize === tableInfo.pageNo ? '' : 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="tableInfo.totalPage > 1"
-							:disabled="tableInfo.pageNo === tableInfo.totalPage"
+							v-if="tableInfo.pageSize > 1"
+							:disabled="tableInfo.pageNo === tableInfo.pageSize"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									tableInfo.pageNo === tableInfo.totalPage
+									tableInfo.pageNo === tableInfo.pageSize
 										? `#C5C5C5`
 										: `#101939`
 								"
@@ -167,31 +162,31 @@
 						:value="count"
 						v-for="count in tableCount"
 						:key="`page-size-${count}`"
-						>{{ count }}</option
 					>
+						{{ count }}
+					</option>
 				</select>
 			</div>
 		</div>
 		<!-- END: PAGINATION INFO SECTION -->
 
-		<!-- START: MODAL FILTER DATA FOR MOBILE -->
+		<!-- START: MODAL POPUP -->
 		<b-modal
 			ref="modal-popup"
+			hide-footer
+			hide-header
+			centered
 			no-close-on-backdrop
 			no-close-on-esc
-			hide-header
-			hide-footer
-			centered
 		>
 			<form-filter-data
-				v-if="baseModalType === 'filter-data'"
+				v-if="baseModalType === 'filter'"
 				title="Filter Data Alat"
 				:closeModal="closePopup"
 				:formInput="filterData"
 				:form="formFilter"
-				@submitFilter="submitFilterData"
+				@submitFilter="getListStaffLab"
 			/>
-
 			<base-modal-alert
 				v-if="baseModalType === 'alert'"
 				:isProcess="isProcess"
@@ -200,7 +195,7 @@
 				:closeAlert="closePopup"
 			/>
 		</b-modal>
-		<!-- END: MODAL FILTER DATA FOR MOBILE -->
+		<!-- END: MODAL POPUP -->
 	</div>
 </template>
 
@@ -214,83 +209,114 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+
 	export default {
-		name: 'list-supplier',
-		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAlert },
+		name: 'list-staff-jurusan',
 		mixins: [ModalMixins, TableMixins],
+		components: {
+			IconComponent,
+			FormFilterData,
+			BaseFilter,
+			BaseModalAlert,
+		},
 		data() {
 			return {
 				headsTable: [
 					{
-						label: 'Nama Supplier',
+						label: 'Nomor Induk Pegawai',
 						filter_type: 'search',
-						placeholder: 'Filter Nama Supplier',
-						model: 'supplier_name',
+						placeholder: 'Filter Nomor Induk Pegawai',
+						model: 'nip',
 						options: null,
 					},
 					{
-						label: 'Alamat Supplier',
+						label: 'Nama Staff',
 						filter_type: 'search',
-						placeholder: 'Filter Alamat Supplier',
-						model: 'supplier_address',
+						placeholder: 'Filter Nama Staff',
+						model: 'staff_fullname',
 						options: null,
 					},
 					{
-						label: 'Person In Charge',
+						label: 'Program Studi',
+						filter_type: 'select',
+						placeholder: 'Filter Program Studi',
+						model: 'prodi_id',
+						options: [
+							{
+								id: null,
+								name: 'All',
+								value: null,
+								disabled: false,
+							},
+						],
+					},
+					{
+						label: 'Email',
 						filter_type: 'search',
-						placeholder: 'Filter Person In Charge',
-						model: 'person_in_charge',
+						placeholder: 'Filter Email',
+						model: 'email',
 						options: null,
 					},
 					'',
 				],
 				listData: [
 					{
-						id: 1,
-						supplier_name: 'Supplier A',
-						person_in_charge: 'PIC Supplier A',
-						supplier_address:
-							'Jl. Panaragan Penggilingan No 07 RT 01 RW 06 Bogor Tengah',
-					},
-					{
-						id: 2,
-						supplier_name: 'Supplier B',
-						person_in_charge: 'PIC Supplier B',
-						supplier_address:
-							'Jl. Panaragan Penggilingan No 07 RT 01 RW 06 Bogor Tengah',
+						nip: '3271032506990001',
+						staff_fullname: 'Muhammad Rafly Sadewa',
+						prodi_id: 1,
+						prodi_name: 'Teknik Multimedia Digital',
+						email: 'raflysdw25@gmail.com',
+						address: 'Jl. Panaragan Penggilingan No. 07',
+						phone_number: '081218860714',
 					},
 				],
+				tableInfo: {
+					listSize: 5,
+					listTotal: 0,
+					pageNo: 1,
+					pageSize: 10,
+				},
 				filterData: {
-					supplier_name: '',
-					supplier_address: '',
-					person_in_charge: '',
+					nip: '',
+					staff_fullname: '',
+					prodi_id: null,
+					email: '',
 				},
 				formFilter: [
 					{
-						label: 'Nama Supplier',
+						label: 'Nomor Induk Pegawai',
 						type: 'text',
-						model: 'supplier_name',
+						model: 'nip',
 						description: '',
-						placeholder: 'Filter Nama Supplier',
+						placeholder: 'Filter Nomor Induk Pegawai',
 						isRequired: false,
 					},
 					{
-						label: 'Alamat Supplier',
+						label: 'Nama Staff',
 						type: 'text',
-						model: 'supplier_address',
+						model: 'staff_fullname',
 						description: '',
-						placeholder: 'Filter Alamat Supplier',
+						placeholder: 'Filter Nama Staff',
 						isRequired: false,
 					},
 					{
-						label: 'Person In Charge',
+						label: 'Program Studi',
 						type: 'text',
-						model: 'person_in_charge',
+						model: 'prodi_id',
 						description: '',
-						placeholder: 'Filter Person In Charge',
+						placeholder: 'Filter Program Studi',
 						isRequired: false,
+						options: [
+							{
+								id: null,
+								name: 'All',
+								value: null,
+								disabled: false,
+							},
+						],
 					},
 				],
+				// Data Add Jenis Alat
 			}
 		},
 		computed: {
@@ -298,9 +324,10 @@
 				let listTable = []
 				this.listData.forEach((list, indexList) => {
 					let rowTable = [
-						list.supplier_name, //Nama Supplier
-						list.supplier_address, //Alamat Supplier
-						list.person_in_charge, //Person In Charge
+						list.nip, //NIP
+						list.staff_fullname, //Nama Staff
+						list.prodi_name, //Program Studi
+						list.email, //Email
 						'',
 					]
 
@@ -309,32 +336,87 @@
 
 				return listTable
 			},
-			filterPayload() {
-				return this.filterData
-			},
 		},
 		async mounted() {
-			await this.getListSupplier()
-			// this.showAlert(false, false, 'Alert Berhasil')
+			await this.getListStaffLab()
+			await this.getProdi()
+			// this.showAlert(false, true, 'Alert Berhasil')
 		},
 		methods: {
 			// Call API
-			async getListSupplier() {
+			async getListStaffLab() {
 				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
-				this.tableInfo.totalPage =
+				this.tableInfo.pageSize =
 					this.listData.length < this.tableInfo.listSize
 						? 1
 						: this.listData.length / this.tableInfo.listSize
 				this.tableInfo.listTotal = this.listData.length
 				// Nembak API Get List Alat
 			},
+			async getProdi() {
+				// Hit API List Jabatan from Jabatan Table
+				let prodi = [
+					{
+						id: 1,
+						prodi_name: 'Teknik Multimedia dan Digital',
+					},
+					{
+						id: 2,
+						prodi_name: 'Teknik Multimedia Jaringan',
+					},
+					{
+						id: 3,
+						prodi_name: 'Teknik Informatika',
+					},
+					{
+						id: 4,
+						prodi_name: 'Teknik Jaringan dan Komputer',
+					},
+				]
 
-			submitFilterData(formInput) {
-				this.filterData = formInput
-				alert(this.filterData)
-				// this.getListSupplier()
+				prodi.forEach((pd, indexJns) => {
+					this.headsTable[2].options.push({
+						id: pd.id,
+						name: pd.prodi_name,
+						value: pd.id,
+						disabled: false,
+					})
+					this.formFilter[2].options.push({
+						id: pd.id,
+						name: pd.prodi_name,
+						value: pd.id,
+						disabled: false,
+					})
+				})
 			},
+
 			// Value Change
+			statusAkunStaff(status_id) {
+				let listStatus = [
+					{
+						id: 1,
+						text: 'Pending',
+						background: 'smil-bg-default',
+					},
+					{
+						id: 2,
+						text: 'Punya Akses',
+						background: 'smil-bg-success',
+					},
+					{
+						id: 3,
+						text: 'Kadaluarse',
+						background: 'smil-bg-danger',
+					},
+					{
+						id: 4,
+						text: 'Belum Login',
+						background: 'smil-bg-default',
+					},
+				]
+
+				return listStatus.find((status) => status.id === status_id)
+			},
 
 			// Action Dropdown
 			lihatDetail(indexData) {},
@@ -345,6 +427,12 @@
 <style lang="scss" scoped>
 	.button-group {
 		margin-bottom: 40px;
+		.tab-title {
+			font-size: 32px;
+			color: #101939;
+			font-weight: 700;
+			margin-bottom: 0;
+		}
 		button {
 			margin-right: 15px;
 		}

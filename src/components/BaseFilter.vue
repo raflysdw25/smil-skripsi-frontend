@@ -11,7 +11,7 @@
 				:key="`select-${ops.value}-${indexList}`"
 				:disabled="ops.disabled"
 			>
-				{{ ops.text }}
+				{{ ops.name }}
 			</option>
 		</select>
 
@@ -70,7 +70,7 @@
 					model: this.modelFilter,
 					value: value,
 				})
-				if (this.filter_type === 'select') {
+				if (this.filter_type === 'select' || this.filter_type === 'date') {
 					this.$emit('filterAction')
 				}
 			},
@@ -92,7 +92,7 @@
 		.form-control,
 		.input-group-append {
 			border-radius: 5px;
-			height: 33px !important;
+			height: 40px !important;
 			font-size: 10px;
 		}
 		.input-group {
@@ -107,7 +107,7 @@
 				}
 				border: 1px solid #c5c5c5;
 				border-left: none;
-				padding: 0.375rem 0.75rem;
+				padding: 0.67rem 0.75rem;
 
 				.icon-component {
 					margin-right: 0;
@@ -118,17 +118,20 @@
 
 		.mx-datepicker {
 			width: 100%;
-		}
-
-		@media screen and (max-width: 992px) {
-			.input-group {
-				.form-control {
-					// border-right: 1px solid #c5c5c5;
-				}
-				.input-group-append {
-					// display: none;
-				}
+			.mx-input {
+				height: 40px;
 			}
 		}
+
+		// @media screen and (max-width: 992px) {
+		// 	.input-group {
+		// 		.form-control {
+		// 			// border-right: 1px solid #c5c5c5;
+		// 		}
+		// 		.input-group-append {
+		// 			// display: none;
+		// 		}
+		// 	}
+		// }
 	}
 </style>

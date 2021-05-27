@@ -5,143 +5,157 @@
 			<button class="smil-btn smil-bg-primary" @click="openPopup('add')">
 				Tambah Data
 			</button>
+			<button
+				class="smil-btn smil-bg-info d-lg-none d-sm-block"
+				@click="openPopup('filter-data')"
+			>
+				Filter Data
+			</button>
 		</div>
 		<!-- END: BUTTON GROUP -->
 
 		<!-- START: LIST DATA -->
-		<table class="table table-responsive-lg smil-table">
-			<!-- START: HEAD -->
-			<thead class="smil-thead">
-				<tr>
-					<th
-						v-for="(head, indexHds) in headsTable"
-						:key="`header-table-${head.id}-${indexHds}`"
-					>
-						{{ head.label }}
-						<base-filter
-							filter_class="d-none d-lg-block"
-							:filter_type="head.filter_type"
-							:default_value="filterJenis[head.model]"
-							:placeholder="head.placeholder"
-							:options="head.options"
-							:modelFilter="head.model"
-						/>
-					</th>
-				</tr>
-			</thead>
-			<!-- END: HEAD -->
+		<div class="table-responsive-sm">
+			<table class="table smil-table">
+				<!-- START: HEAD -->
+				<thead class="smil-thead">
+					<tr>
+						<th
+							v-for="(head, indexHds) in headsTable"
+							:key="`header-table-${indexHds}`"
+						>
+							{{ head.label }}
+							<base-filter
+								filter_class="d-none d-lg-block"
+								@changeValue="changeFilterValue"
+								@filterAction="getListJenisAlat"
+								:filter_type="head.filter_type"
+								:default_value="filterData[head.model]"
+								:placeholder="head.placeholder"
+								:options="head.options"
+								:modelFilter="head.model"
+							/>
+						</th>
+					</tr>
+				</thead>
+				<!-- END: HEAD -->
 
-			<!-- START: EMPTY TABLE -->
-			<tbody class="smil-tbody" v-if="listJenisAlat.length === 0">
-				<tr>
-					<td :colspan="headsTable.length" class="text-center empty-table">
-						<icon-component
-							iconName="empty-files"
-							:size="64"
-							colorIcon="#c5c5c5"
-							iconClass="icon-table"
-						/>
-						<span class="empty-table-description">
-							Tidak ada data yang dapat ditampilkan
-						</span>
-					</td>
-				</tr>
-			</tbody>
-			<!-- END: EMPTY TABLE -->
+				<!-- START: EMPTY TABLE -->
+				<tbody class="smil-tbody" v-if="listData.length === 0">
+					<tr>
+						<td :colspan="headsTable.length" class="text-center empty-table">
+							<icon-component
+								iconName="empty-files"
+								:size="64"
+								colorIcon="#c5c5c5"
+								iconClass="icon-table"
+							/>
+							<span class="empty-table-description">
+								Tidak ada data yang dapat ditampilkan
+							</span>
+						</td>
+					</tr>
+				</tbody>
+				<!-- END: EMPTY TABLE -->
 
-			<!-- START: FILLED TABLE -->
-			<tbody class="smil-tbody" v-else>
-				<tr
-					v-for="(rows, indexRow) in listTable"
-					:key="`content-table-${indexRow}`"
-				>
-					<td
-						v-for="(content, indexContent) in rows"
-						:key="`column-${content}${indexContent}`"
-						:width="indexContent === rows.length - 1 ? 10 : null"
+				<!-- START: FILLED TABLE -->
+				<tbody class="smil-tbody" v-else>
+					<tr
+						v-for="(rows, indexRow) in listTable"
+						:key="`content-table-${indexRow}`"
 					>
-						<template v-if="indexContent === rows.length - 1">
-							<b-dropdown
-								size="lg"
-								right
-								variant="smil-drop-dots"
-								toggle-class="text-decoration-none"
-								no-caret
-								class="drop-dropdown smil-dot"
-							>
-								<template v-slot:button-content>
-									<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-								</template>
-								<b-dropdown-item>
-									Edit Data Alat
-								</b-dropdown-item>
-								<b-dropdown-item>
-									<span class="smil-text-danger">
-										Hapus Data Alat
-									</span>
-								</b-dropdown-item>
-							</b-dropdown>
-						</template>
-						<template v-else>
-							{{ content }}
-						</template>
-					</td>
-				</tr>
-				<tr>
-					<td
-						:colspan="Object.keys(headsTable).length"
-						:style="{ 'padding-bottom': `${listJenisAlat.length * 50}px` }"
-					></td>
-				</tr>
-			</tbody>
-			<!-- END: FILLED TABLE -->
-		</table>
+						<td
+							v-for="(content, indexContent) in rows"
+							:key="`column-${content}${indexContent}`"
+							:width="indexContent === rows.length - 1 ? 10 : null"
+						>
+							<template v-if="indexContent === rows.length - 1">
+								<b-dropdown
+									size="lg"
+									right
+									variant="smil-drop-dots"
+									toggle-class="text-decoration-none"
+									no-caret
+									class="drop-dropdown smil-dot"
+								>
+									<template v-slot:button-content>
+										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+									</template>
+									<b-dropdown-item>
+										Edit Data Alat
+									</b-dropdown-item>
+									<b-dropdown-item>
+										<span class="smil-text-danger">
+											Hapus Data Alat
+										</span>
+									</b-dropdown-item>
+								</b-dropdown>
+							</template>
+							<template v-else>
+								{{ content }}
+							</template>
+						</td>
+					</tr>
+					<tr>
+						<td
+							:colspan="Object.keys(headsTable).length"
+							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
+						></td>
+					</tr>
+				</tbody>
+				<!-- END: FILLED TABLE -->
+			</table>
+		</div>
 		<!-- END: LIST DATA -->
 
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listJenisAlat.length} dari ${listJenisAlat.length} Data` }}
+				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
 					<li>
 						<span
-							:style="listInfo.pageNo === 1 ? '' : 'cursor: pointer'"
+							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === 1"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
 								iconName="arrow-left"
 								:size="24"
-								:colorIcon="listInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
+								:colorIcon="tableInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
 							/>
 						</span>
 					</li>
-					<li v-for="num in listInfo.pageSize" :key="num">
+					<li v-for="num in tableInfo.totalPage" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
 							@click="jumpPage(num)"
-							:class="[num === listInfo.pageNo ? 'active' : '']"
+							:class="[num === tableInfo.pageNo ? 'active' : '']"
 							>{{ num }}
 						</a>
 					</li>
 					<li>
 						<span
 							:style="
-								listInfo.pageSize === listInfo.pageNo ? '' : 'cursor: pointer'
+								tableInfo.totalPage === tableInfo.pageNo
+									? ''
+									: 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === listInfo.pageSize"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === tableInfo.totalPage"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									listInfo.pageNo === listInfo.pageSize ? `#C5C5C5` : `#101939`
+									tableInfo.pageNo === tableInfo.totalPage
+										? `#C5C5C5`
+										: `#101939`
 								"
 							/>
 						</span>
@@ -150,13 +164,13 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="listInfo.listSize">
-					<option value="5">5</option>
-					<option value="10">10</option>
-					<option value="15">15</option>
-					<option value="20">20</option>
-					<option value="25">25</option>
-					<option value="30">30</option>
+				<select class="custom-select" v-model="tableInfo.listSize">
+					<option
+						:value="count"
+						v-for="count in tableCount"
+						:key="`page-size-${count}`"
+						>{{ count }}</option
+					>
 				</select>
 			</div>
 		</div>
@@ -186,6 +200,16 @@
 				:message="message"
 				:closeAlert="closePopup"
 			/>
+
+			<form-filter-data
+				v-if="baseModalType === 'filter-data'"
+				title="Filter Data Jenis Alat"
+				:closeModal="closePopup"
+				:form="formFilter"
+				:formInput="filterData"
+				:submitFunction="submitFilterData"
+				:activeButton="activeFilter"
+			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
 	</div>
@@ -201,6 +225,7 @@
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
+	import TableMixins from '@/mixins/TableMixins'
 
 	export default {
 		name: 'list-jenis-alat-lab',
@@ -211,71 +236,52 @@
 			BaseModalAdd,
 			BaseModalAlert,
 		},
-		mixins: [ModalMixins],
+		mixins: [ModalMixins, TableMixins],
 		data() {
 			return {
 				headsTable: [
 					{
-						id: 1,
-						label: 'ID Jenis Alat',
-						filter_type: 'search',
-						placeholder: 'Filter ID Jenis Alat',
-						model: 'id',
-						options: null,
-					},
-					{
-						id: 2,
 						label: 'Nama Jenis Alat',
 						filter_type: 'search',
 						placeholder: 'Filter Nama Jenis Alat',
-						model: 'nama',
+						model: 'jenis_name',
 						options: null,
 					},
 					{
-						id: 2,
 						label: 'Attribut Spesifikasi',
 						filter_type: 'search',
 						placeholder: 'Filter Attribut Spesifikasi',
-						model: 'attribut',
+						model: 'spec_attributes',
 						options: null,
 					},
 					'',
 				],
-				listJenisAlat: [
+				listData: [
 					{
 						id: 1,
-						nama_jenis: 'Smartphone',
-						attr_spek: ['Processor', 'RAM', 'Storage', 'Kamera'],
+						jenis_name: 'Smartphone',
+						spec_attributes: 'Processor,  RAM, Storage, Kamera',
 					},
 				],
-				listInfo: {
-					listSize: 5,
-					listTotal: 0,
-					pageNo: 1,
-					pageSize: 10,
-				},
-				filterJenis: {
-					id: '',
-					nama: '',
-					attribut: '',
+				filterData: {
+					jenis_name: '',
+					spec_attributes: '',
 				},
 				formFilter: [
 					{
-						id: 1,
-						label: 'ID Jenis Alat',
-						type: 'number',
-						model: 'id',
+						label: 'Nama Jenis Alat',
+						type: 'text',
+						model: 'jenis_name',
 						description: '',
-						placeholder: 'Filter ID Jenis Alat',
+						placeholder: 'Filter Nama Jenis Alat',
 						isRequired: false,
 					},
 					{
-						id: 2,
-						label: 'Nama Jenis Alat',
+						label: 'Attribut Spesifikasi',
 						type: 'text',
-						model: 'nama',
+						model: 'spec_attributes',
 						description: '',
-						placeholder: 'Filter Nama Jenis Alat',
+						placeholder: 'Filter Attribut Spesifikasi',
 						isRequired: false,
 					},
 				],
@@ -316,19 +322,10 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listJenisAlat.forEach((list, indexList) => {
-					let spec_attr = ''
-					list.attr_spek.forEach((spec) => {
-						if (spec_attr === '') {
-							spec_attr += spec
-						} else {
-							spec_attr += `, ${spec}`
-						}
-					})
+				this.listData.forEach((list, indexList) => {
 					let rowTable = [
-						list.id, //ID Jenis Alat
-						list.nama_jenis, //Nama Jenis Alat
-						spec_attr, // Attribute Spesifikasi
+						list.jenis_name, //Nama Jenis Alat
+						list.spec_attributes, // Attribute Spesifikasi
 						indexList,
 					]
 
@@ -337,16 +334,31 @@
 
 				return listTable
 			},
+			activeFilter() {
+				return (
+					this.filterPayload.jenis_name !== '' ||
+					this.filterPayload.spec_attributes !== ''
+				)
+			},
+			filterPayload() {
+				return this.filterData
+			},
+
 			submitRequest() {
-				let spec_attr = []
-				this.formAdd[1].model.forEach((attr) => {
+				// Untuk Tambah Data baru
+				let spec_attr = ''
+				this.formAdd[1].model.forEach((attr, idxAttr) => {
 					if (attr.value !== '') {
-						spec_attr.push(attr.value)
+						if (idxAttr !== this.formAdd.length) {
+							spec_attr += `${attr.value}, `
+						} else {
+							spec_attr += `${attr.value}`
+						}
 					}
 				})
 				return {
 					jenis_name: this.formAdd[0].model,
-					spec_attributes: JSON.stringify(spec_attr),
+					spec_attributes: spec_attr,
 				}
 			},
 		},
@@ -356,13 +368,13 @@
 		methods: {
 			// Call API
 			async getListJenisAlat() {
-				// alert(`Get Data Alat ${this.filterAlat.asal_alat}`)
-				this.listInfo.pageSize =
-					this.listJenisAlat.length < this.listInfo.listSize
+				this.tableInfo.totalPage =
+					this.listData.length < this.tableInfo.listSize
 						? 1
-						: this.listJenisAlat.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listJenisAlat.length
+						: this.listData.length / this.tableInfo.listSize
+				this.tableInfo.listTotal = this.listData.length
 				// Nembak API Get List Alat
+				// alert(this.filterData.jenis_name)
 			},
 			async sendAddJenis() {
 				this.closePopup()
@@ -387,21 +399,27 @@
 					})
 				}, 1500)
 			},
+			submitFilterData() {
+				this.getListJenisAlat(this.mobileFilter)
+			},
 			//Table Page Interaction
-			nextPage() {
-				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
-					this.listInfo.pageNo += 1
-				}
-			},
-			previousPage() {
-				if (this.listInfo.pageNo !== 1) {
-					this.listInfo.pageNo -= 1
-				}
-			},
-			jumpPage(pageNo) {
-				this.listInfo.pageNo = pageNo
-			},
-			// Modal Interaction
+			// nextPage() {
+			// 	if (this.tableInfo.pageNo !== this.tableInfo.totalPage) {
+			// 		this.tableInfo.pageNo += 1
+			// 	}
+			// },
+			// previousPage() {
+			// 	if (this.tableInfo.pageNo !== 1) {
+			// 		this.tableInfo.pageNo -= 1
+			// 	}
+			// },
+			// jumpPage(pageNo) {
+			// 	this.tableInfo.pageNo = pageNo
+			// },
+			// Value change
+			// changeFilterValue(objFilter) {
+			// 	this.filterData[objFilter.model] = objFilter.value
+			// },
 		},
 	}
 </script>

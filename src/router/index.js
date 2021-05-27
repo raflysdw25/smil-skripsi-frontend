@@ -34,7 +34,8 @@ import ListStaffLaboratorium from '@/views/pages/admin/staff/ListStaffLaboratori
 import AddStaffLaboratorium from '@/views/pages/admin/staff/AddStaffLaboratorium.vue'
 
 // Pages - Staff Jurusan
-import ListStaffJurusan from '@/views/pages/admin/staff/ListStaffJurusan.vue'
+import ListCivitasJurusan from '@/views/pages/admin/staff/ListCivitasJurusan.vue'
+
 import AddStaffJurusan from '@/views/pages/admin/staff/AddStaffJurusan.vue'
 
 // PEMINJAMAN
@@ -160,8 +161,8 @@ const routes = [
 			// Pagegroup - Staff Jurusan
 			{
 				path: 'jurusan',
-				name: 'ListStaffJurusan',
-				component: ListStaffJurusan,
+				name: 'ListCivitasJurusan',
+				component: ListCivitasJurusan,
 			},
 			{
 				path: 'jurusan/add',
@@ -181,6 +182,9 @@ const router = new VueRouter({
 	mode: 'history',
 	base: process.env.BASE_URL,
 	routes,
+	scrollBehavior(to, from, savedPosition) {
+		return { x: 0, y: 0 }
+	},
 })
 
 export default router

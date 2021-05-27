@@ -1,7 +1,7 @@
 <template>
 	<div class="list-alat-lab">
 		<!-- START: BUTTON GROUP -->
-		<div class="button-group d-flex">
+		<div class="button-group d-flex align-items-center">
 			<button
 				class="smil-btn smil-bg-primary"
 				@click="$router.push({ name: 'TambahAlatLab' })"
@@ -14,6 +14,12 @@
 			>
 				Filter Data
 			</button>
+			<button
+				class="smil-btn smil-bg-secondary ml-auto"
+				@click="openPopup('asal')"
+			>
+				Asal Pengadaan
+			</button>
 		</div>
 		<!-- END: BUTTON GROUP -->
 
@@ -24,23 +30,25 @@
 					<tr>
 						<th
 							v-for="(head, indexHds) in headsTable"
-							:key="`header-table-${head.id}-${indexHds}`"
+							:key="`header-table-${indexHds}`"
 						>
 							{{ head.label }}
-							<base-filter
-								filter_class="d-none d-lg-block"
-								@changeValue="changeFilterValue"
-								@filterAction="getListAlat"
-								:filter_type="head.filter_type"
-								:default_value="filterAlat[head.model]"
-								:placeholder="head.placeholder"
-								:options="head.options"
-								:modelFilter="head.model"
-							/>
+							<template v-if="head !== ''">
+								<base-filter
+									filter_class="d-none d-lg-block mt-2"
+									@changeValue="changeFilterValue"
+									@filterAction="getListAlat"
+									:filter_type="head.filter_type"
+									:default_value="filterData[head.model]"
+									:placeholder="head.placeholder"
+									:options="head.options"
+									:modelFilter="head.model"
+								/>
+							</template>
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listAlatLab.length === 0">
+				<tbody class="smil-tbody" v-if="listData.length === 0">
 					<tr>
 						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
@@ -108,7 +116,7 @@
 					<tr>
 						<td
 							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listAlatLab.length * 50}px` }"
+							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
 						></td>
 					</tr>
 				</tbody>
@@ -119,47 +127,51 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listAlatLab.length} dari ${listAlatLab.length} Data` }}
+				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
 					<li>
 						<span
-							:style="listInfo.pageNo === 1 ? '' : 'cursor: pointer'"
+							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === 1"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
 								iconName="arrow-left"
 								:size="24"
-								:colorIcon="listInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
+								:colorIcon="tableInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
 							/>
 						</span>
 					</li>
-					<li v-for="num in listInfo.pageSize" :key="num">
+					<li v-for="num in tableInfo.totalPage" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
 							@click="jumpPage(num)"
-							:class="[num === listInfo.pageNo ? 'active' : '']"
+							:class="[num === tableInfo.pageNo ? 'active' : '']"
 							>{{ num }}
 						</a>
 					</li>
 					<li>
 						<span
 							:style="
-								listInfo.pageSize === listInfo.pageNo ? '' : 'cursor: pointer'
+								tableInfo.totalPage === tableInfo.pageNo
+									? ''
+									: 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === listInfo.pageSize"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === tableInfo.totalPage"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									listInfo.pageNo === listInfo.pageSize ? `#C5C5C5` : `#101939`
+									tableInfo.pageNo === tableInfo.totalPage
+										? `#C5C5C5`
+										: `#101939`
 								"
 							/>
 						</span>
@@ -168,13 +180,13 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="listInfo.listSize">
-					<option value="5">5</option>
-					<option value="10">10</option>
-					<option value="15">15</option>
-					<option value="20">20</option>
-					<option value="25">25</option>
-					<option value="30">30</option>
+				<select class="custom-select" v-model="tableInfo.listSize">
+					<option
+						:value="count"
+						v-for="count in tableCount"
+						:key="`page-size-${count}`"
+						>{{ count }}</option
+					>
 				</select>
 			</div>
 		</div>
@@ -188,14 +200,16 @@
 			hide-header
 			hide-footer
 			centered
+			:size="baseModalType === 'asal' ? 'lg' : ''"
 		>
 			<form-filter-data
 				v-if="baseModalType === 'filter-data'"
 				title="Filter Data Alat"
 				:closeModal="closePopup"
-				:formInput="filterAlat"
 				:form="formFilter"
-				@submitFilter="submitFilterData"
+				:formInput="filterData"
+				:submitFunction="getListAlat"
+				:activeButton="mobileFilterActive"
 			/>
 
 			<base-modal-alert
@@ -204,6 +218,13 @@
 				:isSuccess="isSuccess"
 				:message="message"
 				:closeAlert="closePopup"
+			/>
+
+			<base-modal-list-support
+				v-if="baseModalType === 'asal'"
+				title="Asal Pengadaan Alat"
+				supportType="asal"
+				:closeModal="closePopup"
 			/>
 		</b-modal>
 		<!-- END: MODAL FILTER DATA FOR MOBILE -->
@@ -216,217 +237,157 @@
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalListSupport from '@/components/BaseModal/BaseModalListSupport.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
+	import TableMixins from '@/mixins/TableMixins'
 	export default {
 		name: 'list-alat-lab',
-		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAlert },
-		mixins: [ModalMixins],
+		components: {
+			IconComponent,
+			FormFilterData,
+			BaseFilter,
+			BaseModalAlert,
+			BaseModalListSupport,
+		},
+		mixins: [ModalMixins, TableMixins],
 		data() {
 			return {
 				headsTable: [
 					{
-						id: 1,
-						label: 'ID Alat',
-						filter_type: 'search',
-						placeholder: 'Filter ID Alat',
-						model: 'id',
-						options: null,
-					},
-					{
-						id: 2,
 						label: 'Nama Alat',
 						filter_type: 'search',
 						placeholder: 'Filter Nama Alat',
-						model: 'nama',
+						model: 'alat_name',
 						options: null,
 					},
 					{
-						id: 3,
 						label: 'Jenis Alat',
 						filter_type: 'select',
 						model: 'jenis_alat_id',
 						options: [
 							{
-								id: 1,
-								text: 'All',
-								value: '',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 						],
 					},
 					{
-						id: 4,
 						label: 'Asal Pengadaan',
 						filter_type: 'select',
-						model: 'asal_alat',
+						model: 'asal_pengadaan_id',
 						options: [
 							{
-								id: 1,
-								text: 'All',
-								value: '',
-								disabled: true,
-							},
-							{
-								id: 2,
-								text: 'Barang Habis Pakai',
-								value: 'BHP',
-								disabled: false,
-							},
-							{
-								id: 3,
-								text: 'Hibah Tugas Akhir',
-								value: 'HTA',
-								disabled: false,
-							},
-							{
-								id: 4,
-								text: 'Supplier',
-								value: 'SUP',
-								disabled: false,
-							},
-							{
-								id: 5,
-								text: 'Direktorat PNJ',
-								value: 'DRP',
-								disabled: false,
-							},
-							{
-								id: 6,
-								text: 'Hibah Pemerintah',
-								value: 'HPM',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 						],
 					},
 					{
-						id: 5,
 						label: 'Tahun Pengadaan',
 						filter_type: 'search',
 						placeholder: 'Filter Tahun Pengadaan',
-						model: 'tahun_alat',
+						model: 'alat_year',
 						options: null,
 					},
 					'',
 				],
-				listAlatLab: [
+				listData: [
 					{
 						id: 1,
-						nama_alat: 'iPhone 7 Plus',
-						asal_alat: 'BHP',
-						tahun: '2017',
+						alat_name: 'iPhone 7 Plus',
+						asal_pengadaan_id: 1,
+						alat_year: '2017',
 						jenis_alat_id: 1,
 					},
 					{
 						id: 2,
-						nama_alat: 'ASUS A412DA',
-						asal_alat: 'HTA',
-						tahun: '2019',
+						alat_name: 'ASUS A412DA',
+						asal_pengadaan_id: 2,
+						alat_year: '2019',
 						jenis_alat_id: 2,
 					},
 				],
-				listInfo: {
+				tableInfo: {
 					listSize: 5,
 					listTotal: 0,
 					pageNo: 1,
-					pageSize: 10,
+					totalPage: 10,
 				},
-				filterAlat: {
-					id: '',
-					nama: '',
-					jenis_alat_id: '',
-					asal_alat: '',
-					tahun_alat: '',
+				filterData: {
+					alat_name: '',
+					jenis_alat_id: null,
+					asal_pengadaan_id: null,
+					alat_year: '',
 				},
 				formFilter: [
 					{
-						id: 1,
-						label: 'ID Alat',
-						type: 'number',
-						model: 'id',
-						description: '',
-						placeholder: 'Filter ID Alat',
-						isRequired: false,
-					},
-					{
-						id: 2,
 						label: 'Nama Alat',
 						type: 'text',
-						model: 'nama',
+						model: 'alat_name',
 						description: '',
 						placeholder: 'Filter Nama Alat',
 						isRequired: false,
 					},
 					{
-						id: 3,
-						label: 'Asal Pengadaan Alat',
+						label: 'Jenis Alat',
 						type: 'select',
-						model: 'asal_alat',
+						model: 'jenis_alat_id',
 						description: '',
-						placeholder: 'Pilih Asal Pengadaan Alat',
+						placeholder: 'All',
 						isRequired: false,
 						options: [
 							{
-								id: 1,
-								name: 'Pilih Asal Pengadaan Alat',
-								value: '',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: true,
-							},
-							{
-								id: 2,
-								name: 'Barang Habis Pakai',
-								value: 'BHP',
-								disabled: false,
-							},
-							{
-								id: 3,
-								name: 'Hibah Tugas Akhir',
-								value: 'HTA',
-								disabled: false,
-							},
-							{
-								id: 4,
-								name: 'Supplier',
-								value: 'SUP',
-								disabled: false,
-							},
-							{
-								id: 5,
-								name: 'Direktorat PNJ',
-								value: 'DRP',
-								disabled: false,
-							},
-							{
-								id: 6,
-								name: 'Hibah Pemerintah',
-								value: 'HPM',
-								disabled: false,
 							},
 						],
 					},
 					{
-						id: 4,
+						label: 'Asal Pengadaan Alat',
+						type: 'select',
+						model: 'asal_pengadaan_id',
+						description: '',
+						placeholder: 'All',
+						isRequired: false,
+						options: [
+							{
+								id: null,
+								name: 'All',
+								value: null,
+								disabled: true,
+							},
+						],
+					},
+					{
 						label: 'Tahun Pengadaan Alat',
 						type: 'text',
-						model: 'tahun_alat',
+						model: 'alat_year',
 						description: '',
 						placeholder: 'Filter Tahun Alat',
 						isRequired: false,
 					},
 				],
+				listAsalPengadaanAlat: [],
+				listJenisAlat: [],
 			}
 		},
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listAlatLab.forEach((list, indexList) => {
+				this.listData.forEach((list, indexList) => {
 					let rowTable = [
-						list.id, //ID Alat
-						list.nama_alat, //Nama Alat
+						list.alat_name, //Nama Alat
 						this.jenisAlat(list.jenis_alat_id), //Jenis Alat (Ambil berdasarkan table jenis alat)
-						this.asalPengadaanAlat(list.asal_alat), //Asal Pengadaan
-						list.tahun,
+						this.asalPengadaanData(list.asal_pengadaan_id), //Asal Pengadaan
+						list.alat_year,
 						indexList, //Index Data
 					]
 
@@ -435,109 +396,105 @@
 
 				return listTable
 			},
+			mobileFilterActive() {
+				let value = this.filterPayload
+				return (
+					value.alat_name !== '' ||
+					value.jenis_id !== null ||
+					value.asal_pengadaan_id !== null ||
+					value.tahun_alat !== ''
+				)
+			},
+			filterPayload() {
+				return this.filterData
+			},
 		},
 		async mounted() {
 			await this.getListAlat()
 			await this.getListJenisAlat()
+			await this.getAsalPengadaanAlat()
 		},
 		methods: {
 			// Call API
 			async getListAlat() {
-				// alert(`Get Data Alat ${this.filterAlat.asal_alat}`)
-				this.listInfo.pageSize =
-					this.listAlatLab.length < this.listInfo.listSize
+				this.tableInfo.totalPage =
+					this.listData.length < this.tableInfo.listSize
 						? 1
-						: this.listAlatLab.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listAlatLab.length
+						: this.listData.length / this.tableInfo.listSize
+				this.tableInfo.listTotal = this.listData.length
 				// Nembak API Get List Alat
+				// alert(this.filterPayload.alat_name)
 			},
 			async getListJenisAlat() {
 				let jenisAlat = [
 					{
 						id: 1,
-						jenis: 'Smartphone',
+						jenis_name: 'Smartphone',
 					},
 					{
 						id: 2,
-						jenis: 'Laptop',
+						jenis_name: 'Laptop',
 					},
 				]
-
-				let headsJenisAlat = this.headsTable.find((head) => head.id === 3)
-				jenisAlat.forEach((alat, indexJns) => {
-					headsJenisAlat.options.push({
-						id: indexJns + 2,
-						text: alat.jenis,
-						value: alat.id,
+				this.listJenisAlat = jenisAlat
+				let headsJenisAlat = this.headsTable[1]
+				let filterJenisAlat = this.formFilter[1]
+				jenisAlat.forEach((jenis, indexJns) => {
+					let ja = {
+						id: jenis.id,
+						name: jenis.jenis_name,
+						value: jenis.id,
 						disabled: false,
-					})
+					}
+					headsJenisAlat.options.push(ja)
+					filterJenisAlat.options.push(ja)
 				})
 			},
-			submitFilterData(formInput) {
-				this.filterAlat = formInput
-				alert(this.filterAlat)
-				// this.getListAlat()
-			},
-			changeFilterValue(objFilter) {
-				this.filterAlat[objFilter.model] = objFilter.value
-			},
-			// Table Page Interaction
-			nextPage() {
-				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
-					this.listInfo.pageNo += 1
-				}
-			},
-			previousPage() {
-				if (this.listInfo.pageNo !== 1) {
-					this.listInfo.pageNo -= 1
-				}
-			},
-			jumpPage(pageNo) {
-				this.listInfo.pageNo = pageNo
-			},
-			// Value Change
-			asalPengadaanAlat(value) {
-				let asal = ''
-				switch (value) {
-					case 'BHP':
-						asal = 'Barang Habis Pakai'
-						break
-					case 'HTA':
-						asal = 'Hibah Tugas Akhir'
-						break
-					case 'SUP':
-						asal = 'Supplier'
-						break
-					case 'DRP':
-						asal = 'Direktorat PNJ'
-						break
-					case 'HPM':
-						asal = 'Hibah Pemerintah'
-						break
-					default:
-						asal = 'Tidak Diketahui'
-						break
-				}
-				return asal
-			},
-			jenisAlat(jenis_alat_id) {
-				// Nembak API List Jenis Alat berdasarkan ID
-				let listJenis = [
+			async getAsalPengadaanAlat() {
+				let asalPengadaan = [
 					{
 						id: 1,
-						jenis: 'Smartphone',
+						asal_pengadaan_name: 'Supplier',
 					},
 					{
 						id: 2,
-						jenis: 'Laptop',
+						asal_pengadaan_name: 'Pemerintah Daerah',
 					},
 				]
+				this.listAsalPengadaanAlat = asalPengadaan
 
-				return listJenis.find((jenis) => jenis.id === jenis_alat_id).jenis
+				// Simpan sebagai Options
+				let headsAsalPengadaan = this.headsTable[2]
+				let filterAsalPengadaan = this.formFilter[2]
+				asalPengadaan.forEach((asal, indexJns) => {
+					let ap = {
+						id: asal.id,
+						name: asal.asal_pengadaan_name,
+						value: asal.id,
+						disabled: false,
+					}
+					headsAsalPengadaan.options.push(ap)
+					filterAsalPengadaan.options.push(ap)
+				})
+			},
+
+			// Value Change
+			asalPengadaanData(asalPengadaanId) {
+				if (this.listAsalPengadaanAlat.length > 0) {
+					return this.listAsalPengadaanAlat.find(
+						(asal) => asal.id === asalPengadaanId
+					).asal_pengadaan_name
+				}
+			},
+			jenisAlat(jenisAlatId) {
+				if (this.listJenisAlat.length > 0) {
+					return this.listJenisAlat.find((jenis) => jenis.id === jenisAlatId)
+						.jenis_name
+				}
 			},
 			// Action Dropdown
 			lihatDetail(indexData) {
-				let data = this.listAlatLab[indexData]
+				let data = this.listData[indexData]
 				this.$router.push({ name: 'DetailAlat', params: { alat_id: 1 } })
 			},
 		},

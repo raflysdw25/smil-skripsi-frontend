@@ -4,11 +4,15 @@
 		<div class="button-group d-flex align-items-center justify-content-end">
 			<button
 				class="smil-btn smil-bg-danger mr-4"
-				@click="backToList('ListStaffLaboratorium')"
+				@click="$router.push({ name: 'ListStaffLaboratorium' })"
 			>
 				Batal
 			</button>
-			<button class="smil-btn smil-bg-primary" :disabled="!formFilled">
+			<button
+				class="smil-btn smil-bg-primary"
+				:disabled="!formFilled"
+				@click="sendAddRequest"
+			>
 				Simpan
 			</button>
 		</div>
@@ -39,6 +43,7 @@
 						:required="form.isRequired"
 						:disabled="form.disabled"
 						@keypress="formConstraint($event, form.type)"
+						@change="changeValue"
 					/>
 					<!-- END: INPUT TAG -->
 
@@ -60,6 +65,7 @@
 						id="input-with-list"
 						v-model="form.model"
 						:placeholder="form.placeholder"
+						@change="changeValue"
 					></b-form-input>
 					<b-form-datalist
 						:id="`input-list-${indexInput}`"
@@ -76,6 +82,7 @@
 						:disabled="form.disabled"
 						@closed="setNullString(form.model)"
 						:placeholder="form.placeholder"
+						@change="changeValue"
 					>
 						<template slot="icon-clear">
 							<b-icon-x-circle-fill></b-icon-x-circle-fill>
@@ -88,31 +95,58 @@
 				</div>
 			</div>
 		</section>
+
+		<!-- START: POPUP -->
+		<b-modal
+			ref="modal-popup"
+			hide-footer
+			hide-header
+			centered
+			no-close-on-backdrop
+			no-close-on-esc
+		>
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
+			/>
+		</b-modal>
+		<!-- END: POPUP -->
 	</div>
 </template>
 
 <script>
+	// Components
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert'
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
+	import ModalMixins from '@/mixins/ModalMixins'
 	export default {
 		name: 'add-staff-laboratorium',
-		mixins: [FormInputMixins],
+		mixins: [FormInputMixins, ModalMixins],
+		components: { BaseModalAlert },
 		computed: {
 			formFilled() {
+				let form = this.submitAddRequest
+
 				return (
-					this.addStaffRequest.nip !== '' &&
-					this.addStaffRequest.jabatan_id !== '' &&
-					this.addStaffRequest.tgl_mulai !== '' &&
-					this.addStaffRequest.tgl_akhir !== ''
+					form.nip !== '' &&
+					form.jabatan_id !== null &&
+					(form.active_period !== null || form.active_period !== '')
 				)
 			},
-			addStaffRequest() {
+			submitAddRequest() {
 				let form = this.formGroupList
+
+				let staff = form[0].options.find((ops) => ops.text === form[0].model)
+				let jabatan = form[2].options.find((ops) => ops.text === form[2].model)
 				return {
-					nip: form[0].model.split(' - ')[0],
-					jabatan_id: form[2].model.split(' - ')[0],
-					tgl_mulai: form[3].model,
-					tgl_akhir: form[4].model,
+					nip: staff ? staff.nip : null,
+					email: form[1].model,
+					jabatan_id: jabatan ? jabatan.id : null,
+					active_period: form[4].model,
 				}
 			},
 		},
@@ -121,11 +155,11 @@
 				formGroupList: [
 					{
 						id: 1,
-						label: 'Nomor Induk Pegawai',
+						label: 'Nama Pegawai',
 						type: 'select',
 						model: '',
 						description: '',
-						placeholder: 'Nomor Induk Pegawai',
+						placeholder: 'Nama Pegawai',
 						isRequired: true,
 						disabled: false,
 						options: [],
@@ -178,28 +212,21 @@
 		async mounted() {
 			await this.getListStaffJurusan()
 			await this.getListJabatanAdmin()
+			// this.showAlert(false, false, 'Alert Berhasil')
 		},
 		watch: {},
 		methods: {
-			backToList(routeTo) {
-				let confirmCancel = confirm(
-					'Apakah anda yakin ingin membatalkan tambah staff laboratorium?'
-				)
-				if (confirmCancel) {
-					this.$router.push({ name: routeTo })
-				}
-			},
 			async getListStaffJurusan() {
 				let list = [
 					{
 						nip: '3271032506990001',
-						text: '3271032506990001 - Muhammad Rafly Sadewa',
-						value: '3271032506990001 - Muhammad Rafly Sadewa',
+						email: 'raflysdw25@gmail.com',
+						text: 'Muhammad Rafly Sadewa',
 					},
 					{
 						nip: '3271022109970901',
-						text: '3271022109970901 - Bima Anggara Pratama',
-						value: '3271022109970901 - Bima Anggara Pratama',
+						email: 'prtmanggara@gmail.com',
+						text: 'Bima Anggara Pratama',
 					},
 				]
 				this.formGroupList[0].options = list
@@ -208,22 +235,38 @@
 				let list = [
 					{
 						id: 1,
-						text: `${1} - Kepala Laboratorium`,
-						value: `${1} - Kepala Laboratorium`,
+						text: `Kepala Laboratorium`,
+						// value: `Kepala Laboratorium`,
 					},
 					{
 						id: 2,
-						text: `${2} - Pranata Laboratorium Pendidikan`,
-						value: `${2} - Pranata Laboratorium Pendidikan`,
+						text: `Pranata Laboratorium Pendidikan`,
+						// value: `Pranata Laboratorium Pendidikan`,
 					},
 				]
 				// let list = ['TMD', 'TMJ', 'TI', 'TKJ']
 				this.formGroupList[2].options = list
 			},
+			sendAddRequest() {},
 			// Form Interactions
+			changeValue() {
+				let form = this.formGroupList
+				if (form[0].model !== '') {
+					let staff = form[0].options.find((ops) => ops.text === form[0].model)
+					form[1].model = staff.email
+				}
+			},
 			setNullString(form) {
 				form.model = ''
 			},
+		},
+		beforeRouteLeave(to, from, next) {
+			let confirmCancel = confirm(
+				'Apakah anda yakin ingin membatalkan tambah staff laboratorium?'
+			)
+			if (confirmCancel) {
+				next()
+			}
 		},
 	}
 </script>
@@ -252,7 +295,10 @@
 				border-color: #696969;
 			}
 
-			height: 40px;
+			height: 50px;
+		}
+		.mx-input {
+			height: 50px;
 		}
 	}
 </style>

@@ -4,7 +4,7 @@
 		<div class="button-group d-flex">
 			<button
 				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openPopup('filter')"
+				@click="openPopup('filter-data')"
 			>
 				Filter Data
 			</button>
@@ -18,7 +18,7 @@
 					<tr>
 						<th
 							v-for="(head, indexHds) in headsTable"
-							:key="`header-table-${head.id}-${indexHds}`"
+							:key="`header-table-${indexHds}`"
 						>
 							{{ head.label }}
 							<base-filter
@@ -26,7 +26,7 @@
 								@changeValue="changeFilterValue"
 								@filterAction="getLaporanKerusakan"
 								:filter_type="head.filter_type"
-								:default_value="filterLaporanKerusakan[head.model]"
+								:default_value="filterData[head.model]"
 								:placeholder="head.placeholder"
 								:options="head.options"
 								:modelFilter="head.model"
@@ -34,7 +34,7 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listLaporanKerusakan.length === 0">
+				<tbody class="smil-tbody" v-if="listData.length === 0">
 					<tr>
 						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
@@ -98,7 +98,7 @@
 						<td
 							:colspan="Object.keys(headsTable).length"
 							:style="{
-								'padding-bottom': `${listLaporanKerusakan.length * 50}px`,
+								'padding-bottom': `${listData.length * 50}px`,
 							}"
 						></td>
 					</tr>
@@ -110,49 +110,51 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{
-					`${listLaporanKerusakan.length} dari ${listLaporanKerusakan.length} Data`
-				}}
+				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
 					<li>
 						<span
-							:style="listInfo.pageNo === 1 ? '' : 'cursor: pointer'"
+							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === 1"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
 								iconName="arrow-left"
 								:size="24"
-								:colorIcon="listInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
+								:colorIcon="tableInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
 							/>
 						</span>
 					</li>
-					<li v-for="num in listInfo.pageSize" :key="num">
+					<li v-for="num in tableInfo.totalPage" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
 							@click="jumpPage(num)"
-							:class="[num === listInfo.pageNo ? 'active' : '']"
+							:class="[num === tableInfo.pageNo ? 'active' : '']"
 							>{{ num }}
 						</a>
 					</li>
 					<li>
 						<span
 							:style="
-								listInfo.pageSize === listInfo.pageNo ? '' : 'cursor: pointer'
+								tableInfo.totalPage === tableInfo.pageNo
+									? ''
+									: 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === listInfo.pageSize"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === tableInfo.totalPage"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									listInfo.pageNo === listInfo.pageSize ? `#C5C5C5` : `#101939`
+									tableInfo.pageNo === tableInfo.totalPage
+										? `#C5C5C5`
+										: `#101939`
 								"
 							/>
 						</span>
@@ -161,13 +163,14 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="listInfo.listSize">
-					<option value="5">5</option>
-					<option value="10">10</option>
-					<option value="15">15</option>
-					<option value="20">20</option>
-					<option value="25">25</option>
-					<option value="30">30</option>
+				<select class="custom-select" v-model="tableInfo.listSize">
+					<option
+						:value="count"
+						v-for="count in tableCount"
+						:key="`page-size-${count}`"
+					>
+						{{ count }}
+					</option>
 				</select>
 			</div>
 		</div>
@@ -186,12 +189,13 @@
 			<!-- START: MODAL FILTER DATA FOR MOBILE -->
 
 			<form-filter-data
-				v-if="baseModalType === 'filter'"
-				title="Filter Data Alat"
-				:closePopup="closePopup"
-				:formInput="filterLaporanKerusakan"
+				v-if="baseModalType === 'filter-data'"
+				title="Filter Data Laporan Kerusakan"
+				:closeModal="closePopup"
+				:formInput="filterData"
 				:form="formFilter"
-				@submitFilter="submitFilterData"
+				@submitFilter="getLaporanKerusakan"
+				:activeButton="filterActive"
 			/>
 			<!-- END: MODAL FILTER DATA FOR MOBILE -->
 			<base-modal-add
@@ -227,6 +231,7 @@
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
+	import TableMixins from '@/mixins/TableMixins'
 	export default {
 		name: 'list-kerusakan-alat-lab',
 		components: {
@@ -236,28 +241,25 @@
 			BaseModalAdd,
 			BaseModalAlert,
 		},
-		mixins: [FormInputMixins, ModalMixins],
+		mixins: [FormInputMixins, ModalMixins, TableMixins],
 		data() {
 			return {
 				headsTable: [
 					{
-						id: 1,
 						label: 'Tanggal Pelaporan',
 						filter_type: 'date',
 						placeholder: 'Filter Tanggal Pelaporan',
-						model: 'tgl_lapor',
+						model: 'report_date',
 						options: null,
 					},
 					{
-						id: 2,
-						label: 'Nama Pelapor',
+						label: 'Nomor Induk Pelapor',
 						filter_type: 'search',
-						placeholder: 'Filter Nama Pelapor',
-						model: 'nama',
+						placeholder: 'Filter Nomor Induk Pelapor',
+						model: 'nomor_induk',
 						options: null,
 					},
 					{
-						id: 3,
 						label: 'Barcode Alat',
 						filter_type: 'search',
 						placeholder: 'Filter Barcode Alat',
@@ -265,40 +267,38 @@
 						options: null,
 					},
 					{
-						id: 4,
 						label: 'Kronologi',
 						filter_type: 'search',
-						placeholder: 'Filter Tahun Pengadaan',
-						model: 'tahun_alat',
+						placeholder: 'Filter Kronologi',
+						model: 'chronology',
 						options: null,
 					},
 					{
-						id: 5,
 						label: 'Status Laporan',
 						filter_type: 'select',
-						model: 'status_laporan',
+						model: 'report_status',
 						options: [
 							{
-								id: 1,
-								text: 'All',
-								value: '',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 							{
-								id: 2,
-								text: 'Menunggu Tindakan',
+								id: 1,
+								name: 'Menunggu Tindakan',
 								value: 1,
 								disabled: false,
 							},
 							{
-								id: 3,
-								text: 'Diperbaiki',
+								id: 2,
+								name: 'Diperbaiki',
 								value: 2,
 								disabled: false,
 							},
 							{
-								id: 4,
-								text: 'Tidak Diperbaiki',
+								id: 3,
+								name: 'Tidak Diperbaiki',
 								value: 3,
 								disabled: false,
 							},
@@ -306,7 +306,7 @@
 					},
 					'',
 				],
-				listLaporanKerusakan: [
+				listData: [
 					{
 						laporan_id: 1,
 						report_date: new Date().toString(),
@@ -324,93 +324,80 @@
 						deleted_at: null,
 					},
 				],
-				listInfo: {
-					listSize: 5,
-					listTotal: 0,
-					pageNo: 1,
-					pageSize: 10,
-				},
-				filterLaporanKerusakan: {
-					tgl_lapor: '',
-					nama: '',
+				filterData: {
+					report_date: '',
+					nomor_induk: '',
 					barcode_alat: '',
-					kronologi: '',
-					status_laporan: '',
+					chronology: '',
+					report_status: null,
 				},
 				formFilter: [
 					{
-						id: 1,
-						label: 'ID Alat',
-						type: 'number',
-						model: 'id',
+						label: 'Tanggal Laporan',
+						type: 'date',
+						model: 'report_date',
 						description: '',
-						placeholder: 'Filter ID Alat',
+						placeholder: 'Filter Tanggal Laporan',
 						isRequired: false,
 					},
 					{
-						id: 2,
-						label: 'Nama Alat',
+						label: 'Nomor Induk Pelapor',
 						type: 'text',
-						model: 'nama',
+						model: 'nomor_induk',
 						description: '',
-						placeholder: 'Filter Nama Alat',
+						placeholder: 'Filter Nomor Induk Pelapor',
+						isRequired: false,
+						options: null,
+					},
+					{
+						label: 'Barcode Alat',
+						type: 'text',
+						model: 'barcode_alat',
+						description: '',
+						placeholder: 'Filter Barcode Alat',
 						isRequired: false,
 					},
 					{
-						id: 3,
-						label: 'Asal Pengadaan Alat',
-						type: 'select',
-						model: 'asal_alat',
+						label: 'Kronologi',
+						type: 'text',
+						model: 'chronology',
 						description: '',
-						placeholder: 'Pilih Asal Pengadaan Alat',
+						placeholder: 'Filter Kronologi',
+						isRequired: false,
+					},
+					{
+						label: 'Status Laporan',
+						type: 'select',
+						model: 'report_status',
+						description: '',
+						placeholder: 'Filter Status Laporan',
 						isRequired: false,
 						options: [
 							{
+								id: null,
+								name: 'All',
+								value: null,
+								disabled: false,
+							},
+							{
 								id: 1,
-								name: 'Pilih Asal Pengadaan Alat',
-								value: '',
-								disabled: true,
+								name: 'Menunggu Tindakan',
+								value: 1,
+								disabled: false,
 							},
 							{
 								id: 2,
-								name: 'Barang Habis Pakai',
-								value: 'BHP',
+								name: 'Diperbaiki',
+								value: 2,
 								disabled: false,
 							},
 							{
 								id: 3,
-								name: 'Hibah Tugas Akhir',
-								value: 'HTA',
-								disabled: false,
-							},
-							{
-								id: 4,
-								name: 'Supplier',
-								value: 'SUP',
-								disabled: false,
-							},
-							{
-								id: 5,
-								name: 'Direktorat PNJ',
-								value: 'DRP',
-								disabled: false,
-							},
-							{
-								id: 6,
-								name: 'Hibah Pemerintah',
-								value: 'HPM',
+								name: 'Tidak Diperbaiki',
+								value: 3,
 								disabled: false,
 							},
 						],
-					},
-					{
-						id: 4,
-						label: 'Tahun Pengadaan Alat',
-						type: 'text',
-						model: 'tahun_alat',
-						description: '',
-						placeholder: 'Filter Tahun Alat',
-						isRequired: false,
 					},
 				],
 				formAction: [
@@ -458,13 +445,13 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listLaporanKerusakan.forEach((list, indexList) => {
+				this.listData.forEach((list, indexList) => {
 					let nama_pelapor =
 						list.nim_mahasiswa !== null
 							? list.mahasiswa_fullname
 							: list.staff_fullname
 					let rowTable = [
-						list.report_date, //Tanggal Laporan
+						this.formatDate(list.report_date, 'DD-MM-YYYY HH:mm'), //Tanggal Laporan
 						nama_pelapor, //Nama Pelapor
 						list.barcode_alat, //Barcode Alat
 						list.chronology,
@@ -476,6 +463,19 @@
 				})
 
 				return listTable
+			},
+			filterPayload() {
+				return this.filterData
+			},
+			filterActive() {
+				let filter = this.filterPayload
+				return (
+					filter.report_date !== '' ||
+					filter.nomor_induk !== '' ||
+					filter.barcode_alat !== '' ||
+					filter.chronology !== '' ||
+					filter.report_status !== null
+				)
 			},
 			formTindakanFill() {
 				return this.formAction[2].model !== ''
@@ -497,37 +497,17 @@
 		methods: {
 			// Call API
 			async getLaporanKerusakan() {
-				// alert(`Get Data Alat ${this.filterLaporanKerusakan.asal_alat}`)
-				this.listInfo.pageSize =
-					this.listLaporanKerusakan.length < this.listInfo.listSize
+				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
+				this.tableInfo.totalPage =
+					this.listData.length < this.tableInfo.listSize
 						? 1
-						: this.listLaporanKerusakan.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listLaporanKerusakan.length
+						: this.listData.length / this.tableInfo.listSize
+				this.tableInfo.listTotal = this.listData.length
 				// Nembak API Get List Alat
+				// alert(this.filterPayload.report_date)
 			},
 			sendTindakanLaporan() {},
-			submitFilterData(formInput) {
-				this.filterLaporanKerusakan = formInput
-				alert(this.filterLaporanKerusakan)
-				// this.getLaporanKerusakan()
-			},
-			changeFilterValue(objFilter) {
-				this.filterLaporanKerusakan[objFilter.model] = objFilter.value
-			},
-			// Table Page Interaction
-			nextPage() {
-				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
-					this.listInfo.pageNo += 1
-				}
-			},
-			previousPage() {
-				if (this.listInfo.pageNo !== 1) {
-					this.listInfo.pageNo -= 1
-				}
-			},
-			jumpPage(pageNo) {
-				this.listInfo.pageNo = pageNo
-			},
+
 			// Value Change
 			statusLaporan(status_id) {
 				let listStatusLaporan = [
@@ -551,7 +531,7 @@
 				return listStatusLaporan.find((status) => status.id === status_id)
 			},
 			tindakLaporan(row) {
-				this.selected_data = this.listLaporanKerusakan[row]
+				this.selected_data = this.listData[row]
 				this.formAction[1].model =
 					this.selected_data.nim_mahasiswa !== null
 						? this.selected_data.mahasiswa_fullname
@@ -560,7 +540,7 @@
 			},
 			// Action Dropdown
 			lihatDetail(indexData) {
-				let data = this.listLaporanKerusakan[indexData]
+				let data = this.listData[indexData]
 				console.log(data)
 			},
 		},

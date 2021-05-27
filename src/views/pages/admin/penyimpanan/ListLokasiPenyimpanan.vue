@@ -7,7 +7,7 @@
 			</button>
 			<button
 				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openPopup('filter')"
+				@click="openPopup('filter-data')"
 			>
 				Filter Data
 			</button>
@@ -21,7 +21,7 @@
 					<tr>
 						<th
 							v-for="(head, indexHds) in headsTable"
-							:key="`header-table-${head.id}-${indexHds}`"
+							:key="`header-table-${indexHds}`"
 						>
 							{{ head.label }}
 							<base-filter
@@ -29,7 +29,7 @@
 								@changeValue="changeFilterValue"
 								@filterAction="getListLokasi"
 								:filter_type="head.filter_type"
-								:default_value="filterLokasi[head.model]"
+								:default_value="filterData[head.model]"
 								:placeholder="head.placeholder"
 								:options="head.options"
 								:modelFilter="head.model"
@@ -37,7 +37,7 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listLokasi.length === 0">
+				<tbody class="smil-tbody" v-if="listData.length === 0">
 					<tr>
 						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
@@ -75,6 +75,9 @@
 										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 									</template>
 									<b-dropdown-item>
+										Lihat QR Code
+									</b-dropdown-item>
+									<b-dropdown-item>
 										Cetak QR Code
 									</b-dropdown-item>
 									<b-dropdown-item>
@@ -98,7 +101,7 @@
 					<tr>
 						<td
 							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listLokasi.length * 50}px` }"
+							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
 						></td>
 					</tr>
 				</tbody>
@@ -109,47 +112,51 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listLokasi.length} dari ${listLokasi.length} Data` }}
+				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
 					<li>
 						<span
-							:style="listInfo.pageNo === 1 ? '' : 'cursor: pointer'"
+							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === 1"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
 								iconName="arrow-left"
 								:size="24"
-								:colorIcon="listInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
+								:colorIcon="tableInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
 							/>
 						</span>
 					</li>
-					<li v-for="num in listInfo.pageSize" :key="num">
+					<li v-for="num in tableInfo.totalPage" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
 							@click="jumpPage(num)"
-							:class="[num === listInfo.pageNo ? 'active' : '']"
+							:class="[num === tableInfo.pageNo ? 'active' : '']"
 							>{{ num }}
 						</a>
 					</li>
 					<li>
 						<span
 							:style="
-								listInfo.pageSize === listInfo.pageNo ? '' : 'cursor: pointer'
+								tableInfo.totalPage === tableInfo.pageNo
+									? ''
+									: 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === listInfo.pageSize"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === tableInfo.totalPage"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									listInfo.pageNo === listInfo.pageSize ? `#C5C5C5` : `#101939`
+									tableInfo.pageNo === tableInfo.totalPage
+										? `#C5C5C5`
+										: `#101939`
 								"
 							/>
 						</span>
@@ -158,29 +165,18 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="listInfo.listSize">
-					<option value="5">5</option>
-					<option value="10">10</option>
-					<option value="15">15</option>
-					<option value="20">20</option>
-					<option value="25">25</option>
-					<option value="30">30</option>
+				<select class="custom-select" v-model="tableInfo.listSize">
+					<option
+						:value="count"
+						v-for="count in tableCount"
+						:key="`page-size-${count}`"
+					>
+						{{ count }}
+					</option>
 				</select>
 			</div>
 		</div>
 		<!-- END: PAGINATION INFO SECTION -->
-
-		<!-- START: MODAL FILTER DATA FOR MOBILE -->
-		<!-- <b-modal
-			ref="filterData"
-			no-close-on-backdrop
-			no-close-on-esc
-			hide-header
-			hide-footer
-			centered
-		>
-		</b-modal> -->
-		<!-- END: MODAL FILTER DATA FOR MOBILE -->
 
 		<!-- START: MODAL POPUP -->
 		<b-modal
@@ -209,12 +205,12 @@
 			/>
 
 			<form-filter-data
-				v-if="baseModalType === 'filter'"
+				v-if="baseModalType === 'filter-data'"
 				title="Filter Data Alat"
 				:closeModal="closePopup"
-				:formInput="filterLokasi"
+				:formInput="filterData"
 				:form="formFilter"
-				@submitFilter="submitFilterData"
+				@submitFilter="getListLokasi"
 			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
@@ -231,10 +227,11 @@
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
+	import TableMixins from '@/mixins/TableMixins'
 
 	export default {
 		name: 'list-lokasi-penyimpanan',
-		mixins: [ModalMixins],
+		mixins: [ModalMixins, TableMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
@@ -246,135 +243,67 @@
 			return {
 				headsTable: [
 					{
-						id: 1,
-						label: 'ID Lokasi',
-						filter_type: 'search',
-						placeholder: 'Filter ID Lokasi',
-						model: 'id',
-						options: null,
-					},
-					{
-						id: 2,
 						label: 'Nama Lokasi',
 						filter_type: 'search',
 						placeholder: 'Filter Nama Lokasi',
-						model: 'nama',
+						model: 'lokasi_name',
 						options: null,
 					},
 					{
-						id: 3,
+						label: 'Kapasitas Total',
+						filter_type: 'search',
+						placeholder: 'Filter Kapasitas Total',
+						model: 'total_capacity',
+						options: null,
+					},
+					{
 						label: 'Kapasitas Tersedia',
 						filter_type: 'search',
 						placeholder: 'Filter Kapasitas Tersedia',
-						model: 'kapasitas',
+						model: 'available_capacity',
 						options: null,
 					},
-					{
-						id: 4,
-						label: 'QR Code Lokasi',
-						filter_type: 'search',
-						placeholder: 'Filter QR Code Lokasi',
-						model: 'qrcode',
-						options: null,
-					},
+
 					'',
 				],
-				listLokasi: [
+				listData: [
 					{
-						lokasi_id: 1,
-						location_name: 'Lemari A',
+						id: 1,
+						lokasi_name: 'Lemari A',
 						total_capacity: 100,
 						available_capacity: 100,
 						stored_capacity: 0,
 						path_qrcode: '',
 					},
 				],
-				listInfo: {
-					listSize: 5,
-					listTotal: 0,
-					pageNo: 1,
-					pageSize: 10,
-				},
-				filterLokasi: {
-					id: '',
-					nama: '',
-					kapasitas: '',
-					jenis: '',
-					qrcode: '',
+				filterData: {
+					lokasi_name: '',
+					total_capacity: '',
+					available_capacity: '',
 				},
 				formFilter: [
 					{
-						id: 1,
-						label: 'ID Alat',
+						label: 'Nama Lokasi',
+						type: 'text',
+						model: 'lokasi_name',
+						description: '',
+						placeholder: 'Filter Nama Lokasi',
+						isRequired: false,
+					},
+					{
+						label: 'Kapasistas Total',
 						type: 'number',
-						model: 'id',
+						model: 'total_capacity',
 						description: '',
-						placeholder: 'Filter ID Alat',
+						placeholder: 'Filter Kapasistas Total',
 						isRequired: false,
 					},
 					{
-						id: 2,
-						label: 'Nama Alat',
-						type: 'text',
-						model: 'nama',
+						label: 'Kapasistas Tersedia',
+						type: 'number',
+						model: 'available_capacity',
 						description: '',
-						placeholder: 'Filter Nama Alat',
-						isRequired: false,
-					},
-					{
-						id: 3,
-						label: 'Asal Pengadaan Alat',
-						type: 'select',
-						model: 'asal_alat',
-						description: '',
-						placeholder: 'Pilih Asal Pengadaan Alat',
-						isRequired: false,
-						options: [
-							{
-								id: 1,
-								name: 'Pilih Asal Pengadaan Alat',
-								value: '',
-								disabled: true,
-							},
-							{
-								id: 2,
-								name: 'Barang Habis Pakai',
-								value: 'BHP',
-								disabled: false,
-							},
-							{
-								id: 3,
-								name: 'Hibah Tugas Akhir',
-								value: 'HTA',
-								disabled: false,
-							},
-							{
-								id: 4,
-								name: 'Supplier',
-								value: 'SUP',
-								disabled: false,
-							},
-							{
-								id: 5,
-								name: 'Direktorat PNJ',
-								value: 'DRP',
-								disabled: false,
-							},
-							{
-								id: 6,
-								name: 'Hibah Pemerintah',
-								value: 'HPM',
-								disabled: false,
-							},
-						],
-					},
-					{
-						id: 4,
-						label: 'Tahun Pengadaan Alat',
-						type: 'text',
-						model: 'tahun_alat',
-						description: '',
-						placeholder: 'Filter Tahun Alat',
+						placeholder: 'Filter Kapasistas Tersedia',
 						isRequired: false,
 					},
 				],
@@ -416,12 +345,11 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listLokasi.forEach((list, indexList) => {
+				this.listData.forEach((list, indexList) => {
 					let rowTable = [
-						list.lokasi_id, //ID Lokasi
-						list.location_name, //Nama Lokasi
+						list.lokasi_name, //Nama Lokasi
 						list.total_capacity, //kapasitas
-						list.path_qrcode, //qrcode
+						list.available_capacity, //Kapasitas tersedia
 						'',
 					]
 
@@ -443,6 +371,20 @@
 				let submit = this.submitAddRequest
 				return submit.location_name !== '' && submit.total_capacity !== null
 			},
+			filterPayload() {
+				let filter = this.filterData
+				let total =
+					filter.total_capacity === '' ? null : parseInt(filter.total_capacity)
+				let available =
+					filter.available_capacity === ''
+						? null
+						: parseInt(filter.available_capacity)
+				return {
+					lokasi_name: filter.lokasi_name,
+					total_capacity: total,
+					available_capacity: available,
+				}
+			},
 		},
 		async mounted() {
 			await this.getListLokasi()
@@ -451,37 +393,16 @@
 		methods: {
 			// Call API
 			async getListLokasi() {
-				// alert(`Get Data Alat ${this.filterLokasi.asal_alat}`)
-				this.listInfo.pageSize =
-					this.listLokasi.length < this.listInfo.listSize
+				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
+				this.tableInfo.totalPage =
+					this.listData.length < this.tableInfo.listSize
 						? 1
-						: this.listLokasi.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listLokasi.length
+						: this.listData.length / this.tableInfo.listSize
+				this.tableInfo.listTotal = this.listData.length
 				// Nembak API Get List Alat
 			},
 			async sendAddLokasi() {},
-			submitFilterData(formInput) {
-				this.filterLokasi = formInput
-				alert(this.filterLokasi)
-				// this.getListLokasi()
-			},
-			changeFilterValue(objFilter) {
-				this.filterLokasi[objFilter.model] = objFilter.value
-			},
-			// Table Page Interaction
-			nextPage() {
-				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
-					this.listInfo.pageNo += 1
-				}
-			},
-			previousPage() {
-				if (this.listInfo.pageNo !== 1) {
-					this.listInfo.pageNo -= 1
-				}
-			},
-			jumpPage(pageNo) {
-				this.listInfo.pageNo = pageNo
-			},
+
 			// Value Change
 
 			// Action Dropdown

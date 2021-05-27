@@ -4,7 +4,7 @@
 		<div class="button-group d-flex align-items-center justify-content-end">
 			<button
 				class="smil-btn smil-bg-danger mr-4"
-				@click="$router.push({ name: 'ListStaffJurusan' })"
+				@click="$router.push({ name: 'ListCivitasJurusan' })"
 			>
 				Batal
 			</button>

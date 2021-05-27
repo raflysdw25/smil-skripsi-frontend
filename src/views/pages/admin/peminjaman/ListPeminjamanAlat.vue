@@ -4,9 +4,12 @@
 		<div class="button-group d-flex">
 			<button
 				class="smil-btn smil-bg-info d-lg-none d-sm-block"
-				@click="openPopup('filter')"
+				@click="openPopup('filter-data')"
 			>
 				Filter Data
+			</button>
+			<button class="smil-btn smil-bg-secondary" @click="openPopup('ruangan')">
+				Ruangan Kampus
 			</button>
 		</div>
 		<!-- END: BUTTON GROUP -->
@@ -18,7 +21,7 @@
 					<tr>
 						<th
 							v-for="(head, indexHds) in headsTable"
-							:key="`header-table-${head.id}-${indexHds}`"
+							:key="`header-table-${indexHds}`"
 						>
 							{{ head.label }}
 							<base-filter
@@ -26,7 +29,7 @@
 								@changeValue="changeFilterValue"
 								@filterAction="getListPeminjaman"
 								:filter_type="head.filter_type"
-								:default_value="filterLokasi[head.model]"
+								:default_value="filterData[head.model]"
 								:placeholder="head.placeholder"
 								:options="head.options"
 								:modelFilter="head.model"
@@ -34,7 +37,7 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listPeminjaman.length === 0">
+				<tbody class="smil-tbody" v-if="listData.length === 0">
 					<tr>
 						<td :colspan="headsTable.length" class="text-center empty-table">
 							<icon-component
@@ -106,7 +109,7 @@
 					<tr>
 						<td
 							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listPeminjaman.length * 50}px` }"
+							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
 						></td>
 					</tr>
 				</tbody>
@@ -117,47 +120,51 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listPeminjaman.length} dari ${listPeminjaman.length} Data` }}
+				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
 					<li>
 						<span
-							:style="listInfo.pageNo === 1 ? '' : 'cursor: pointer'"
+							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === 1"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
 								iconName="arrow-left"
 								:size="24"
-								:colorIcon="listInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
+								:colorIcon="tableInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
 							/>
 						</span>
 					</li>
-					<li v-for="num in listInfo.pageSize" :key="num">
+					<li v-for="num in tableInfo.totalPage" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
 							@click="jumpPage(num)"
-							:class="[num === listInfo.pageNo ? 'active' : '']"
+							:class="[num === tableInfo.pageNo ? 'active' : '']"
 							>{{ num }}
 						</a>
 					</li>
 					<li>
 						<span
 							:style="
-								listInfo.pageSize === listInfo.pageNo ? '' : 'cursor: pointer'
+								tableInfo.totalPage === tableInfo.pageNo
+									? ''
+									: 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === listInfo.pageSize"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === tableInfo.totalPage"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									listInfo.pageNo === listInfo.pageSize ? `#C5C5C5` : `#101939`
+									tableInfo.pageNo === tableInfo.totalPage
+										? `#C5C5C5`
+										: `#101939`
 								"
 							/>
 						</span>
@@ -166,13 +173,13 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="listInfo.listSize">
-					<option value="5">5</option>
-					<option value="10">10</option>
-					<option value="15">15</option>
-					<option value="20">20</option>
-					<option value="25">25</option>
-					<option value="30">30</option>
+				<select class="custom-select" v-model="tableInfo.listSize">
+					<option
+						:value="count"
+						v-for="count in tableCount"
+						:key="`page-size-${count}`"
+						>{{ count }}</option
+					>
 				</select>
 			</div>
 		</div>
@@ -186,6 +193,7 @@
 			centered
 			no-close-on-backdrop
 			no-close-on-esc
+			:size="baseModalType === 'ruangan' ? 'lg' : ''"
 		>
 			<base-modal-alert
 				v-if="baseModalType === 'alert'"
@@ -204,12 +212,19 @@
 			/>
 
 			<form-filter-data
-				v-if="baseModalType === 'filter'"
-				title="Filter Data Alat"
+				v-if="baseModalType === 'filter-data'"
+				title="Filter Data Peminjaman"
 				:closeModal="closePopup"
-				:formInput="filterLokasi"
+				:formInput="filterData"
 				:form="formFilter"
-				@submitFilter="submitFilterData"
+				@submitFilter="getListPeminjaman"
+			/>
+
+			<base-modal-list-support
+				v-if="baseModalType === 'ruangan'"
+				title="Ruangan Kampus"
+				supportType="ruangan"
+				:closeModal="closePopup"
 			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
@@ -223,212 +238,155 @@
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
 	import BaseModalApprove from '@/components/BaseModal/BaseModalApprove.vue'
+	import BaseModalListSupport from '@/components/BaseModal/BaseModalListSupport.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
+	import TableMixins from '@/mixins/TableMixins'
 	export default {
 		name: 'list-peminjaman-alat',
-		mixins: [ModalMixins],
+		mixins: [ModalMixins, TableMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
 			BaseFilter,
 			BaseModalAlert,
 			BaseModalApprove,
+			BaseModalListSupport,
 		},
 		data() {
 			return {
 				headsTable: [
 					{
-						id: 1,
 						label: 'Waktu Peminjaman',
 						filter_type: 'date',
 						placeholder: 'Filter Waktu Peminjaman',
-						model: 'tgl_peminjaman',
+						model: 'created_at',
 						options: null,
 					},
 					{
-						id: 2,
 						label: 'Waktu Pengembalian',
 						filter_type: 'date',
 						placeholder: 'Filter Waktu Pengembalian',
-						model: 'tgl_pengembalian',
+						model: 'real_return_date',
 						options: null,
 					},
 					{
-						id: 3,
-						label: 'Nama Peminjam',
+						label: 'Nomor Induk Peminjam',
 						filter_type: 'search',
-						placeholder: 'Filter Nama Peminjam',
-						model: 'kapasitas',
+						placeholder: 'Filter Nomor Induk Peminjam',
+						model: 'nomor_induk',
 						options: null,
 					},
 					{
-						id: 4,
 						label: 'Status Peminjaman',
 						filter_type: 'select',
 						placeholder: 'Filter Status Peminjaman',
-						model: 'status',
+						model: 'pjm_status',
 						options: [
 							{
-								text: 'All',
-								value: '',
+								name: 'All',
+								value: null,
 							},
 							{
-								text: 'Butuh Persetujuan',
+								name: 'Butuh Persetujuan',
 								value: 1,
 							},
 							{
-								text: 'Berhasil',
+								name: 'Berhasil',
 								value: 2,
 							},
 							{
-								text: 'Ditolak',
+								name: 'Ditolak',
 								value: 3,
 							},
 							{
-								text: 'Belum Kembali',
+								name: 'Belum Kembali',
 								value: 4,
 							},
 							{
-								text: 'Selesai',
+								name: 'Selesai',
 								value: 5,
 							},
 						],
 					},
 					'',
 				],
-				listPeminjaman: [
+				listData: [
 					{
-						pjm_id: 1,
-						tgl_pinjam: new Date(),
-						tgl_pengembalian: new Date(),
-						nama: 'Muhammad Rafly Sadewa',
-						status_pinjam: 2,
+						id: 1,
+						created_at: new Date(),
+						real_return_date: new Date(),
+						nomor_induk: 'Muhammad Rafly Sadewa',
+						pjm_status: 2,
 					},
 				],
-				listInfo: {
-					listSize: 5,
-					listTotal: 0,
-					pageNo: 1,
-					pageSize: 10,
-				},
-				filterLokasi: {
-					tgl_pinjam: '',
-					tgl_pengembalian: '',
-					nama: '',
-					status: '',
+				filterData: {
+					created_at: '',
+					real_return_date: '',
+					nomor_induk: '',
+					pjm_status: null,
 				},
 				formFilter: [
 					{
-						id: 1,
-						label: 'ID Alat',
-						type: 'number',
-						model: 'id',
+						label: 'Tanggal Peminjaman Alat',
+						type: 'date',
+						model: 'created_at',
 						description: '',
-						placeholder: 'Filter ID Alat',
+						placeholder: 'Filter Tanggal Peminjaman Alat',
 						isRequired: false,
 					},
 					{
-						id: 2,
-						label: 'Nama Alat',
+						label: 'Tanggal Pengembalian Alat',
+						type: 'date',
+						model: 'real_return_date',
+						description: '',
+						placeholder: 'Filter Tanggal Pengembalian Alat',
+						isRequired: false,
+					},
+					{
+						label: 'Nomor Induk Peminjam',
 						type: 'text',
-						model: 'nama',
+						model: 'nomor_induk',
 						description: '',
-						placeholder: 'Filter Nama Alat',
+						placeholder: 'Filter Nomor Induk Peminjam',
 						isRequired: false,
 					},
 					{
-						id: 3,
-						label: 'Asal Pengadaan Alat',
+						label: 'Status Peminjaman',
 						type: 'select',
-						model: 'asal_alat',
+						model: 'pjm_status',
 						description: '',
-						placeholder: 'Pilih Asal Pengadaan Alat',
+						placeholder: 'Filter Status Peminjaman',
 						isRequired: false,
 						options: [
 							{
-								id: 1,
-								name: 'Pilih Asal Pengadaan Alat',
-								value: '',
-								disabled: true,
+								name: 'All',
+								value: null,
 							},
 							{
-								id: 2,
-								name: 'Barang Habis Pakai',
-								value: 'BHP',
-								disabled: false,
+								name: 'Butuh Persetujuan',
+								value: 1,
 							},
 							{
-								id: 3,
-								name: 'Hibah Tugas Akhir',
-								value: 'HTA',
-								disabled: false,
+								name: 'Berhasil',
+								value: 2,
 							},
 							{
-								id: 4,
-								name: 'Supplier',
-								value: 'SUP',
-								disabled: false,
+								name: 'Ditolak',
+								value: 3,
 							},
 							{
-								id: 5,
-								name: 'Direktorat PNJ',
-								value: 'DRP',
-								disabled: false,
+								name: 'Belum Kembali',
+								value: 4,
 							},
 							{
-								id: 6,
-								name: 'Hibah Pemerintah',
-								value: 'HPM',
-								disabled: false,
+								name: 'Selesai',
+								value: 5,
 							},
 						],
 					},
-					{
-						id: 4,
-						label: 'Tahun Pengadaan Alat',
-						type: 'text',
-						model: 'tahun_alat',
-						description: '',
-						placeholder: 'Filter Tahun Alat',
-						isRequired: false,
-					},
 				],
-				formAdd: [
-					{
-						id: 1,
-						label: 'Nama Lokasi Penyimpanan',
-						type: 'text',
-						disabled: false,
-						model: '',
-						canAddValue: false,
-					},
-					{
-						id: 2,
-						label: 'Kapasitas Penyimpanan',
-						type: 'number',
-						disabled: false,
-						model: '',
-						canAddValue: false,
-					},
-					{
-						id: 3,
-						label: 'Jenis Alat Disimpan',
-						type: 'select',
-						options: [
-							{
-								id: 1,
-								text: 'Pilih Jenis Alat Disimpan',
-								value: '',
-								disabled: true,
-							},
-						],
-						model: [{ id: 1, value: '', disabled: false }],
-						canAddValue: true,
-					},
-				],
-				buttonActive: false,
 				selected_pjm: {},
 				isApprove: '',
 			}
@@ -436,12 +394,12 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listPeminjaman.forEach((list, indexList) => {
+				this.listData.forEach((list, indexList) => {
 					let rowTable = [
-						list.tgl_pinjam, //ID Lokasi
-						list.tgl_pengembalian, //Nama Lokasi
-						list.nama, //kapasitas
-						this.statusPeminjaman(list.status_pinjam), //jenis
+						list.created_at, //ID Lokasi
+						list.real_return_date, //Nama Lokasi
+						list.nomor_induk, //kapasitas
+						this.statusPeminjaman(list.pjm_status), //jenis
 						'',
 					]
 
@@ -453,63 +411,19 @@
 		},
 		async mounted() {
 			await this.getListPeminjaman()
-			await this.getListJenisAlat()
+
 			// this.showAlert(false, false, 'Alert Berhasil')
 		},
 		methods: {
 			// Call API
 			async getListPeminjaman() {
-				// alert(`Get Data Alat ${this.filterLokasi.asal_alat}`)
-				this.listInfo.pageSize =
-					this.listPeminjaman.length < this.listInfo.listSize
+				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
+				this.tableInfo.totalPage =
+					this.listData.length < this.tableInfo.listSize
 						? 1
-						: this.listPeminjaman.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listPeminjaman.length
+						: this.listData.length / this.tableInfo.listSize
+				this.tableInfo.listTotal = this.listData.length
 				// Nembak API Get List Alat
-			},
-			async getListJenisAlat() {
-				let jenisAlat = [
-					{
-						id: 1,
-						jenis: 'Smartphone',
-					},
-					{
-						id: 2,
-						jenis: 'Laptop',
-					},
-				]
-
-				let listJenis = this.formAdd.find((form) => form.id === 3)
-				jenisAlat.forEach((alat, indexJns) => {
-					listJenis.options.push({
-						id: indexJns + 2,
-						text: alat.jenis,
-						value: alat.id,
-						disabled: false,
-					})
-				})
-			},
-			submitFilterData(formInput) {
-				this.filterLokasi = formInput
-				alert(this.filterLokasi)
-				// this.getListPeminjaman()
-			},
-			changeFilterValue(objFilter) {
-				this.filterLokasi[objFilter.model] = objFilter.value
-			},
-			// Table Page Interaction
-			nextPage() {
-				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
-					this.listInfo.pageNo += 1
-				}
-			},
-			previousPage() {
-				if (this.listInfo.pageNo !== 1) {
-					this.listInfo.pageNo -= 1
-				}
-			},
-			jumpPage(pageNo) {
-				this.listInfo.pageNo = pageNo
 			},
 			// Value Change
 			statusPeminjaman(status_id) {
@@ -550,7 +464,7 @@
 			// Action Dropdown
 			lihatDetail(indexData) {},
 			tindakPeminjaman(tindakan, row) {
-				this.selected_pjm = this.listPeminjaman[row]
+				this.selected_pjm = this.listData[row]
 				this.isApprove = tindakan
 				this.openPopup('approval')
 			},

@@ -9,7 +9,7 @@
 				<div
 					class="form-group"
 					v-for="(fr, indexInput) in form"
-					:key="`form-input-${indexInput}-${fr.id}`"
+					:key="`form-input-${indexInput}`"
 				>
 					<label :for="`input-${indexInput + 1}`">
 						{{ fr.label }}
@@ -37,7 +37,7 @@
 					>
 						<option
 							v-for="(ops, indexOps) in fr.options"
-							:key="`option-${fr.model}-${indexOps}-${ops.id}`"
+							:key="`option-${fr.model}-${indexOps}`"
 							:disabled="ops.disabled"
 							:value="ops.value"
 						>
@@ -45,6 +45,24 @@
 						</option>
 					</select>
 					<!-- END: SELECT TAG -->
+
+					<!-- START: DATE PICKER -->
+					<date-picker
+						v-else-if="fr.type === 'date'"
+						format="DD-MM-YYYY"
+						value-type="format"
+						placeholder="All"
+						v-model="inputData[fr.model]"
+						@closed="setNullString(fr.model)"
+					>
+						<template slot="icon-clear">
+							<b-icon-x-circle-fill></b-icon-x-circle-fill>
+						</template>
+						<template slot="icon-calendar">
+							<b-icon icon="calendar-month-fill"></b-icon>
+						</template>
+					</date-picker>
+					<!-- END: DATE PICKER -->
 				</div>
 			</div>
 		</section>
@@ -59,7 +77,7 @@
 			</button>
 			<button
 				class="smil-btn smil-btn-small smil-bg-primary"
-				:disabled="!formFilled"
+				:disabled="!activeButton"
 				@click="implementFilter()"
 			>
 				Terapkan
@@ -81,7 +99,7 @@
 			},
 			formInput: {
 				type: Object,
-				required: true,
+				required: false,
 			},
 			form: {
 				type: Array,
@@ -95,6 +113,10 @@
 				type: Function,
 				required: true,
 			},
+			activeButton: {
+				type: Boolean,
+				required: false,
+			},
 		},
 		watch: {},
 		mounted() {},
@@ -106,14 +128,14 @@
 		},
 		methods: {
 			implementFilter() {
+				this.submitFunction()
 				this.closeModal(true)
 			},
-		},
-		computed: {
-			formFilled() {
-				return true
+			setNullString(model) {
+				this.inputData[model] = ''
 			},
 		},
+		computed: {},
 	}
 </script>
 
@@ -146,6 +168,10 @@
 				margin-right: 12px;
 			}
 		}
+	}
+
+	.mx-datepicker {
+		width: 100%;
 	}
 </style>
 <style lang="scss"></style>
