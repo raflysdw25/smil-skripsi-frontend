@@ -184,7 +184,7 @@ router.beforeEach((to, from, next) => {
 					active_period: decryptedData.active_period,
 					expire_period: decryptedData.expire_period,
 				}
-				$cookies.set('smilAccessToken', admin.data.access_token, '12h')
+				$cookies.set('smilAccessToken', accessToken, '12h')
 				store.dispatch(types.UPDATE_ADMIN, adminData)
 				next()
 			} else {
