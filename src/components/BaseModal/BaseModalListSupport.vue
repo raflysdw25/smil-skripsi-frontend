@@ -291,17 +291,11 @@
 						this.supportType,
 						this.submitRequest
 					)
-					if (response.data.response.code === 201) {
-						this.isCreate = false
-						this.closeInput()
-						setTimeout(() => {
-							this.getSupportData()
-						}, 500)
-					} else {
-						alert(response.data.response.message)
-						this.isCreate = false
-						this.inputActive = false
-					}
+					this.isCreate = false
+					this.closeInput()
+					setTimeout(() => {
+						this.getSupportData()
+					}, 500)
 				} catch (e) {
 					this.isCreate = false
 
