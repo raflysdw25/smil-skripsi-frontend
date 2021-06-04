@@ -15,7 +15,10 @@
 			</option>
 		</select>
 
-		<div class="input-group" v-else-if="filter_type === 'search'">
+		<div
+			class="input-group"
+			v-else-if="filter_type === 'search' || filter_type === 'search-number'"
+		>
 			<input
 				type="text"
 				:placeholder="placeholder"
@@ -67,6 +70,7 @@
 		watch: {
 			filter_value: function(value) {
 				this.$emit('changeValue', {
+					type: this.filter_type,
 					model: this.modelFilter,
 					value: value,
 				})

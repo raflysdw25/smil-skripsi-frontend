@@ -29,69 +29,77 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listData.length === 0">
-					<tr>
+
+				<tbody class="smil-tbody">
+					<tr v-if="loadingTable">
 						<td :colspan="headsTable.length" class="text-center empty-table">
-							<icon-component
-								iconName="empty-files"
-								:size="64"
-								colorIcon="#c5c5c5"
-								iconClass="icon-table"
-							/>
-							<span class="empty-table-description">
-								Tidak ada data yang dapat ditampilkan
-							</span>
+							<b-spinner
+								class="icon-table icon-size"
+								variant="secondary"
+								style=""
+							></b-spinner>
+							<p class="empty-table-description">
+								Sedang Memuat Data...
+							</p>
 						</td>
 					</tr>
-				</tbody>
-				<tbody class="smil-tbody" v-else>
-					<tr
-						v-for="(rows, indexRow) in listTable"
-						:key="`content-table-${indexRow}`"
-					>
-						<td
-							v-for="(content, indexContent) in rows"
-							:key="`column-${content}${indexContent}`"
-							:width="indexContent === rows.length - 1 ? 10 : 200"
+					<template v-else>
+						<tr v-if="listData.length === 0">
+							<td :colspan="headsTable.length" class="text-center empty-table">
+								<icon-component
+									iconName="empty-files"
+									:size="64"
+									colorIcon="#c5c5c5"
+									iconClass="icon-table"
+								/>
+								<span class="empty-table-description">
+									Tidak ada data yang dapat ditampilkan
+								</span>
+							</td>
+						</tr>
+						<tr
+							v-else
+							v-for="(rows, indexRow) in listTable"
+							:key="`content-table-${indexRow}`"
 						>
-							<template v-if="indexContent === rows.length - 1">
-								<b-dropdown
-									size="lg"
-									right
-									variant="smil-drop-dots"
-									toggle-class="text-decoration-none"
-									no-caret
-									class="drop-dropdown smil-dot"
-								>
-									<template v-slot:button-content>
-										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-									</template>
-									<b-dropdown-item>
-										Detail Mahasiswa
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Edit Data Mahasiswa
-									</b-dropdown-item>
+							<td
+								v-for="(content, indexContent) in rows"
+								:key="`column-${content}${indexContent}`"
+								:width="indexContent === rows.length - 1 ? 10 : 200"
+							>
+								<template v-if="indexContent === rows.length - 1">
+									<b-dropdown
+										size="lg"
+										right
+										variant="smil-drop-dots"
+										toggle-class="text-decoration-none"
+										no-caret
+										class="drop-dropdown smil-dot"
+									>
+										<template v-slot:button-content>
+											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+										</template>
+										<b-dropdown-item>
+											Detail Mahasiswa
+										</b-dropdown-item>
+										<b-dropdown-item>
+											Edit Data Mahasiswa
+										</b-dropdown-item>
 
-									<b-dropdown-item>
-										<span class="smil-text-danger">
-											Hapus Data Mahasiswa
-										</span>
-									</b-dropdown-item>
-								</b-dropdown>
-							</template>
+										<b-dropdown-item @click="deleteNotif(indexRow)">
+											<span class="smil-text-danger">
+												Hapus Data Mahasiswa
+											</span>
+										</b-dropdown-item>
+									</b-dropdown>
+								</template>
 
-							<template v-else>
-								{{ content }}
-							</template>
-						</td>
-					</tr>
-					<tr>
-						<td
-							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
-						></td>
-					</tr>
+								<template v-else>
+									{{ content }}
+								</template>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -100,7 +108,7 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listData.length} dari ${listData.length} Data` }}
+				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
@@ -108,7 +116,7 @@
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
 							@click="previousPage"
-							v-if="tableInfo.pageSize > 1"
+							v-if="tableInfo.totalPage > 1"
 							:disabled="tableInfo.pageNo === 1"
 						>
 							<icon-component
@@ -118,7 +126,7 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.pageSize" :key="num">
+					<li v-for="num in tableInfo.totalPage" :key="num">
 						<a
 							style="cursor: pointer"
 							class="smil-link"
@@ -130,17 +138,19 @@
 					<li>
 						<span
 							:style="
-								tableInfo.pageSize === tableInfo.pageNo ? '' : 'cursor: pointer'
+								tableInfo.totalPage === tableInfo.pageNo
+									? ''
+									: 'cursor: pointer'
 							"
 							@click="nextPage"
-							v-if="tableInfo.pageSize > 1"
-							:disabled="tableInfo.pageNo === tableInfo.pageSize"
+							v-if="tableInfo.totalPage > 1"
+							:disabled="tableInfo.pageNo === tableInfo.totalPage"
 						>
 							<icon-component
 								iconName="arrow-right"
 								:size="24"
 								:colorIcon="
-									tableInfo.pageNo === tableInfo.pageSize
+									tableInfo.pageNo === tableInfo.totalPage
 										? `#C5C5C5`
 										: `#101939`
 								"
@@ -151,7 +161,11 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="tableInfo.listSize">
+				<select
+					class="custom-select"
+					v-model="tableInfo.listSize"
+					@change="getListMahasiswa"
+				>
 					<option
 						:value="count"
 						v-for="count in tableCount"
@@ -204,6 +218,9 @@
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
 
+	// API
+	import api from '@/api/admin_api'
+
 	export default {
 		name: 'list-mahasiswa',
 		mixins: [ModalMixins, TableMixins],
@@ -253,17 +270,7 @@
 					},
 					'',
 				],
-				listData: [
-					{
-						nim: '4617010058',
-						mahasiswa_fullname: 'Muhammad Rafly Sadewa',
-						prodi_id: 1,
-						prodi_name: 'Teknik Multimedia Digital',
-						email: 'raflysdw25@gmail.com',
-						address: 'Jl. Panaragan Penggilingan No. 07',
-						phone_number: '081218860714',
-					},
-				],
+
 				filterData: {
 					nim: '',
 					mahasiswa_fullname: '',
@@ -314,7 +321,7 @@
 					let rowTable = [
 						list.nim, //NIM
 						list.mahasiswa_fullname, //Nama Mahasiswa
-						list.prodi_name, //Program Studi
+						list.prodi_model.prodi_name, //Program Studi
 						list.email, //Email
 						'',
 					]
@@ -323,6 +330,15 @@
 				})
 
 				return listTable
+			},
+			filterPayload() {
+				let tableInfo = this.tableInfo
+				return {
+					page_size: tableInfo.listSize,
+					sort_by: 'created_at',
+					sort_direction: 'ASC',
+					...this.filterData,
+				}
 			},
 		},
 		async mounted() {
@@ -333,55 +349,76 @@
 		methods: {
 			// Call API
 			async getListMahasiswa() {
-				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
-				this.tableInfo.pageSize =
-					this.listData.length < this.tableInfo.listSize
-						? 1
-						: this.listData.length / this.tableInfo.listSize
-				this.tableInfo.listTotal = this.listData.length
+				this.loadingTable = true
 				// Nembak API Get List Alat
+				try {
+					const response = await api.getFilterData(
+						'mahasiswa',
+						this.tableInfo.pageNo,
+						this.filterPayload
+					)
+					console.log(response)
+					this.listData = response.data.result
+					let page = response.data.page
+					this.tableInfo.totalPage = page.total
+					this.tableInfo.listTotal = page.data_total
+				} catch (e) {
+					console.log(e)
+				} finally {
+					this.loadingTable = false
+				}
 			},
 			async getProdi() {
 				// Hit API List Jabatan from Jabatan Table
-				let prodi = [
-					{
-						id: 1,
-						prodi_name: 'Teknik Multimedia dan Digital',
-					},
-					{
-						id: 2,
-						prodi_name: 'Teknik Multimedia Jaringan',
-					},
-					{
-						id: 3,
-						prodi_name: 'Teknik Informatika',
-					},
-					{
-						id: 4,
-						prodi_name: 'Teknik Jaringan dan Komputer',
-					},
-				]
-
-				prodi.forEach((pd, indexJns) => {
-					this.headsTable[2].options.push({
-						id: pd.id,
-						name: pd.prodi_name,
-						value: pd.id,
-						disabled: false,
+				try {
+					const response = await api.getListData('prodi')
+					let prodi = response.data.data
+					prodi.forEach((pd, indexJns) => {
+						this.headsTable[2].options.push({
+							id: pd.id,
+							name: pd.prodi_name,
+							value: pd.id,
+							disabled: false,
+						})
+						this.formFilter[2].options.push({
+							id: pd.id,
+							name: pd.prodi_name,
+							value: pd.id,
+							disabled: false,
+						})
 					})
-					this.formFilter[2].options.push({
-						id: pd.id,
-						name: pd.prodi_name,
-						value: pd.id,
-						disabled: false,
-					})
-				})
+				} catch (e) {
+					console.log(e)
+				}
 			},
-
+			async deleteMahasiswa(nim) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('mahasiswa', nim)
+					if (response.data.response.code == 200) {
+						this.showAlert(false, true, response.data.response.message)
+						this.getListMahasiswa()
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				} finally {
+				}
+			},
 			// Value Change
 
 			// Action Dropdown
 			lihatDetail(indexData) {},
+			deleteNotif(index) {
+				let mahasiswa = this.listData[index]
+				let confirm = window.confirm(
+					`Apakah anda yakin ingin menghapus mahasiswa ${mahasiswa.mahasiswa_fullname}`
+				)
+				if (confirm) {
+					this.deleteMahasiswa(mahasiswa.nim)
+				}
+			},
 		},
 	}
 </script>

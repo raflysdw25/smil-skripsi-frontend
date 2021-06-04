@@ -3,6 +3,8 @@ export default {
 	data() {
 		return {
 			inputType: ['number', 'text', 'password', 'email', 'tel', 'text-barcode'],
+			isCreate: false,
+			loadingForm: false,
 		}
 	},
 	methods: {

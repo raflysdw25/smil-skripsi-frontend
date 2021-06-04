@@ -46,75 +46,83 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listData.length === 0">
-					<tr>
+
+				<tbody class="smil-tbody">
+					<tr v-if="loadingTable">
 						<td :colspan="headsTable.length" class="text-center empty-table">
-							<icon-component
-								iconName="empty-files"
-								:size="64"
-								colorIcon="#c5c5c5"
-								iconClass="icon-table"
-							/>
-							<span class="empty-table-description">
-								Tidak ada data yang dapat ditampilkan
-							</span>
+							<b-spinner
+								class="icon-table icon-size"
+								variant="secondary"
+								style=""
+							></b-spinner>
+							<p class="empty-table-description">
+								Sedang Memuat Data...
+							</p>
 						</td>
 					</tr>
-				</tbody>
-				<tbody class="smil-tbody" v-else>
-					<tr
-						v-for="(rows, indexRow) in listTable"
-						:key="`content-table-${indexRow}`"
-					>
-						<td
-							v-for="(content, indexContent) in rows"
-							:key="`column-${content}${indexContent}`"
-							:width="indexContent === rows.length - 1 ? 10 : 200"
-						>
-							<template v-if="indexContent === rows.length - 1">
-								<b-dropdown
-									size="lg"
-									right
-									variant="smil-drop-dots"
-									toggle-class="text-decoration-none"
-									no-caret
-									class="drop-dropdown smil-dot"
-								>
-									<template v-slot:button-content>
-										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-									</template>
-									<b-dropdown-item>
-										Cetak QR Code
-									</b-dropdown-item>
-									<b-dropdown-item>
-										List Alat Tersimpan
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Edit Data Lokasi
-									</b-dropdown-item>
-									<b-dropdown-item>
-										<span class="smil-text-danger">
-											Hapus Data Lokasi
-										</span>
-									</b-dropdown-item>
-								</b-dropdown>
-							</template>
-							<template v-else-if="indexContent === rows.length - 2">
-								<span class="smil-status" :class="content.background">
-									{{ content.text }}
+					<template v-else>
+						<tr v-if="listData.length === 0">
+							<td :colspan="headsTable.length" class="text-center empty-table">
+								<icon-component
+									iconName="empty-files"
+									:size="64"
+									colorIcon="#c5c5c5"
+									iconClass="icon-table"
+								/>
+								<span class="empty-table-description">
+									Tidak ada data yang dapat ditampilkan
 								</span>
-							</template>
-							<template v-else>
-								{{ content }}
-							</template>
-						</td>
-					</tr>
-					<tr>
-						<td
-							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
-						></td>
-					</tr>
+							</td>
+						</tr>
+						<tr
+							v-else
+							v-for="(rows, indexRow) in listTable"
+							:key="`content-table-${indexRow}`"
+						>
+							<td
+								v-for="(content, indexContent) in rows"
+								:key="`column-${content}${indexContent}`"
+								:width="indexContent === rows.length - 1 ? 10 : 200"
+							>
+								<template v-if="indexContent === rows.length - 1">
+									<b-dropdown
+										size="lg"
+										right
+										variant="smil-drop-dots"
+										toggle-class="text-decoration-none"
+										no-caret
+										class="drop-dropdown smil-dot"
+									>
+										<template v-slot:button-content>
+											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+										</template>
+										<b-dropdown-item>
+											Cetak QR Code
+										</b-dropdown-item>
+										<b-dropdown-item>
+											List Alat Tersimpan
+										</b-dropdown-item>
+										<b-dropdown-item>
+											Edit Data Lokasi
+										</b-dropdown-item>
+										<b-dropdown-item>
+											<span class="smil-text-danger">
+												Hapus Data Lokasi
+											</span>
+										</b-dropdown-item>
+									</b-dropdown>
+								</template>
+								<template v-else-if="indexContent === rows.length - 2">
+									<span class="smil-status" :class="content.background">
+										{{ content.text }}
+									</span>
+								</template>
+								<template v-else>
+									{{ content }}
+								</template>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -302,17 +310,6 @@
 					},
 					'',
 				],
-				listData: [
-					{
-						nip: '3271032506990001',
-						staff_fullname: 'Muhammad Rafly Sadewa',
-						email: 'raflysdw25@gmail.com',
-						jabatan_id: 1,
-						active_period: new Date(['2021', '06', '25']).toString(),
-						first_login: true, //Didapatkan dari backend, dengan melihat apakah passwordnya masih default 'admin'
-					},
-				],
-
 				listJabatan: [],
 				filterData: {
 					nip: '',
@@ -380,7 +377,7 @@
 				this.listData.forEach((list, indexList) => {
 					let rowTable = [
 						list.nip, //Nip Peminjam Alat
-						this.getJabatan(list.jabatan_id), //kapasitas
+						list.jabatan_user.jabatan_name, //kapasitas
 						this.statusAkunStaff(list.active_period, list.first_login), //jenis
 						'',
 					]

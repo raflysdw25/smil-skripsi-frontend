@@ -34,74 +34,88 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listData.length === 0">
-					<tr>
+
+				<tbody class="smil-tbody">
+					<tr v-if="loadingTable">
 						<td :colspan="headsTable.length" class="text-center empty-table">
-							<icon-component
-								iconName="empty-files"
-								:size="64"
-								colorIcon="#c5c5c5"
-								iconClass="icon-table"
-							/>
-							<span class="empty-table-description">
-								Tidak ada data yang dapat ditampilkan
-							</span>
+							<b-spinner
+								class="icon-table icon-size"
+								variant="secondary"
+								style=""
+							></b-spinner>
+							<p class="empty-table-description">
+								Sedang Memuat Data...
+							</p>
 						</td>
 					</tr>
-				</tbody>
-				<tbody class="smil-tbody" v-else>
-					<tr
-						v-for="(rows, indexRow) in listTable"
-						:key="`content-table-${indexRow}`"
-					>
-						<td
-							v-for="(content, indexContent) in rows"
-							:key="`column-${content}${indexContent}`"
-							:width="indexContent === rows.length - 1 ? 10 : 200"
-						>
-							<template v-if="indexContent === rows.length - 1">
-								<b-dropdown
-									size="lg"
-									right
-									variant="smil-drop-dots"
-									toggle-class="text-decoration-none"
-									no-caret
-									class="drop-dropdown smil-dot"
-								>
-									<template v-slot:button-content>
-										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-									</template>
-									<b-dropdown-item @click="tindakLaporan(indexRow)">
-										Tindakan Laporan
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Detail Alat
-									</b-dropdown-item>
-									<b-dropdown-item>
-										<span class="smil-text-danger">
-											Hapus Laporan Kerusakan
-										</span>
-									</b-dropdown-item>
-								</b-dropdown>
-							</template>
-							<template v-else-if="indexContent === rows.length - 2">
-								<span class="smil-status" :class="content.background">
-									{{ content.text }}
+					<template v-else>
+						<tr v-if="listData.length === 0">
+							<td :colspan="headsTable.length" class="text-center empty-table">
+								<icon-component
+									iconName="empty-files"
+									:size="64"
+									colorIcon="#c5c5c5"
+									iconClass="icon-table"
+								/>
+								<span class="empty-table-description">
+									Tidak ada data yang dapat ditampilkan
 								</span>
-							</template>
-							<template v-else>
-								{{ content }}
-							</template>
-						</td>
-					</tr>
-					<tr>
-						<td
-							:colspan="Object.keys(headsTable).length"
-							:style="{
-								'padding-bottom': `${listData.length * 50}px`,
-							}"
-						></td>
-					</tr>
+							</td>
+						</tr>
+						<tr
+							v-else
+							v-for="(rows, indexRow) in listTable"
+							:key="`content-table-${indexRow}`"
+						>
+							<td
+								v-for="(content, indexContent) in rows"
+								:key="`column-${content}${indexContent}`"
+								:width="indexContent === rows.length - 1 ? 10 : 200"
+							>
+								<template v-if="indexContent === rows.length - 1">
+									<b-dropdown
+										size="lg"
+										right
+										variant="smil-drop-dots"
+										toggle-class="text-decoration-none"
+										no-caret
+										class="drop-dropdown smil-dot"
+									>
+										<template v-slot:button-content>
+											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+										</template>
+										<b-dropdown-item
+											@click="tindakLaporan(indexRow)"
+											v-if="listData[indexRow].report_status == 1"
+										>
+											Tindakan Laporan
+										</b-dropdown-item>
+										<b-dropdown-item>
+											Detail Laporan
+										</b-dropdown-item>
+										<b-dropdown-item @click="deleteNotif(indexRow)">
+											<span class="smil-text-danger">
+												Hapus Laporan Kerusakan
+											</span>
+										</b-dropdown-item>
+									</b-dropdown>
+								</template>
+								<template v-else-if="indexContent === rows.length - 2">
+									<span class="smil-status" :class="content.background">
+										{{ content.text }}
+									</span>
+								</template>
+								<template v-else-if="indexContent === 3">
+									<span class="text-limit">
+										{{ content }}
+									</span>
+								</template>
+								<template v-else>
+									{{ content }}
+								</template>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -110,7 +124,7 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listData.length} dari ${listData.length} Data` }}
+				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
@@ -163,7 +177,11 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="tableInfo.listSize">
+				<select
+					class="custom-select"
+					v-model="tableInfo.listSize"
+					@change="getLaporanKerusakan"
+				>
 					<option
 						:value="count"
 						v-for="count in tableCount"
@@ -232,6 +250,9 @@
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+
+	// API
+	import api from '@/api/admin_api'
 	export default {
 		name: 'list-kerusakan-alat-lab',
 		components: {
@@ -419,6 +440,14 @@
 					},
 					{
 						id: 3,
+						label: 'Nama Pelapor',
+						type: 'text',
+						disabled: true,
+						model: '',
+						canAddValue: false,
+					},
+					{
+						id: 4,
 						label: 'Tindakan',
 						type: 'radio',
 
@@ -430,7 +459,7 @@
 						],
 					},
 					{
-						id: 2,
+						id: 5,
 						label: 'Catatan Laporan',
 						type: 'text-area',
 						disabled: false,
@@ -445,27 +474,36 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listData.forEach((list, indexList) => {
-					let nama_pelapor =
-						list.nim_mahasiswa !== null
-							? list.mahasiswa_fullname
-							: list.staff_fullname
-					let rowTable = [
-						this.formatDate(list.report_date, 'DD-MM-YYYY HH:mm'), //Tanggal Laporan
-						nama_pelapor, //Nama Pelapor
-						list.barcode_alat, //Barcode Alat
-						list.chronology,
-						this.statusLaporan(list.report_status),
-						indexList, //Index Data
-					]
+				if (this.listData.length !== 0) {
+					this.listData.forEach((list, indexList) => {
+						let nama_pelapor =
+							list.nim_mahasiswa !== ''
+								? `${list.nim_mahasiswa} - ${list.mahasiswa_lapor_model.mahasiswa_fullname}`
+								: `${list.nip_staff} - ${list.staff_lapor_model.staff_fullname}`
+						let rowTable = [
+							this.formatDate(list.report_date, 'DD MMMM YYYY'), //Tanggal Laporan
+							nama_pelapor, //Nama Pelapor
+							list.barcode_alat, //Barcode Alat
+							list.chronology,
+							this.statusLaporan(list.report_status),
+							indexList, //Index Data
+						]
 
-					listTable.push(rowTable)
-				})
+						listTable.push(rowTable)
+					})
+				}
 
 				return listTable
 			},
 			filterPayload() {
-				return this.filterData
+				let tableInfo = this.tableInfo
+
+				return {
+					page_size: tableInfo.listSize,
+					sort_by: 'id',
+					sort_direction: 'DESC',
+					...this.filterData,
+				}
 			},
 			filterActive() {
 				let filter = this.filterPayload
@@ -478,16 +516,13 @@
 				)
 			},
 			formTindakanFill() {
-				return this.formAction[2].model !== ''
+				return this.formAction[3].model !== ''
 			},
 			submitTindakanRequest() {
-				let laporan = this.selected_data
 				let form = this.formAction
 				return {
-					laporan_id: laporan.laporan_id,
-					report_status: form[2].model,
-					report_notes: form[3].model,
-					report_action: form[0].model,
+					action: form[3].model,
+					report_notes: form[4].model,
 				}
 			},
 		},
@@ -497,16 +532,55 @@
 		methods: {
 			// Call API
 			async getLaporanKerusakan() {
-				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
-				this.tableInfo.totalPage =
-					this.listData.length < this.tableInfo.listSize
-						? 1
-						: this.listData.length / this.tableInfo.listSize
-				this.tableInfo.listTotal = this.listData.length
+				this.loadingTable = true
 				// Nembak API Get List Alat
-				// alert(this.filterPayload.report_date)
+				try {
+					const response = await api.getFilterData(
+						'laporan',
+						this.tableInfo.pageNo,
+						this.filterPayload
+					)
+					console.log(response)
+					this.listData = response.data.result
+					let page = response.data.page
+					this.tableInfo.totalPage = page.total
+					this.tableInfo.listTotal = page.data_total
+				} catch (e) {
+					console.log(e)
+				} finally {
+					this.loadingTable = false
+				}
 			},
-			sendTindakanLaporan() {},
+			async sendTindakanLaporan() {
+				this.closePopup()
+				this.showAlert(true)
+				try {
+					const response = api.reportAction(
+						this.selectedRowId,
+						this.submitTindakanRequest
+					)
+					if (response.data.response.code === 200) {
+						this.showAlert(false, true, 'Tindakan berhasil dikirimkan')
+					}
+				} catch (e) {
+					console.log(e)
+				}
+			},
+			async deleteLaporan(id) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('laporan', id)
+					if (response.data.response.code == 200) {
+						this.showAlert(false, true, response.data.response.message)
+						this.getLaporanKerusakan()
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				} finally {
+				}
+			},
 
 			// Value Change
 			statusLaporan(status_id) {
@@ -531,17 +605,34 @@
 				return listStatusLaporan.find((status) => status.id === status_id)
 			},
 			tindakLaporan(row) {
-				this.selected_data = this.listData[row]
+				let report = this.listData[row]
+				this.selectedRowId = report.id
 				this.formAction[1].model =
-					this.selected_data.nim_mahasiswa !== null
-						? this.selected_data.mahasiswa_fullname
-						: this.selected_data.staff_fullname
+					report.barcode_alat_rusak.alat_model.alat_name
+				this.formAction[2].model =
+					report.nim_mahasiswa !== ''
+						? report.mahasiswa_lapor_model.mahasiswa_fullname
+						: report.staff_lapor_model.staff_fullname
 				this.openPopup('action')
 			},
 			// Action Dropdown
 			lihatDetail(indexData) {
 				let data = this.listData[indexData]
 				console.log(data)
+			},
+			// Notification
+			deleteNotif(index) {
+				let laporan = this.listData[index]
+				let pelapor =
+					laporan.nim_mahasiswa !== ''
+						? laporan.mahasiswa_lapor_model.mahasiswa_fullname
+						: laporan.staff_lapor_model.staff_fullname
+				let confirm = window.confirm(
+					`Apakah anda yakin ingin menghapus laporan dari ${pelapor}?`
+				)
+				if (confirm) {
+					this.deleteLaporan(laporan.id)
+				}
 			},
 		},
 	}
@@ -553,5 +644,12 @@
 		button {
 			margin-right: 15px;
 		}
+	}
+	.text-limit {
+		display: block;
+		width: 230px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 </style>

@@ -77,7 +77,6 @@
 			</button>
 			<button
 				class="smil-btn smil-btn-small smil-bg-primary"
-				:disabled="!activeButton"
 				@click="implementFilter()"
 			>
 				Terapkan

@@ -40,67 +40,74 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listData.length === 0">
-					<tr>
+				<tbody class="smil-tbody">
+					<tr v-if="loadingTable">
 						<td :colspan="headsTable.length" class="text-center empty-table">
-							<icon-component
-								iconName="empty-files"
-								:size="64"
-								colorIcon="#c5c5c5"
-								iconClass="icon-table"
-							/>
-							<span class="empty-table-description">
-								Tidak ada data yang dapat ditampilkan
-							</span>
+							<b-spinner
+								class="icon-table icon-size"
+								variant="secondary"
+								style=""
+							></b-spinner>
+							<p class="empty-table-description">
+								Sedang Memuat Data...
+							</p>
 						</td>
 					</tr>
-				</tbody>
-				<tbody class="smil-tbody" v-else>
-					<tr
-						v-for="(rows, indexRow) in listTable"
-						:key="`content-table-${indexRow}`"
-					>
-						<td
-							v-for="(content, indexContent) in rows"
-							:key="`column-${content}${indexContent}`"
-							:width="indexContent === rows.length - 1 ? 10 : 200"
+					<template v-else>
+						<tr v-if="listData.length === 0">
+							<td :colspan="headsTable.length" class="text-center empty-table">
+								<icon-component
+									iconName="empty-files"
+									:size="64"
+									colorIcon="#c5c5c5"
+									iconClass="icon-table"
+								/>
+								<span class="empty-table-description">
+									Tidak ada data yang dapat ditampilkan
+								</span>
+							</td>
+						</tr>
+						<tr
+							v-else
+							v-for="(rows, indexRow) in listTable"
+							:key="`content-table-${indexRow}`"
 						>
-							<template v-if="indexContent === rows.length - 1">
-								<b-dropdown
-									size="lg"
-									right
-									variant="smil-drop-dots"
-									toggle-class="text-decoration-none"
-									no-caret
-									class="drop-dropdown smil-dot"
-								>
-									<template v-slot:button-content>
-										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-									</template>
-									<b-dropdown-item @click="lihatDetail(content)">
-										Lihat Detail Supplier
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Edit Supplier
-									</b-dropdown-item>
-									<b-dropdown-item>
-										<span class="smil-text-danger">
-											Hapus Supplier
-										</span>
-									</b-dropdown-item>
-								</b-dropdown>
-							</template>
-							<template v-else>
-								{{ content }}
-							</template>
-						</td>
-					</tr>
-					<tr>
-						<td
-							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
-						></td>
-					</tr>
+							<td
+								v-for="(content, indexContent) in rows"
+								:key="`column-${content}${indexContent}`"
+								:width="indexContent === rows.length - 1 ? 10 : 200"
+							>
+								<template v-if="indexContent === rows.length - 1">
+									<b-dropdown
+										size="lg"
+										right
+										variant="smil-drop-dots"
+										toggle-class="text-decoration-none"
+										no-caret
+										class="drop-dropdown smil-dot"
+									>
+										<template v-slot:button-content>
+											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+										</template>
+										<b-dropdown-item @click="lihatDetail(content)">
+											Lihat Detail Supplier
+										</b-dropdown-item>
+										<b-dropdown-item @click="editRowData(indexRow)">
+											Edit Supplier
+										</b-dropdown-item>
+										<b-dropdown-item @click="deleteNotif(indexRow)">
+											<span class="smil-text-danger">
+												Hapus Supplier
+											</span>
+										</b-dropdown-item>
+									</b-dropdown>
+								</template>
+								<template v-else>
+									{{ content }}
+								</template>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -109,7 +116,7 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listData.length} dari ${listData.length} Data` }}
+				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
@@ -162,7 +169,11 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="tableInfo.listSize">
+				<select
+					class="custom-select"
+					v-model="tableInfo.listSize"
+					@change="getListSupplier"
+				>
 					<option
 						:value="count"
 						v-for="count in tableCount"
@@ -214,6 +225,9 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+
+	// API
+	import api from '@/api/admin_api'
 	export default {
 		name: 'list-supplier',
 		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAlert },
@@ -243,22 +257,6 @@
 						options: null,
 					},
 					'',
-				],
-				listData: [
-					{
-						id: 1,
-						supplier_name: 'Supplier A',
-						person_in_charge: 'PIC Supplier A',
-						supplier_address:
-							'Jl. Panaragan Penggilingan No 07 RT 01 RW 06 Bogor Tengah',
-					},
-					{
-						id: 2,
-						supplier_name: 'Supplier B',
-						person_in_charge: 'PIC Supplier B',
-						supplier_address:
-							'Jl. Panaragan Penggilingan No 07 RT 01 RW 06 Bogor Tengah',
-					},
 				],
 				filterData: {
 					supplier_name: '',
@@ -310,7 +308,21 @@
 				return listTable
 			},
 			filterPayload() {
-				return this.filterData
+				let tableInfo = this.tableInfo
+				return {
+					page_size: tableInfo.listSize,
+					sort_by: 'id',
+					sort_direction: 'ASC',
+					...this.filterData,
+				}
+			},
+		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getListSupplier()
+				},
 			},
 		},
 		async mounted() {
@@ -320,24 +332,64 @@
 		methods: {
 			// Call API
 			async getListSupplier() {
-				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
-				this.tableInfo.totalPage =
-					this.listData.length < this.tableInfo.listSize
-						? 1
-						: this.listData.length / this.tableInfo.listSize
-				this.tableInfo.listTotal = this.listData.length
+				this.loadingTable = true
 				// Nembak API Get List Alat
+				try {
+					const response = await api.getFilterData(
+						'supplier',
+						this.tableInfo.pageNo,
+						this.filterPayload
+					)
+					console.log(response)
+					this.listData = response.data.result
+					let page = response.data.page
+					this.tableInfo.totalPage = page.total
+					this.tableInfo.listTotal = page.data_total
+				} catch (e) {
+					console.log(e)
+				} finally {
+					this.loadingTable = false
+				}
 			},
-
+			async deleteSupplier(id) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('supplier', id)
+					if (response.data.response.code == 200) {
+						this.showAlert(false, true, response.data.response.message)
+						this.getListSupplier()
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				} finally {
+				}
+			},
 			submitFilterData(formInput) {
 				this.filterData = formInput
 				alert(this.filterData)
 				// this.getListSupplier()
 			},
-			// Value Change
 
 			// Action Dropdown
 			lihatDetail(indexData) {},
+			editRowData(index) {
+				let data = this.listData[index]
+				this.$router.push({
+					name: 'EditSupplier',
+					params: { supplier_id: data.id },
+				})
+			},
+			deleteNotif(index) {
+				let supplier = this.listData[index]
+				let confirm = window.confirm(
+					`Apakah anda yakin ingin menghapus supplier ${supplier.supplier_name}`
+				)
+				if (confirm) {
+					this.deleteSupplier(supplier.id)
+				}
+			},
 		},
 	}
 </script>

@@ -37,82 +37,94 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listData.length === 0">
-					<tr>
+				<tbody class="smil-tbody">
+					<tr v-if="loadingTable">
 						<td :colspan="headsTable.length" class="text-center empty-table">
-							<icon-component
-								iconName="empty-files"
-								:size="64"
-								colorIcon="#c5c5c5"
-								iconClass="icon-table"
-							/>
-							<span class="empty-table-description">
-								Tidak ada data yang dapat ditampilkan
-							</span>
+							<b-spinner
+								class="icon-table icon-size"
+								variant="secondary"
+								style=""
+							></b-spinner>
+							<p class="empty-table-description">
+								Sedang Memuat Data...
+							</p>
 						</td>
 					</tr>
-				</tbody>
-				<tbody class="smil-tbody" v-else>
-					<tr
-						v-for="(rows, indexRow) in listTable"
-						:key="`content-table-${indexRow}`"
-					>
-						<td
-							v-for="(content, indexContent) in rows"
-							:key="`column-${content}${indexContent}`"
-							:width="indexContent === rows.length - 1 ? 10 : 200"
+					<template v-else>
+						<!-- EMPTY DATA -->
+						<tr v-if="listData.length === 0">
+							<td :colspan="headsTable.length" class="text-center empty-table">
+								<icon-component
+									iconName="empty-files"
+									:size="64"
+									colorIcon="#c5c5c5"
+									iconClass="icon-table"
+								/>
+								<span class="empty-table-description">
+									Tidak ada data yang dapat ditampilkan
+								</span>
+							</td>
+						</tr>
+						<!-- END: EMPTY DATA -->
+
+						<!-- LISTED DATA -->
+						<tr
+							v-else
+							v-for="(rows, indexRow) in listTable"
+							:key="`content-table-${indexRow}`"
 						>
-							<template v-if="indexContent === rows.length - 1">
-								<b-dropdown
-									size="lg"
-									right
-									variant="smil-drop-dots"
-									toggle-class="text-decoration-none"
-									no-caret
-									class="drop-dropdown smil-dot"
-								>
-									<template v-slot:button-content>
-										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-									</template>
-									<b-dropdown-item>
-										Lihat QR Code
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Cetak QR Code
-									</b-dropdown-item>
-									<b-dropdown-item>
-										List Alat Tersimpan
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Edit Data Lokasi
-									</b-dropdown-item>
-									<b-dropdown-item>
-										<span class="smil-text-danger">
-											Hapus Data Lokasi
-										</span>
-									</b-dropdown-item>
-								</b-dropdown>
-							</template>
-							<template v-else>
-								{{ content }}
-							</template>
-						</td>
-					</tr>
-					<tr>
-						<td
-							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
-						></td>
-					</tr>
+							<td
+								v-for="(content, indexContent) in rows"
+								:key="`column-${content}${indexContent}`"
+								:width="indexContent === rows.length - 1 ? 10 : 200"
+							>
+								<template v-if="indexContent === rows.length - 1">
+									<b-dropdown
+										size="lg"
+										right
+										variant="smil-drop-dots"
+										toggle-class="text-decoration-none"
+										no-caret
+										class="drop-dropdown smil-dot"
+									>
+										<template v-slot:button-content>
+											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+										</template>
+										<b-dropdown-item>
+											Lihat QR Code
+										</b-dropdown-item>
+										<b-dropdown-item>
+											Cetak QR Code
+										</b-dropdown-item>
+										<b-dropdown-item>
+											List Alat Tersimpan
+										</b-dropdown-item>
+										<b-dropdown-item @click="editRowData(indexRow)">
+											Edit Data Lokasi
+										</b-dropdown-item>
+										<b-dropdown-item @click="deleteNotif(indexRow)">
+											<span class="smil-text-danger">
+												Hapus Data Lokasi
+											</span>
+										</b-dropdown-item>
+									</b-dropdown>
+								</template>
+								<template v-else>
+									{{ content }}
+								</template>
+							</td>
+						</tr>
+						<!-- END: LISTED DATA -->
+					</template>
 				</tbody>
 			</table>
 		</div>
 		<!-- END: LIST DATA -->
 
 		<!-- START: PAGINATION INFO SECTION -->
-		<div class="pagination-section">
+		<div class="pagination-section" v-if="listData.length > 0">
 			<div class="table-counter">
-				{{ `${listData.length} dari ${listData.length} Data` }}
+				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul>
@@ -165,7 +177,11 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="tableInfo.listSize">
+				<select
+					class="custom-select"
+					v-model="tableInfo.listSize"
+					@change="getListLokasi"
+				>
 					<option
 						:value="count"
 						v-for="count in tableCount"
@@ -188,12 +204,15 @@
 			no-close-on-esc
 		>
 			<base-modal-add
-				v-if="baseModalType === 'add'"
-				modalTitle="Tambah Jenis Alat"
+				v-if="baseModalType === 'add' || baseModalType === 'edit'"
+				:modalTitle="`${isEditRow ? 'Edit' : 'Tambah'} Lokasi Penyimpanan`"
 				:formList="formAdd"
+				:formFilled="formAddFilled"
 				:submitFunction="sendAddLokasi"
 				:closeFunction="closePopup"
-				:formFilled="formAddFilled"
+				:editFunction="editLokasi"
+				:isEdit="isEditRow"
+				@reset="isEditRow = false"
 			/>
 
 			<base-modal-alert
@@ -228,6 +247,9 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+
+	// API
+	import api from '@/api/admin_api'
 
 	export default {
 		name: 'list-lokasi-penyimpanan',
@@ -265,16 +287,6 @@
 					},
 
 					'',
-				],
-				listData: [
-					{
-						id: 1,
-						lokasi_name: 'Lemari A',
-						total_capacity: 100,
-						available_capacity: 100,
-						stored_capacity: 0,
-						path_qrcode: '',
-					},
 				],
 				filterData: {
 					lokasi_name: '',
@@ -315,32 +327,45 @@
 						disabled: false,
 						model: '',
 						canAddValue: false,
+						isRequired: true,
 					},
 					{
 						id: 2,
-						label: 'Kapasitas Penyimpanan',
+						label: 'Kapasitas Total Lokasi Penyimpanan',
 						type: 'number',
 						disabled: false,
 						model: '',
 						canAddValue: false,
+						isRequired: true,
 					},
-					// {
-					// 	id: 3,
-					// 	label: 'Jenis Alat Disimpan',
-					// 	type: 'select',
-					// 	options: [
-					// 		{
-					// 			id: 1,
-					// 			text: 'Pilih Jenis Alat Disimpan',
-					// 			value: '',
-					// 			disabled: true,
-					// 		},
-					// 	],
-					// 	model: [{ id: 1, value: '', disabled: false }],
-					// 	canAddValue: true,
-					// },
+					{
+						id: 3,
+						label: 'Kapasitas Tersedia Penyimpanan',
+						type: 'number',
+						disabled: false,
+						model: '',
+						canAddValue: false,
+						isRequired: false,
+					},
+					{
+						id: 4,
+						label: 'Kapasitas Tersisa',
+						type: 'number',
+						disabled: false,
+						model: '',
+						canAddValue: false,
+						isRequired: false,
+					},
 				],
 			}
+		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getListLokasi()
+				},
+			},
 		},
 		computed: {
 			listTable() {
@@ -358,20 +383,25 @@
 
 				return listTable
 			},
-			submitAddRequest() {
+			submitRequest() {
 				let form = this.formAdd
 				return {
-					location_name: form[0].model,
+					lokasi_name: form[0].model,
 					total_capacity: form[1].model !== '' ? parseInt(form[1].model) : null,
 					available_capacity:
-						form[1].model !== '' ? parseInt(form[1].model) : null,
+						form[2].model !== ''
+							? parseInt(form[2].model)
+							: parseInt(form[1].model),
+					stored_capacity:
+						form[3].model !== '' ? parseInt(form[3].model) : null,
 				}
 			},
 			formAddFilled() {
-				let submit = this.submitAddRequest
-				return submit.location_name !== '' && submit.total_capacity !== null
+				let submit = this.submitRequest
+				return submit.lokasi_name !== '' && submit.total_capacity !== null
 			},
 			filterPayload() {
+				let tableInfo = this.tableInfo
 				let filter = this.filterData
 				let total =
 					filter.total_capacity === '' ? null : parseInt(filter.total_capacity)
@@ -380,6 +410,9 @@
 						? null
 						: parseInt(filter.available_capacity)
 				return {
+					page_size: tableInfo.listSize,
+					sort_by: 'id',
+					sort_direction: 'ASC',
 					lokasi_name: filter.lokasi_name,
 					total_capacity: total,
 					available_capacity: available,
@@ -393,20 +426,110 @@
 		methods: {
 			// Call API
 			async getListLokasi() {
-				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
-				this.tableInfo.totalPage =
-					this.listData.length < this.tableInfo.listSize
-						? 1
-						: this.listData.length / this.tableInfo.listSize
-				this.tableInfo.listTotal = this.listData.length
+				this.loadingTable = true
 				// Nembak API Get List Alat
+				try {
+					const response = await api.getFilterData(
+						'lokasi',
+						this.tableInfo.pageNo,
+						this.filterPayload
+					)
+					console.log(response)
+					this.listData = response.data.result
+					let page = response.data.page
+					this.tableInfo.totalPage = page.total
+					this.tableInfo.listTotal = page.data_total
+				} catch (e) {
+					console.log(e)
+				} finally {
+					this.loadingTable = false
+				}
 			},
-			async sendAddLokasi() {},
-
-			// Value Change
-
+			async sendAddLokasi() {
+				this.closePopup()
+				this.showAlert(true)
+				try {
+					const response = await api.createNewData('lokasi', this.submitRequest)
+					if (response.data.response.code === 201) {
+						setTimeout(() => {
+							this.showAlert(false, true, 'Tambah Lokasi Penyimpanan Berhasil')
+							this.getListLokasi()
+						}, 500)
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (error) {
+					this.showAlert(false, false, e)
+				}
+			},
+			async deleteLokasi(id) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('lokasi', id)
+					if (response.data.response.code == 200) {
+						this.showAlert(false, true, response.data.response.message)
+						this.getListLokasi()
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				} finally {
+				}
+			},
+			async editLokasi() {
+				this.closePopup()
+				this.showAlert(true)
+				try {
+					const response = await api.editData(
+						'lokasi',
+						this.selectedRowId,
+						this.submitRequest
+					)
+					if (response.data.response.code === 200) {
+						setTimeout(() => {
+							this.showAlert(
+								false,
+								true,
+								'Edit Lokasi Penyimpanan berhasil dilakukan'
+							)
+							this.getListLokasi()
+						}, 500)
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				} finally {
+					this.selectedRowId = null
+				}
+			},
 			// Action Dropdown
 			lihatDetail(indexData) {},
+			// Edit Data
+			editRowData(index) {
+				this.isEditRow = true
+				let data = this.listData[index]
+				this.selectedRowId = data.id
+
+				let form = this.formAdd
+				form[0].model = data.lokasi_name
+				form[1].model = data.total_capacity
+				form[2].model = data.available_capacity
+				form[3].model = data.stored_capacity
+
+				this.openPopup('edit')
+			},
+			// Notification
+			deleteNotif(index) {
+				let lokasi = this.listData[index]
+				let confirm = window.confirm(
+					`Apakah anda yakin ingin menghapus lokasi penyimpanan ${lokasi.lokasi_name}`
+				)
+				if (confirm) {
+					this.deleteLokasi(lokasi.id)
+				}
+			},
 		},
 	}
 </script>

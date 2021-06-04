@@ -44,17 +44,42 @@
 				</div>
 			</div>
 		</section>
+
+		<b-modal
+			ref="modal-popup"
+			no-close-on-backdrop
+			no-close-on-esc
+			hide-header
+			hide-footer
+			centered
+		>
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
+			/>
+		</b-modal>
 	</div>
 </template>
 
 <script>
+	// API
+	import api from '@/api/admin_api'
+	import CryptoJs from 'crypto-js'
 	// Componenets
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
 
 	// Vuex
 	import * as types from '@/store/types'
 	export default {
 		name: 'login-admin',
-		components: {},
+		components: { BaseModalAlert },
+		mixins: [ModalMixins],
 		data() {
 			return {
 				formGroupList: [
@@ -93,6 +118,9 @@
 				buttonActive: false,
 			}
 		},
+		mounted() {
+			// this.showAlert(false, false, 'Alert Berhasil')
+		},
 		watch: {},
 		computed: {
 			formFilled() {
@@ -100,21 +128,42 @@
 			},
 		},
 		methods: {
-			loginAdmin() {
-				// Untuk slicing Design
-				let adminData = {
-					nip: '3271032506990001',
-					nama: 'Muhammad Rafly Sadewa',
-					jabatan: 1, //PLP, STAFF, ADMIN TI
+			async loginAdmin() {
+				// Request Login via API
+				this.showAlert(true)
+				try {
+					const response = await api.loginAdmin(this.formInput)
+					console.log(response)
+					// Get Data Admin via API
+					let admin = response.data
+					if (admin.response.code === 200) {
+						let adminData = {
+							id: admin.data.id,
+							staff_model: admin.data.staff_model,
+							jabatan_model: admin.data.jabatan_model,
+							active_period: admin.data.user_active_period,
+							expire_period: admin.data.user_expire_period,
+							access_token: admin.data.access_token,
+						}
+						// Save User Data and Token into Local Storage or Cookies
+						let cipherData = CryptoJs.AES.encrypt(
+							JSON.stringify(adminData),
+							process.env.VUE_APP_KEY
+						).toString()
+						let e64 = CryptoJs.enc.Base64.parse(cipherData)
+						let eHex = e64.toString(CryptoJs.enc.Hex)
+						$cookies.set('smilAdminAuth', eHex, '12h')
+
+						// Save data admin into Vuex
+						this.showAlert(false, true, admin.response.message)
+						setTimeout(() => {
+							this.$router.push({ name: 'DashboardAdmin' })
+						}, 1500)
+					}
+				} catch (e) {
+					alert('Akun tidak ditemukan')
+					this.resetLoginAdmin()
 				}
-
-				// Get Data Admin via API
-
-				// Save Token into Local Storage or Cookies
-
-				// Save data admin into Vuex
-				this.$store.dispatch(types.UPDATE_ADMIN, adminData)
-				this.$router.push({ name: 'DashboardAdmin' })
 			},
 			resetLoginAdmin(form) {
 				Object.keys(form).forEach((key) => {

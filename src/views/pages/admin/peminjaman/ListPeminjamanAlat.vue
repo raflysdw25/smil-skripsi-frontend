@@ -106,12 +106,6 @@
 							</template>
 						</td>
 					</tr>
-					<tr>
-						<td
-							:colspan="Object.keys(headsTable).length"
-							:style="{ 'padding-bottom': `${listData.length * 50}px` }"
-						></td>
-					</tr>
 				</tbody>
 			</table>
 		</div>

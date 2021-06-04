@@ -1,9 +1,11 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import * as types from '@/store/types'
+import { store } from '@/store/store'
+import CryptoJS from 'crypto-js'
 
 // Layout
 import LayoutPortalAdmin from '@/views/layout/LayoutPortalAdmin.vue'
-import LayoutPortalPeminjaman from '@/views/layout/LayoutPortalPeminjaman.vue'
 
 // ADMIN
 
@@ -38,58 +40,19 @@ import ListCivitasJurusan from '@/views/pages/admin/staff/ListCivitasJurusan.vue
 
 import AddStaffJurusan from '@/views/pages/admin/staff/AddStaffJurusan.vue'
 
-// PEMINJAMAN
-
-// Pages
-import BerandaPeminjaman from '@/views/pages/peminjaman/BerandaPeminjaman.vue'
-import LaporKerusakanAlat from '@/views/pages/peminjaman/LaporKerusakanAlat.vue'
-import BuatAkunMahasiswa from '@/views/pages/peminjaman/BuatAkunMahasiswa.vue'
-import ActionPeminjaman from '@/views/pages/peminjaman/ActionPeminjaman.vue'
-
 Vue.use(VueRouter)
 
 const routes = [
 	// App Route
 
-	// Portal Peminjaman
-	{
-		path: '/',
-		component: LayoutPortalPeminjaman,
-		children: [
-			// Beranda
-			{
-				path: '',
-				name: 'BerandaPeminjaman',
-				component: BerandaPeminjaman,
-			},
-			// Form Peminjaman & Pengembalian
-			{
-				path: '/:actionType',
-				name: 'ActionPeminjaman',
-				component: ActionPeminjaman,
-			},
-			// Form Laporan Kerusakan
-			{
-				path: '/lapor-kerusakan',
-				name: 'LaporKerusakanAlat',
-				component: LaporKerusakanAlat,
-			},
-			// Form Buat Akun Mahasiswa
-			{
-				path: '/buat-akun',
-				name: 'BuatAkunMahasiswa',
-				component: BuatAkunMahasiswa,
-			},
-		],
-	},
 	// Portal Admin
 	{
-		path: '/admin/',
+		path: '/',
 		component: LayoutPortalAdmin,
 		children: [
 			// Dashboard
 			{
-				path: 'dashboard',
+				path: '',
 				name: 'DashboardAdmin',
 				component: DashboardAdmin,
 			},
@@ -135,6 +98,11 @@ const routes = [
 				name: 'TambahSupplier',
 				component: AddSupplier,
 			},
+			{
+				path: 'supplier/edit/:supplier_id',
+				name: 'EditSupplier',
+				component: AddSupplier,
+			},
 			// Pagegroup - Peminjaman
 			{
 				path: 'peminjaman',
@@ -169,6 +137,11 @@ const routes = [
 				name: 'TambahStaffJurusan',
 				component: AddStaffJurusan,
 			},
+			{
+				path: 'jurusan/edit/:staff_nip',
+				name: 'EditStaffJurusan',
+				component: AddStaffJurusan,
+			},
 		],
 	},
 	{
@@ -185,6 +158,37 @@ const router = new VueRouter({
 	scrollBehavior(to, from, savedPosition) {
 		return { x: 0, y: 0 }
 	},
+})
+
+router.beforeEach((to, from, next) => {
+	if (to.name == 'LoginAdmin') {
+		next()
+	} else {
+		let dataUser = $cookies.get('smilAdminAuth')
+		if (dataUser) {
+			let reb64 = CryptoJS.enc.Hex.parse(dataUser)
+			let bytes = reb64.toString(CryptoJS.enc.Base64)
+			let decrypt = CryptoJS.AES.decrypt(bytes, process.env.VUE_APP_KEY)
+			let decryptedData = JSON.parse(decrypt.toString(CryptoJS.enc.Utf8))
+
+			if (Object.keys(decryptedData).length !== 0) {
+				let adminData = {
+					id: decryptedData.id,
+					staff_model: decryptedData.staff_model,
+					jabatan_model: decryptedData.jabatan_model,
+					active_period: decryptedData.active_period,
+					expire_period: decryptedData.expire_period,
+				}
+				localStorage.access_token = decryptedData.access_token
+				store.dispatch(types.UPDATE_ADMIN, adminData)
+				next()
+			} else {
+				next({ name: 'LoginAdmin' })
+			}
+		} else {
+			next({ name: 'LoginAdmin' })
+		}
+	}
 })
 
 export default router

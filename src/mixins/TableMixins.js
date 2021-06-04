@@ -11,6 +11,9 @@ export default {
 			},
 			filterData: {},
 			tableCount: [5, 10, 15, 20, 25, 30],
+			loadingTable: false,
+			isEditRow: false,
+			selectedRowId: null,
 		}
 	},
 	methods: {
@@ -29,7 +32,12 @@ export default {
 			this.tableInfo.pageNo = pageNo
 		},
 		changeFilterValue(objFilter) {
-			this.filterData[objFilter.model] = objFilter.value
+			if (objFilter.type == 'search-number') {
+				this.filterData[objFilter.model] =
+					objFilter.value !== '' ? parseInt(objFilter.value) : null
+			} else {
+				this.filterData[objFilter.model] = objFilter.value
+			}
 		},
 	},
 	computed: {},

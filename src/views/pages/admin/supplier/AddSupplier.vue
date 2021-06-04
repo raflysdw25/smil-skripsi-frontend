@@ -8,14 +8,28 @@
 			>
 				Batal
 			</button>
-			<button class="smil-btn smil-bg-primary" :disabled="!formFilled">
-				Simpan
+			<button
+				class="smil-btn smil-bg-primary"
+				@click="confirmNotif"
+				:disabled="!formFilled"
+			>
+				{{ supplierId !== null ? 'Edit' : 'Simpan' }}
 			</button>
 		</div>
 		<!-- END: BUTTON GROUP -->
 		<section class="section-form-group">
 			<div class="smil-row">
+				<div class="icon-class text-center" v-if="loadingForm">
+					<b-spinner
+						variant="secondary"
+						style="width: 140px; height: 140px; margin-bottom: 20px"
+					></b-spinner>
+					<p class="empty-table-description">
+						Sedang Memuat Data...
+					</p>
+				</div>
 				<div
+					v-else
 					class="form-group col-lg-6 col-12"
 					v-for="(form, indexInput) in formGroupList"
 					:key="`form-input-${indexInput}-${form.id}`"
@@ -99,6 +113,9 @@
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
+
+	// API
+	import api from '@/api/admin_api'
 	export default {
 		name: 'add-supplier',
 		components: { BaseModalAlert },
@@ -121,6 +138,11 @@
 					supplier_email: form[3].model,
 					supplier_address: form[4].model,
 				}
+			},
+			supplierId() {
+				return this.$route.params.supplier_id
+					? parseInt(this.$route.params.supplier_id)
+					: null
 			},
 		},
 		data() {
@@ -176,13 +198,101 @@
 		},
 		mounted() {
 			// this.showAlert(false, false, 'Alert Berhasil')
+			if (this.supplierId !== null) {
+				this.getDetailSupplier()
+			}
 		},
-		methods: {},
+		methods: {
+			// Call API
+			async getDetailSupplier() {
+				this.loadingForm = true
+				try {
+					const response = await api.getDetailData('supplier', this.supplierId)
+					if (response.data.response.code === 200) {
+						let supplier = response.data.data
+						let form = this.formGroupList
+						form[0].model = supplier.supplier_name
+						form[1].model = supplier.supplier_phone
+						form[2].model = supplier.person_in_charge
+						form[3].model = supplier.supplier_email
+						form[4].model = supplier.supplier_address
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				} finally {
+					this.loadingForm = false
+				}
+			},
+			async sendAddSupplier() {
+				this.isCreate = true
+				this.showAlert(true)
+				try {
+					const response = await api.createNewData(
+						'supplier',
+						this.submitRequest
+					)
+					if (response.data.response.code === 201) {
+						setTimeout(() => {
+							this.showAlert(false, true, 'Tambah Supplier Berhasil')
+							this.$router.push({ name: 'ListSupplier' })
+						}, 2000)
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (error) {
+					this.showAlert(false, false, e)
+				}
+			},
+			async editSupplier() {
+				this.isCreate = true
+				this.showAlert(true)
+				try {
+					const response = await api.editData(
+						'supplier',
+						this.supplierId,
+						this.submitRequest
+					)
+					if (response.data.response.code === 200) {
+						setTimeout(() => {
+							this.showAlert(false, true, 'Edit Supplier berhasil dilakukan')
+							this.$router.push({ name: 'ListSupplier' })
+						}, 2000)
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				} finally {
+					this.selectedRowId = null
+				}
+			},
+			// Notif
+			confirmNotif() {
+				let confirmAction = confirm(
+					'Apakah anda yakin ingin menyimpan data supplier?'
+				)
+				if (confirmAction) {
+					if (this.supplierId === null) {
+						this.sendAddSupplier()
+					} else {
+						this.editSupplier()
+					}
+				}
+			},
+		},
 		beforeRouteLeave(to, from, next) {
-			let confirmCancel = confirm(
-				'Apakah anda yakin ingin membatalkan tambah supplier? Data yang sudah diinputkan tidak akan disimpan'
-			)
-			if (confirmCancel) {
+			if (!this.isCreate) {
+				let confirmCancel = confirm(
+					`Apakah anda yakin ingin membatalkan ${
+						this.supplierId !== null ? 'edit data' : 'tambah data'
+					} supplier? Data yang sudah diinputkan tidak akan disimpan`
+				)
+				if (confirmCancel) {
+					next()
+				}
+			} else {
 				next()
 			}
 		},

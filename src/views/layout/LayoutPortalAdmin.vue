@@ -43,8 +43,12 @@
 						<template v-slot:button-content>
 							<div class="identity">
 								<div class="identity-info">
-									<span class="identity-name">Muhammad Rafly Sadewa</span>
-									<span class="identity-job">Kepala Laboratorium</span>
+									<span class="identity-name">{{
+										adminData.staff_model.staff_fullname
+									}}</span>
+									<span class="identity-job">{{
+										adminData.jabatan_model.jabatan_name
+									}}</span>
 								</div>
 								<div class="identity-icon" v-if="!isMobile">
 									<icon-component iconName="user" :size="30" colorIcon="#000" />
@@ -72,6 +76,23 @@
 			<!-- END: FOOTER -->
 		</div>
 		<!-- END: CONTENT VIEW -->
+
+		<b-modal
+			ref="modal-popup"
+			no-close-on-backdrop
+			no-close-on-esc
+			hide-header
+			hide-footer
+			centered
+		>
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
+			/>
+		</b-modal>
 	</div>
 </template>
 
@@ -80,12 +101,20 @@
 	import MenuNavigation from '@/components/MenuNavigation.vue'
 	import IconComponent from '@/components/IconComponent.vue'
 	import FooterLayout from '@/components/FooterLayout.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
 
 	// Vuex
 	import * as types from '@/store/types.js'
+
+	// API
+	import api from '@/api/admin_api'
 	export default {
 		name: 'layout-portal-admin',
-		components: { MenuNavigation, IconComponent, FooterLayout },
+		components: { MenuNavigation, IconComponent, FooterLayout, BaseModalAlert },
+		mixins: [ModalMixins],
 		data() {
 			return {
 				menus: [
@@ -179,9 +208,7 @@
 		},
 		mounted() {
 			// Cek if Admin already login
-			// if (this.adminData === null) {
-			// 	this.$router.push({ name: 'LoginAdmin' })
-			// }
+			this.checkUserAuthorize()
 		},
 		computed: {
 			isKaLab() {
@@ -225,6 +252,34 @@
 			},
 		},
 		methods: {
+			// Authorize
+			checkUserAuthorize() {
+				if (Object.keys(this.adminData).length === 0) {
+					this.$router.push({ name: 'LoginAdmin' })
+				}
+			},
+			async logoutAdmin() {
+				this.showAlert(true)
+				try {
+					const response = await api.logoutAdmin()
+					if (response.data.response.code == 200) {
+						this.$store.dispatch(types.UPDATE_ADMIN, null)
+						// localStorage.removeItem('access_token')
+						$cookies.remove('smilAdminAuth')
+						this.showAlert(false, true, response.data.response.message)
+						setTimeout(() => {
+							this.$router.push({ name: 'LoginAdmin' })
+						}, 1500)
+					}
+				} catch (e) {
+					console.log(e)
+					this.showAlert(false, false, e.response.data.message)
+				}
+				// let logout = confirm('Apakah anda yakin ingin keluar?')
+				// if (logout) {
+				// }
+			},
+			// Modal Admin
 			actionSidebar(action) {
 				if (action) {
 					this.showSidebar()
@@ -237,12 +292,6 @@
 			},
 			closeSidebar() {
 				this.toggleSideBar = false
-			},
-			logoutAdmin() {
-				if (confirm('Apakah anda yakin ingin keluar?')) {
-					this.$store.dispatch(types.UPDATE_ADMIN, null)
-					this.$router.push({ name: 'LoginAdmin' })
-				}
 			},
 		},
 	}

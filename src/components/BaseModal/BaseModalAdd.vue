@@ -11,6 +11,9 @@
 			>
 				<p class="form-label">
 					{{ form.label }}
+					<span v-if="form.isRequired" style="color: #dc3545; font-size: 14px">
+						*
+					</span>
 				</p>
 				<template v-if="!form.canAddValue">
 					<input
@@ -19,6 +22,7 @@
 						v-if="formInputType(form.type) === 'input'"
 						:disabled="form.disabled"
 						v-model="form.model"
+						:required="form.isRequired"
 					/>
 					<select
 						v-if="form.type === 'select'"
@@ -40,6 +44,7 @@
 						v-model="form.model"
 						cols="30"
 						rows="10"
+						:required="form.isRequired"
 					></textarea>
 					<date-picker
 						v-else-if="form.type === 'date'"
@@ -132,7 +137,7 @@
 					:disabled="!formFilled"
 					@click="submit"
 				>
-					Submit
+					{{ isEdit ? 'Ubah' : 'Submit' }}
 				</button>
 			</div>
 		</div>
@@ -161,13 +166,19 @@
 				type: Function,
 				required: false,
 			},
+			editFunction: {
+				type: Function,
+				required: false,
+			},
 			closeFunction: {
 				type: Function,
 				required: true,
 			},
+			isEdit: { type: Boolean, default: false },
 		},
 		mixins: [FormInputMixins],
 		watch: {},
+
 		methods: {
 			addInput(arrayInput) {
 				let object = {
@@ -183,9 +194,15 @@
 				arrayInput.splice(indexChild, 1)
 			},
 			async submit() {
-				await this.submitFunction()
+				if (this.isEdit) {
+					await this.editFunction()
+				} else {
+					await this.submitFunction()
+				}
+				this.closeModal()
 			},
 			closeModal() {
+				this.$emit('reset')
 				this.formList.forEach((form) => {
 					if (typeof form.model !== 'object') {
 						form.model = ''

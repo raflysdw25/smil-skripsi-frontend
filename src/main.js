@@ -5,6 +5,7 @@ import './registerServiceWorker'
 import router from './router'
 import { store } from './store/store'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+import VueCookies from 'vue-cookies'
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css'
@@ -17,6 +18,9 @@ import 'vue2-datepicker/index.css'
 Vue.use(BootstrapVue)
 // Optionally install the BootstrapVue icon components plugin
 Vue.use(IconsPlugin)
+
+// Cookies
+Vue.use(VueCookies)
 
 Vue.component('date-picker', DatePicker)
 Vue.config.productionTip = false

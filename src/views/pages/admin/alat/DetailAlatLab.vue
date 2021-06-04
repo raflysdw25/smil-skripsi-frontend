@@ -305,9 +305,9 @@
 						model: 'kondisi_alat',
 						options: [
 							{
-								id: 1,
-								text: 'All',
-								value: '',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 						],
@@ -319,9 +319,9 @@
 						model: 'ketersediaan_alat',
 						options: [
 							{
-								id: 1,
-								text: 'All',
-								value: '',
+								id: null,
+								name: 'All',
+								value: null,
 								disabled: false,
 							},
 						],
@@ -333,9 +333,9 @@
 						model: 'lokasi_id',
 						options: [
 							{
-								id: 1,
+								id: null,
 								text: 'All',
-								value: '',
+								value: null,
 								disabled: false,
 							},
 						],
