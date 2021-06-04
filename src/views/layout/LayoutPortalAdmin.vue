@@ -264,7 +264,7 @@
 					const response = await api.logoutAdmin()
 					if (response.data.response.code == 200) {
 						this.$store.dispatch(types.UPDATE_ADMIN, null)
-						// localStorage.removeItem('access_token')
+						localStorage.removeItem('access_token')
 						$cookies.remove('smilAdminAuth')
 						this.showAlert(false, true, response.data.response.message)
 						setTimeout(() => {
