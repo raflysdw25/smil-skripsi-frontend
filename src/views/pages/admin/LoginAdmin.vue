@@ -157,8 +157,8 @@
 						// Save data admin into Vuex
 						this.showAlert(false, true, admin.response.message)
 						setTimeout(() => {
-							this.$router.push({ name: 'DashboardAdmin' })
-							this.$router.go(0)
+							// this.$router.push({ name: 'DashboardAdmin' })
+							this.$router.go({ name: 'DashboardAdmin' })
 						}, 1500)
 					}
 				} catch (e) {
