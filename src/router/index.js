@@ -161,11 +161,16 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
+	let dataUser = $cookies.get('smilAdminAuth')
+	let accessToken = $cookies.get('smilAccessToken')
 	if (to.name == 'LoginAdmin') {
-		next()
+		if (dataUser && accessToken) {
+			next({ name: 'DashboardAdmin' })
+		} else {
+			next()
+		}
 	} else {
-		let dataUser = $cookies.get('smilAdminAuth')
-		if (dataUser) {
+		if (dataUser && accessToken) {
 			let reb64 = CryptoJS.enc.Hex.parse(dataUser)
 			let bytes = reb64.toString(CryptoJS.enc.Base64)
 			let decrypt = CryptoJS.AES.decrypt(bytes, process.env.VUE_APP_KEY)
@@ -179,7 +184,7 @@ router.beforeEach((to, from, next) => {
 					active_period: decryptedData.active_period,
 					expire_period: decryptedData.expire_period,
 				}
-				localStorage.access_token = decryptedData.access_token
+
 				store.dispatch(types.UPDATE_ADMIN, adminData)
 				next()
 			} else {

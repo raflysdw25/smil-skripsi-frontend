@@ -196,6 +196,7 @@
 					},
 				],
 				toggleSideBar: false,
+				firstAccess: true,
 			}
 		},
 		watch: {
@@ -208,6 +209,7 @@
 		},
 		mounted() {
 			// Cek if Admin already login
+
 			this.checkUserAuthorize()
 		},
 		computed: {
@@ -253,6 +255,7 @@
 		},
 		methods: {
 			// Authorize
+
 			checkUserAuthorize() {
 				if (Object.keys(this.adminData).length === 0) {
 					this.$router.push({ name: 'LoginAdmin' })
@@ -264,8 +267,9 @@
 					const response = await api.logoutAdmin()
 					if (response.data.response.code == 200) {
 						this.$store.dispatch(types.UPDATE_ADMIN, null)
-						localStorage.removeItem('access_token')
+						// localStorage.removeItem('access_token')
 						$cookies.remove('smilAdminAuth')
+						$cookies.remove('smilAccessToken')
 						this.showAlert(false, true, response.data.response.message)
 						setTimeout(() => {
 							this.$router.push({ name: 'LoginAdmin' })
@@ -294,6 +298,9 @@
 				this.toggleSideBar = false
 			},
 		},
+		// onComplete() {
+		// 	this.$router.go(0)
+		// },
 	}
 </script>
 

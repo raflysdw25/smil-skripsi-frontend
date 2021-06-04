@@ -143,7 +143,6 @@
 							jabatan_model: admin.data.jabatan_model,
 							active_period: admin.data.user_active_period,
 							expire_period: admin.data.user_expire_period,
-							access_token: admin.data.access_token,
 						}
 						// Save User Data and Token into Local Storage or Cookies
 						let cipherData = CryptoJs.AES.encrypt(
@@ -153,11 +152,13 @@
 						let e64 = CryptoJs.enc.Base64.parse(cipherData)
 						let eHex = e64.toString(CryptoJs.enc.Hex)
 						$cookies.set('smilAdminAuth', eHex, '12h')
+						$cookies.set('smilAccessToken', admin.data.access_token, '12h')
 
 						// Save data admin into Vuex
 						this.showAlert(false, true, admin.response.message)
 						setTimeout(() => {
 							this.$router.push({ name: 'DashboardAdmin' })
+							this.$router.go(0)
 						}, 1500)
 					}
 				} catch (e) {
