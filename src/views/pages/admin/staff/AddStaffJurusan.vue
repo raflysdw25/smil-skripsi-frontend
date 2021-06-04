@@ -279,7 +279,7 @@
 					} else {
 						this.showAlert(false, false, response.data.response.message)
 					}
-				} catch (error) {
+				} catch (e) {
 					this.showAlert(false, false, e)
 				}
 			},
