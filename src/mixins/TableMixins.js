@@ -14,6 +14,7 @@ export default {
 			loadingTable: false,
 			isEditRow: false,
 			selectedRowId: null,
+			selectedRowData: {},
 		}
 	},
 	methods: {

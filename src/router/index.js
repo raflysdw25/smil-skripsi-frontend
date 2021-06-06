@@ -11,6 +11,7 @@ import LayoutPortalAdmin from '@/views/layout/LayoutPortalAdmin.vue'
 
 // Pages
 import LoginAdmin from '@/views/pages/admin/LoginAdmin.vue'
+import FirstLoginAdmin from '@/views/pages/admin/FirstLoginAdmin.vue'
 import DashboardAdmin from '@/views/pages/admin/DashboardAdmin.vue'
 
 // Pages - Alat Lab
@@ -35,9 +36,8 @@ import ListLokasiPenyimpanan from '@/views/pages/admin/penyimpanan/ListLokasiPen
 import ListStaffLaboratorium from '@/views/pages/admin/staff/ListStaffLaboratorium.vue'
 import AddStaffLaboratorium from '@/views/pages/admin/staff/AddStaffLaboratorium.vue'
 
-// Pages - Staff Jurusan
+// Pages - Civitas Jurusan
 import ListCivitasJurusan from '@/views/pages/admin/staff/ListCivitasJurusan.vue'
-
 import AddStaffJurusan from '@/views/pages/admin/staff/AddStaffJurusan.vue'
 
 Vue.use(VueRouter)
@@ -78,9 +78,15 @@ const routes = [
 				component: AddAlatLab,
 			},
 			{
+				path: 'alatlab/edit/:alat_id',
+				name: 'EditAlatLab',
+				component: AddAlatLab,
+			},
+			{
 				path: 'alatlab/upload/image/:alat_id',
 				name: 'UploadFotoAlat',
 				component: UploadImage,
+				meta: { previousPage: '' },
 			},
 			{
 				path: 'alatlab/list/detail/:alat_id',
@@ -126,6 +132,11 @@ const routes = [
 				name: 'TambahStaffLaboratorium',
 				component: AddStaffLaboratorium,
 			},
+			{
+				path: 'staff/edit/jabatan/:user_id',
+				name: 'EditJabatanStaffLaboratorium',
+				component: AddStaffLaboratorium,
+			},
 			// Pagegroup - Staff Jurusan
 			{
 				path: 'jurusan',
@@ -138,7 +149,7 @@ const routes = [
 				component: AddStaffJurusan,
 			},
 			{
-				path: 'jurusan/edit/:staff_nip',
+				path: 'jurusan/edit/staff-jurusan/:staff_nip',
 				name: 'EditStaffJurusan',
 				component: AddStaffJurusan,
 			},
@@ -148,6 +159,11 @@ const routes = [
 		path: '/login',
 		name: 'LoginAdmin',
 		component: LoginAdmin,
+	},
+	{
+		path: '/first-login-admin',
+		name: 'FirstLoginAdmin',
+		component: FirstLoginAdmin,
 	},
 ]
 
@@ -183,9 +199,14 @@ router.beforeEach((to, from, next) => {
 					jabatan_model: decryptedData.jabatan_model,
 					active_period: decryptedData.active_period,
 					expire_period: decryptedData.expire_period,
+					first_login: decryptedData.first_login,
 				}
 				$cookies.set('smilAccessToken', accessToken, '12h')
 				store.dispatch(types.UPDATE_ADMIN, adminData)
+				// if (adminData.first_login) {
+				// } else {
+				// 	next()
+				// }
 				next()
 			} else {
 				next({ name: 'LoginAdmin' })

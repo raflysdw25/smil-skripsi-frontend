@@ -2,13 +2,14 @@
 	<div class="upload-image">
 		<!-- START: BUTTON GROUP -->
 		<div class="button-group d-flex align-items-center justify-content-end">
-			<button
-				class="smil-btn smil-bg-danger mr-4"
-				@click="$router.push({ name: 'ListAlatLaboratorium' })"
-			>
+			<button class="smil-btn smil-bg-danger mr-4" @click="$router.go(-1)">
 				Batal
 			</button>
-			<button class="smil-btn smil-bg-primary" :disabled="!uploadFilled">
+			<button
+				class="smil-btn smil-bg-primary"
+				:disabled="!uploadFilled"
+				@click="submitNotif"
+			>
 				Simpan
 			</button>
 		</div>
@@ -25,7 +26,12 @@
 			>
 				<icon-component iconName="image" :size="52" colorIcon="#101939" />
 				<p class="upload-area-desc">
-					Drag & Drop Gambar atau <span @click="browseImage">Klik Disini</span>
+					Drag & Drop Gambar atau
+					<span
+						@click="browseImage"
+						:class="uploadFiles.length >= 3 ? 'disabled' : ''"
+						>Klik Disini</span
+					>
 				</p>
 				<input
 					type="file"
@@ -72,15 +78,43 @@
 			<!-- UPLOADED IMAGE -->
 		</div>
 		<!-- END: UPLOAD IMAGE SECTION -->
+
+		<!-- MODAL POPUP -->
+		<b-modal
+			ref="modal-popup"
+			hide-footer
+			hide-header
+			centered
+			no-close-on-backdrop
+			no-close-on-esc
+		>
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
+			/>
+		</b-modal>
+		<!-- MODAL POPUP -->
 	</div>
 </template>
 
 <script>
 	// Component
 	import IconComponent from '@/components/IconComponent'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert'
+
+	// Mixins
+	import ModalMixins from '@/mixins/ModalMixins'
+	import FormInputMixins from '@/mixins/FormInputMixins'
+
+	// API
+	import api from '@/api/admin_api'
 	export default {
 		name: 'upload-image',
-		components: { IconComponent },
+		components: { IconComponent, BaseModalAlert },
+		mixins: [ModalMixins, FormInputMixins],
 		data() {
 			return {
 				isOverUploadArea: false,
@@ -88,12 +122,35 @@
 			}
 		},
 		methods: {
+			// Call API
+			async submitImage() {
+				this.isCreate = true
+				this.showAlert(true)
+				try {
+					const response = await api.createNewData(
+						'image-alat',
+						this.submitRequest
+					)
+					if (response.data.response.code === 201) {
+						this.showAlert(false, true, response.data.response.message)
+						this.isCreate = false
+						setTimeout(() => {
+							this.$router.go(-1)
+						}, 2000)
+					}
+				} catch (e) {
+					this.isCreate = false
+					this.showAlert(false, false, e)
+				}
+			},
 			// Upload Area Interaction
 			setIsOver(is_over) {
 				this.isOverUploadArea = is_over
 			},
 			browseImage() {
-				this.$refs['file_image'].click()
+				if (this.uploadFiles.length < 3) {
+					this.$refs['file_image'].click()
+				}
 			},
 			// Upload Process
 			handleDropUpload(e) {
@@ -145,6 +202,18 @@
 			removeImage(indexImage) {
 				this.uploadFiles.splice(indexImage, 1)
 			},
+			// Notif
+			submitNotif() {
+				let confirmSubmit = confirm(
+					`Apakah anda sudah yakin ingin menyimpan ${
+						this.uploadFiles.length > 1 ? 'gambar-gambar' : 'gambar'
+					} ini?`
+				)
+
+				if (confirmSubmit) {
+					this.submitImage()
+				}
+			},
 		},
 		computed: {
 			uploadFilled() {
@@ -152,25 +221,31 @@
 			},
 			alatId() {
 				return this.$route.params.alat_id
+					? parseInt(this.$route.params.alat_id)
+					: null
 			},
 			submitRequest() {
 				let uploadFiles = this.uploadFiles
 				let submit = []
 				uploadFiles.forEach((file) => {
-					submit.push({
-						alat_id: this.alatId,
-						image_data: file.image,
-					})
+					submit.push(file.image)
 				})
 
-				return submit
+				return {
+					alat_id: this.alatId,
+					image_data_list: submit,
+				}
 			},
 		},
 		beforeRouteLeave(to, from, next) {
-			let confirmCancel = confirm(
-				'Apakah anda yakin ingin membatalkan upload foto? Foto yang sudah diunggah tidak akan tersimpan'
-			)
-			if (confirmCancel) {
+			if (!this.isCreate) {
+				let confirmCancel = confirm(
+					'Apakah anda yakin ingin membatalkan upload foto? Foto yang sudah diunggah tidak akan tersimpan'
+				)
+				if (confirmCancel) {
+					next()
+				}
+			} else {
 				next()
 			}
 		},
@@ -201,6 +276,13 @@
 						text-decoration: underline;
 						cursor: pointer;
 					}
+					&.disabled {
+						cursor: none;
+						color: #c5c5c5;
+						&:hover {
+							text-decoration: none;
+						}
+					}
 				}
 			}
 			&.over {
@@ -219,7 +301,7 @@
 				}
 				.uploaded-image-box {
 					display: flex;
-
+					margin-bottom: 12px;
 					.image {
 						width: 120px;
 						height: 120px;

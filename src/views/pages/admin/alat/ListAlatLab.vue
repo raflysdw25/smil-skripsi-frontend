@@ -48,71 +48,99 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listData.length === 0">
-					<tr>
+
+				<tbody class="smil-tbody">
+					<tr v-if="loadingTable">
 						<td :colspan="headsTable.length" class="text-center empty-table">
-							<icon-component
-								iconName="empty-files"
-								:size="64"
-								colorIcon="#c5c5c5"
-								iconClass="icon-table"
-							/>
-							<span class="empty-table-description">
-								Tidak ada data yang dapat ditampilkan
-							</span>
+							<b-spinner
+								class="icon-table icon-size"
+								variant="secondary"
+								style=""
+							></b-spinner>
+							<p class="empty-table-description">
+								Sedang Memuat Data...
+							</p>
 						</td>
 					</tr>
-				</tbody>
-				<tbody class="smil-tbody" v-else>
-					<tr
-						v-for="(rows, indexRow) in listTable"
-						:key="`content-table-${indexRow}`"
-					>
-						<td
-							v-for="(content, indexContent) in rows"
-							:key="`column-${content}${indexContent}`"
-							:width="indexContent === rows.length - 1 ? 10 : null"
+					<template v-else>
+						<tr v-if="listData.length === 0">
+							<td :colspan="headsTable.length" class="text-center empty-table">
+								<icon-component
+									iconName="empty-files"
+									:size="64"
+									colorIcon="#c5c5c5"
+									iconClass="icon-table"
+								/>
+								<span class="empty-table-description">
+									Tidak ada data yang dapat ditampilkan
+								</span>
+							</td>
+						</tr>
+						<tr
+							v-else
+							v-for="(rows, indexRow) in listTable"
+							:key="`content-table-${indexRow}`"
 						>
-							<template v-if="indexContent === rows.length - 1">
-								<b-dropdown
-									size="lg"
-									right
-									variant="smil-drop-dots"
-									toggle-class="text-decoration-none"
-									no-caret
-									class="drop-dropdown smil-dot"
-								>
-									<template v-slot:button-content>
-										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-									</template>
-									<b-dropdown-item @click="lihatDetail(content)">
-										Lihat Detail Alat
-									</b-dropdown-item>
-									<b-dropdown-item
-										@click="
-											$router.push({
-												name: 'UploadFotoAlat',
-												params: { alat_id: 1 },
-											})
-										"
+							<td
+								v-for="(content, indexContent) in rows"
+								:key="`column-${content}${indexContent}`"
+								:width="indexContent === rows.length - 1 ? 10 : null"
+							>
+								<template v-if="indexContent === rows.length - 1">
+									<b-dropdown
+										size="lg"
+										right
+										variant="smil-drop-dots"
+										toggle-class="text-decoration-none"
+										no-caret
+										class="drop-dropdown smil-dot"
 									>
-										Upload Foto Alat
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Edit Data Alat
-									</b-dropdown-item>
-									<b-dropdown-item>
-										<span class="smil-text-danger">
-											Hapus Data Alat
-										</span>
-									</b-dropdown-item>
-								</b-dropdown>
-							</template>
-							<template v-else>
-								{{ content }}
-							</template>
-						</td>
-					</tr>
+										<template v-slot:button-content>
+											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+										</template>
+										<b-dropdown-item
+											@click="
+												$router.push({
+													name: 'DetailAlat',
+													params: { alat_id: listData[indexRow].id },
+												})
+											"
+										>
+											Lihat Detail Alat
+										</b-dropdown-item>
+										<b-dropdown-item
+											@click="
+												$router.push({
+													name: 'UploadFotoAlat',
+													params: { alat_id: listData[indexRow].id },
+												})
+											"
+										>
+											Upload Foto Alat
+										</b-dropdown-item>
+										<b-dropdown-item
+											@click="
+												$router.push({
+													name: 'EditAlatLab',
+													params: { alat_id: listData[indexRow].id },
+												})
+											"
+										>
+											Edit Data Alat
+										</b-dropdown-item>
+										<b-dropdown-item @click="deleteNotif(indexRow)">
+											<span class="smil-text-danger">
+												Hapus Data Alat
+											</span>
+										</b-dropdown-item>
+									</b-dropdown>
+								</template>
+								<template v-else>
+									{{ content }}
+								</template>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -124,7 +152,7 @@
 				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
@@ -174,7 +202,11 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="tableInfo.listSize">
+				<select
+					class="custom-select"
+					v-model="tableInfo.listSize"
+					@change="getListAlat"
+				>
 					<option
 						:value="count"
 						v-for="count in tableCount"
@@ -218,7 +250,7 @@
 				v-if="baseModalType === 'asal'"
 				title="Asal Pengadaan Alat"
 				supportType="asal"
-				:closeModal="closePopup"
+				:closeModal="closeSupport"
 			/>
 		</b-modal>
 		<!-- END: MODAL FILTER DATA FOR MOBILE -->
@@ -236,6 +268,10 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+
+	// API
+	import api from '@/api/admin_api'
+
 	export default {
 		name: 'list-alat-lab',
 		components: {
@@ -273,14 +309,7 @@
 						label: 'Asal Pengadaan',
 						filter_type: 'select',
 						model: 'asal_pengadaan_id',
-						options: [
-							{
-								id: null,
-								name: 'All',
-								value: null,
-								disabled: false,
-							},
-						],
+						options: [],
 					},
 					{
 						label: 'Tahun Pengadaan',
@@ -291,28 +320,6 @@
 					},
 					'',
 				],
-				listData: [
-					{
-						id: 1,
-						alat_name: 'iPhone 7 Plus',
-						asal_pengadaan_id: 1,
-						alat_year: '2017',
-						jenis_alat_id: 1,
-					},
-					{
-						id: 2,
-						alat_name: 'ASUS A412DA',
-						asal_pengadaan_id: 2,
-						alat_year: '2019',
-						jenis_alat_id: 2,
-					},
-				],
-				tableInfo: {
-					listSize: 5,
-					listTotal: 0,
-					pageNo: 1,
-					totalPage: 10,
-				},
 				filterData: {
 					alat_name: '',
 					jenis_alat_id: null,
@@ -351,14 +358,7 @@
 						description: '',
 						placeholder: 'All',
 						isRequired: false,
-						options: [
-							{
-								id: null,
-								name: 'All',
-								value: null,
-								disabled: true,
-							},
-						],
+						options: [],
 					},
 					{
 						label: 'Tahun Pengadaan Alat',
@@ -373,20 +373,30 @@
 				listJenisAlat: [],
 			}
 		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getListAlat()
+				},
+			},
+		},
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listData.forEach((list, indexList) => {
-					let rowTable = [
-						list.alat_name, //Nama Alat
-						this.jenisAlat(list.jenis_alat_id), //Jenis Alat (Ambil berdasarkan table jenis alat)
-						this.asalPengadaanData(list.asal_pengadaan_id), //Asal Pengadaan
-						list.alat_year,
-						indexList, //Index Data
-					]
+				if (this.listData.length > 0) {
+					this.listData.forEach((list, indexList) => {
+						let rowTable = [
+							list.alat_name, //Nama Alat
+							list.jenis_alat_model.jenis_name, // Nama Jenis
+							list.asal_pengadaan_model.asal_pengadaan_name, //Asal Pengadaan
+							list.alat_year,
+							indexList, //Index Data
+						]
 
-					listTable.push(rowTable)
-				})
+						listTable.push(rowTable)
+					})
+				}
 
 				return listTable
 			},
@@ -400,96 +410,130 @@
 				)
 			},
 			filterPayload() {
-				return this.filterData
+				let tableInfo = this.tableInfo
+				return {
+					page_size: tableInfo.listSize,
+					sort_by: 'id',
+					sort_direction: 'ASC',
+					...this.filterData,
+				}
 			},
 		},
 		async mounted() {
-			await this.getListAlat()
-			await this.getListJenisAlat()
 			await this.getAsalPengadaanAlat()
+			await this.getListJenisAlat()
+			await this.getListAlat()
 		},
 		methods: {
 			// Call API
 			async getListAlat() {
-				this.tableInfo.totalPage =
-					this.listData.length < this.tableInfo.listSize
-						? 1
-						: this.listData.length / this.tableInfo.listSize
-				this.tableInfo.listTotal = this.listData.length
+				this.loadingTable = true
 				// Nembak API Get List Alat
-				// alert(this.filterPayload.alat_name)
+				try {
+					const response = await api.getFilterData(
+						'alat',
+						this.tableInfo.pageNo,
+						this.filterPayload
+					)
+					console.log(response)
+					this.listData = response.data.result
+					let page = response.data.page
+					this.tableInfo.totalPage = page.total
+					this.tableInfo.listTotal = page.data_total
+				} catch (e) {
+					console.log(e)
+				}
+				this.loadingTable = false
 			},
 			async getListJenisAlat() {
-				let jenisAlat = [
-					{
-						id: 1,
-						jenis_name: 'Smartphone',
-					},
-					{
-						id: 2,
-						jenis_name: 'Laptop',
-					},
-				]
-				this.listJenisAlat = jenisAlat
-				let headsJenisAlat = this.headsTable[1]
-				let filterJenisAlat = this.formFilter[1]
-				jenisAlat.forEach((jenis, indexJns) => {
-					let ja = {
-						id: jenis.id,
-						name: jenis.jenis_name,
-						value: jenis.id,
-						disabled: false,
-					}
-					headsJenisAlat.options.push(ja)
-					filterJenisAlat.options.push(ja)
-				})
+				// Nembak API
+				try {
+					const response = await api.getPlainData('jenis')
+
+					let jenisAlat = response.data.data
+
+					// Set to Variable
+
+					let headsJenisAlat = this.headsTable[1]
+					let filterJenisAlat = this.formFilter[1]
+					jenisAlat.forEach((jenis) => {
+						let ja = {
+							id: jenis.id,
+							name: jenis.jenis_name,
+							value: jenis.id,
+							disabled: false,
+						}
+						headsJenisAlat.options.push(ja)
+						filterJenisAlat.options.push(ja)
+					})
+				} catch (e) {
+					this.showAlert(false, false, e)
+				}
 			},
 			async getAsalPengadaanAlat() {
-				let asalPengadaan = [
-					{
-						id: 1,
-						asal_pengadaan_name: 'Supplier',
-					},
-					{
-						id: 2,
-						asal_pengadaan_name: 'Pemerintah Daerah',
-					},
-				]
-				this.listAsalPengadaanAlat = asalPengadaan
-
-				// Simpan sebagai Options
-				let headsAsalPengadaan = this.headsTable[2]
-				let filterAsalPengadaan = this.formFilter[2]
-				asalPengadaan.forEach((asal, indexJns) => {
-					let ap = {
-						id: asal.id,
-						name: asal.asal_pengadaan_name,
-						value: asal.id,
-						disabled: false,
+				try {
+					const response = await api.getPlainData('asal')
+					let asalPengadaan = response.data.data
+					// Set to Variable
+					// Simpan sebagai Options
+					let options = [
+						{
+							id: null,
+							name: 'All',
+							value: null,
+							disabled: false,
+						},
+					]
+					let headsAsalPengadaan = this.headsTable[2]
+					let filterAsalPengadaan = this.formFilter[2]
+					asalPengadaan.forEach((asal, indexJns) => {
+						let ap = {
+							id: asal.id,
+							name: asal.asal_pengadaan_name,
+							value: asal.id,
+							disabled: false,
+						}
+						options.push(ap)
+					})
+					headsAsalPengadaan.options = options
+					filterAsalPengadaan.options = options
+				} catch (e) {
+					this.showAlert(false, false, e)
+				}
+			},
+			async deleteAlat(alatId) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('alat', alatId)
+					if (response.data.response.code === 200) {
+						this.showAlert(false, true, response.data.response.message)
+						setTimeout(() => {
+							this.getListAlat()
+						}, 2000)
 					}
-					headsAsalPengadaan.options.push(ap)
-					filterAsalPengadaan.options.push(ap)
-				})
+				} catch (e) {
+					if (process.env.NODE_ENV == 'development') {
+						console.log(e)
+					}
+					this.showAlert(false, false, e)
+				}
+			},
+			// Modal
+			closeSupport() {
+				this.getAsalPengadaanAlat()
+				this.closePopup()
 			},
 
-			// Value Change
-			asalPengadaanData(asalPengadaanId) {
-				if (this.listAsalPengadaanAlat.length > 0) {
-					return this.listAsalPengadaanAlat.find(
-						(asal) => asal.id === asalPengadaanId
-					).asal_pengadaan_name
-				}
-			},
-			jenisAlat(jenisAlatId) {
-				if (this.listJenisAlat.length > 0) {
-					return this.listJenisAlat.find((jenis) => jenis.id === jenisAlatId)
-						.jenis_name
-				}
-			},
 			// Action Dropdown
-			lihatDetail(indexData) {
-				let data = this.listData[indexData]
-				this.$router.push({ name: 'DetailAlat', params: { alat_id: 1 } })
+
+			deleteNotif(index) {
+				let data = this.listData[index]
+				let confirmDelete = confirm(
+					`Apakah anda yakin ingin menghapus alat ${data.alat_name} ? Seluruh data yang berhubungan dengan alat ini akan ikut terhapus`
+				)
+				if (confirmDelete) {
+					this.deleteAlat(data.id)
+				}
 			},
 		},
 	}

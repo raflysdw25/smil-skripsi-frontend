@@ -252,7 +252,7 @@
 			},
 			async getListProdi() {
 				try {
-					const response = await api.getListData('prodi')
+					const response = await api.getPlainData('prodi')
 					let prodi = response.data.data
 					prodi.forEach((pd) => {
 						let option = {
@@ -337,15 +337,7 @@
 	}
 </script>
 
-<style lang="scss" scoped>
-	.add-staff-jurusan {
-		.attention-form {
-			padding: 0 15px;
-			color: #dc3545;
-			font-weight: bold;
-		}
-	}
-</style>
+<style lang="scss" scoped></style>
 <style lang="scss">
 	.add-staff-jurusan {
 		input.form-control,

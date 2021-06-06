@@ -141,7 +141,7 @@
 				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
@@ -266,12 +266,18 @@
 		methods: {
 			async getSupportData() {
 				this.loadingTable = true
+				let fitlerPayload = {
+					page_size: this.tableInfo.listSize,
+					sort_by: 'id',
+					sort_direction: 'ASC',
+					...this.filterData,
+				}
 				// Nembak API Get List Alat
 				try {
 					const response = await api.getFilterData(
 						this.supportType,
 						this.tableInfo.pageNo,
-						this.filterData
+						fitlerPayload
 					)
 					console.log(response)
 					this.listData = response.data.result
@@ -417,15 +423,19 @@
 		},
 		computed: {
 			attribute() {
+				let attribute = null
 				if (this.supportType == 'asal') {
-					return { name: 'asal_pengadaan_name', header: 'Asal Pengadaan' }
+					attribute = { name: 'asal_pengadaan_name', header: 'Asal Pengadaan' }
 				} else if (this.supportType == 'prodi') {
-					return { name: 'prodi_name', header: 'Program Studi' }
+					attribute = { name: 'prodi_name', header: 'Program Studi' }
 				} else if (this.supportType == 'jabatan') {
-					return { name: 'jabatan_name', header: 'Jabatan' }
+					attribute = { name: 'jabatan_name', header: 'Jabatan' }
 				} else if (this.supportType == 'ruangan') {
-					return { name: 'ruangan_name', header: 'Ruangan' }
+					attribute = { name: 'ruangan_name', header: 'Ruangan' }
 				}
+
+				this.filterData[attribute.name] = ''
+				return attribute
 			},
 			listTable() {
 				let listTable = []

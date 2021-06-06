@@ -119,12 +119,12 @@
 		<!-- END: LIST DATA -->
 
 		<!-- START: PAGINATION INFO SECTION -->
-		<div class="pagination-section" v-if="listData.length > 0">
+		<div class="pagination-section">
 			<div class="table-counter">
 				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"

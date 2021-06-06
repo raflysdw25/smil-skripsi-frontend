@@ -143,8 +143,10 @@
 							jabatan_model: admin.data.jabatan_model,
 							active_period: admin.data.user_active_period,
 							expire_period: admin.data.user_expire_period,
+							first_login: admin.data.first_login,
 						}
-						// Save User Data and Token into Local Storage or Cookies
+
+						// // Save User Data and Token into Local Storage or Cookies
 						let cipherData = CryptoJs.AES.encrypt(
 							JSON.stringify(adminData),
 							process.env.VUE_APP_KEY
@@ -157,12 +159,11 @@
 						// Save data admin into Vuex
 						this.showAlert(false, true, admin.response.message)
 						setTimeout(() => {
-							// this.$router.push({ name: 'DashboardAdmin' })
 							this.$router.go({ name: 'DashboardAdmin' })
-						}, 1500)
+						}, 1000)
 					}
 				} catch (e) {
-					alert('Akun tidak ditemukan')
+					this.showAlert(false, false, e.response.data.message)
 					this.resetLoginAdmin()
 				}
 			},
@@ -223,25 +224,32 @@
 			}
 		}
 	}
+	@media screen and (max-width: 992px) {
+		.login-admin {
+			overflow-x: hidden;
+			align-items: center;
+			.login-form-section {
+				.banner-jurusan {
+					width: 350px;
+
+					.banner-title {
+						font-size: 14px;
+					}
+					img {
+						width: 70px;
+						height: 70px;
+					}
+				}
+				h4 {
+					font-size: 18px;
+				}
+			}
+		}
+	}
 </style>
 
 <style lang="scss">
 	.login-admin {
-		// .form-control {
-		// 	color: #000;
-		// 	background-color: #fff;
-		// 	border-color: #c5c5c5;
-		// 	border-radius: 5px;
-		// 	&:focus {
-		// 		box-shadow: 0 0 0 5px #c5c5c5;
-		// 	}
-		// 	&:disabled {
-		// 		background-color: #c5c5c5;
-		// 		border-color: #696969;
-		// 	}
-
-		// 	height: 40px;
-		// }
 		@import '@/assets/css/global.scss';
 	}
 </style>

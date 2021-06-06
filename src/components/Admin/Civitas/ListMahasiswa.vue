@@ -79,7 +79,7 @@
 										<template v-slot:button-content>
 											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 										</template>
-										<b-dropdown-item>
+										<b-dropdown-item @click="lihatDetail(indexRow)">
 											Detail Mahasiswa
 										</b-dropdown-item>
 										<b-dropdown-item>
@@ -111,7 +111,7 @@
 				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
@@ -186,6 +186,7 @@
 			centered
 			no-close-on-backdrop
 			no-close-on-esc
+			:size="baseModalType === 'detail' ? 'lg' : 'md'"
 		>
 			<form-filter-data
 				v-if="baseModalType === 'filter'"
@@ -202,6 +203,13 @@
 				:message="message"
 				:closeAlert="closePopup"
 			/>
+			<base-modal-detail
+				v-if="baseModalType === 'detail'"
+				title="Detail Mahasiswa"
+				:headsData="headsDetail"
+				:valueData="detailData"
+				:closeModal="closePopup"
+			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
 	</div>
@@ -213,6 +221,7 @@
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
@@ -229,6 +238,10 @@
 			FormFilterData,
 			BaseFilter,
 			BaseModalAlert,
+			BaseModalDetail,
+		},
+		props: {
+			listProdi: Array,
 		},
 		data() {
 			return {
@@ -252,14 +265,7 @@
 						filter_type: 'select',
 						placeholder: 'Filter Program Studi',
 						model: 'prodi_id',
-						options: [
-							{
-								id: null,
-								name: 'All',
-								value: null,
-								disabled: false,
-							},
-						],
+						options: [],
 					},
 					{
 						label: 'Email',
@@ -270,7 +276,32 @@
 					},
 					'',
 				],
-
+				headsDetail: [
+					{
+						label: 'Nomor Induk Mahasiswa',
+						key: 'nim',
+					},
+					{
+						label: 'Nama Lengkap',
+						key: 'mahasiswa_fullname',
+					},
+					{
+						label: 'Email',
+						key: 'email',
+					},
+					{
+						label: 'Nomor Telepon',
+						key: 'phone_number',
+					},
+					{
+						label: 'Alamat Tempat Tinggal',
+						key: 'address',
+					},
+					{
+						label: 'Program Studi',
+						key: 'prodi_name',
+					},
+				],
 				filterData: {
 					nim: '',
 					mahasiswa_fullname: '',
@@ -296,19 +327,12 @@
 					},
 					{
 						label: 'Program Studi',
-						type: 'text',
+						type: 'select',
 						model: 'prodi_id',
 						description: '',
 						placeholder: 'Filter Program Studi',
 						isRequired: false,
-						options: [
-							{
-								id: null,
-								name: 'All',
-								value: null,
-								disabled: false,
-							},
-						],
+						options: [],
 					},
 				],
 				// Data Add Jenis Alat
@@ -340,10 +364,32 @@
 					...this.filterData,
 				}
 			},
+			detailData() {
+				if (Object.keys(this.selectedRowData).length > 0) {
+					let data = this.selectedRowData
+					return {
+						nim: data.nim,
+						mahasiswa_fullname: data.mahasiswa_fullname,
+						email: data.email,
+						phone_number: data.phone_number,
+						address: data.address,
+						prodi_name:
+							data.prodi_model !== null ? data.prodi_model.prodi_name : '-',
+					}
+				}
+			},
+		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getListMahasiswa()
+				},
+			},
 		},
 		async mounted() {
 			await this.getListMahasiswa()
-			await this.getProdi()
+			this.getProdi()
 			// this.showAlert(false, true, 'Alert Berhasil')
 		},
 		methods: {
@@ -368,28 +414,9 @@
 					this.loadingTable = false
 				}
 			},
-			async getProdi() {
-				// Hit API List Jabatan from Jabatan Table
-				try {
-					const response = await api.getListData('prodi')
-					let prodi = response.data.data
-					prodi.forEach((pd, indexJns) => {
-						this.headsTable[2].options.push({
-							id: pd.id,
-							name: pd.prodi_name,
-							value: pd.id,
-							disabled: false,
-						})
-						this.formFilter[2].options.push({
-							id: pd.id,
-							name: pd.prodi_name,
-							value: pd.id,
-							disabled: false,
-						})
-					})
-				} catch (e) {
-					console.log(e)
-				}
+			getProdi() {
+				this.headsTable[2].options = this.listProdi
+				this.formFilter[2].options = this.listProdi
 			},
 			async deleteMahasiswa(nim) {
 				this.showAlert(true)
@@ -406,10 +433,11 @@
 				} finally {
 				}
 			},
-			// Value Change
-
 			// Action Dropdown
-			lihatDetail(indexData) {},
+			lihatDetail(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('detail')
+			},
 			deleteNotif(index) {
 				let mahasiswa = this.listData[index]
 				let confirm = window.confirm(

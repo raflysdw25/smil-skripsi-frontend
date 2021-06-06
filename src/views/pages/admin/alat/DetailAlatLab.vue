@@ -1,246 +1,324 @@
 <template>
 	<div class="detail-alat-lab">
-		<!-- START: HEADER -->
-		<div class="header">
-			<div class="header-title">
-				<h1>{{ alatDetail.nama }}</h1>
-				<p class="last-action">
-					{{
-						alatDetail.updated_at === null
-							? `Ditambahkan pada ${alatDetail.created_at}`
-							: `Diubah pada ${alatDetail.updated_at}`
-					}}
-				</p>
-			</div>
-			<div class="button-group">
-				<button class="smil-btn smil-bg-danger">
-					Hapus Data
-				</button>
-				<button class="smil-btn smil-bg-secondary">
-					Edit Data
-				</button>
-				<button
-					class="smil-btn smil-bg-primary"
-					@click="
-						$router.push({
-							name: 'UploadFotoAlat',
-							params: { alat_id: alatId },
-						})
-					"
-				>
-					Upload Foto
-				</button>
-			</div>
+		<div class="mt-4 icon-class text-center" v-if="refreshData">
+			<b-spinner
+				variant="secondary"
+				style="width: 140px; height: 140px; margin-bottom: 20px"
+			></b-spinner>
+			<p class="empty-table-description">
+				Sedang Memuat Data...
+			</p>
 		</div>
-		<!-- END: HEADER -->
-
-		<!-- START: CONTENT DETAIL -->
-		<div class="content smil-row">
-			<div class="col-lg-5 alat-info">
-				<table class="table table-borderless">
-					<tr>
-						<th>Jenis Alat</th>
-						<td>{{ alatDetail.jenis_alat }}</td>
-					</tr>
-					<tr>
-						<th>Asal Pengadaan</th>
-						<td>{{ alatDetail.asal_pengadaan }}</td>
-					</tr>
-					<tr>
-						<th>Tahun Pengadaan</th>
-						<td>{{ alatDetail.tahun_pengadaan }}</td>
-					</tr>
-					<tr>
-						<th>Supplier Alat</th>
-						<td>{{ alatDetail.supplier }}</td>
-					</tr>
-					<tr>
-						<th>Jumlah Alat</th>
-						<td>{{ alatDetail.jumlah }}</td>
-					</tr>
-				</table>
-			</div>
-			<div class="col-lg-7 image-display">
-				<h4>Foto Alat</h4>
-				<div class="empty-image" v-if="alatDetail.image.length === 0">
-					<p>Belum menggunggah foto untuk alat ini</p>
+		<template v-else>
+			<!-- START: HEADER -->
+			<div class="header">
+				<div class="header-title">
+					<h1>{{ alatDetail.alat_name }}</h1>
+					<p class="last-action">
+						{{
+							alatDetail.updated_at === alatDetail.created_at
+								? `Ditambahkan pada ${alatDetail.created_at}`
+								: `Diubah pada ${alatDetail.updated_at}`
+						}}
+					</p>
+				</div>
+				<div class="button-group">
+					<button class="smil-btn smil-bg-danger" @click="deleteNotif('alat')">
+						Hapus Data
+					</button>
+					<button
+						class="smil-btn smil-bg-secondary"
+						@click="
+							$router.push({
+								name: 'EditAlatLab',
+								params: { alat_id: alatDetail.id },
+							})
+						"
+					>
+						Edit Data
+					</button>
+					<button
+						v-if="alatDetail.images && alatDetail.images.length < 3"
+						class="smil-btn smil-bg-primary"
+						@click="
+							$router.push({
+								name: 'UploadFotoAlat',
+								params: { alat_id: alatId },
+								meta: { previousPage: 'DetailAlat' },
+							})
+						"
+					>
+						Upload Foto
+					</button>
 				</div>
 			</div>
-		</div>
-		<!-- END: CONTENT DETAIL -->
+			<!-- END: HEADER -->
 
-		<!-- START: TABEL DETAIL ALAT -->
-		<div class="table-detail-content table-responsive-sm">
-			<div class="table-title d-flex align-items-center">
-				<h4>List Alat Terdaftar</h4>
-				<button
-					class="smil-btn smil-bg-primary ml-auto"
-					@click="openModalPopup('add')"
-				>
-					Tambah Alat
-				</button>
+			<!-- START: CONTENT DETAIL -->
+			<div class="content smil-row">
+				<div class="col-lg-5 alat-info">
+					<table class="table table-borderless">
+						<tr>
+							<th>Jenis Alat</th>
+							<td>
+								{{
+									alatDetail.jenis_alat_model
+										? alatDetail.jenis_alat_model.jenis_name
+										: ''
+								}}
+							</td>
+						</tr>
+						<tr>
+							<th>Asal Pengadaan</th>
+							<td>
+								{{
+									alatDetail.asal_pengadaan_model
+										? alatDetail.asal_pengadaan_model.asal_pengadaan_name
+										: ''
+								}}
+							</td>
+						</tr>
+						<tr>
+							<th>Tahun Pengadaan</th>
+							<td>{{ alatDetail.alat_year }}</td>
+						</tr>
+						<tr>
+							<th>Supplier Alat</th>
+							<td>
+								{{
+									alatDetail.supplier_model && alatDetail.supplier_id !== null
+										? alatDetail.supplier_model.supplier_name
+										: '-'
+								}}
+							</td>
+						</tr>
+						<tr>
+							<th>Jumlah Alat</th>
+							<td>{{ alatDetail.alat_total }}</td>
+						</tr>
+						<tr>
+							<th>Spesifikasi</th>
+							<td>
+								<button class="smil-btn smil-bg-info">
+									Lihat Spesifikasi
+								</button>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div class="col-lg-7 image-display">
+					<h4>Foto Alat</h4>
+					<template v-if="alatDetail.images">
+						<div class="empty-image" v-if="alatDetail.images.length === 0">
+							<p>Belum menggunggah foto untuk alat ini</p>
+						</div>
+						<b-row class="mt-4" v-else>
+							<b-col
+								lg="4"
+								md="6"
+								v-for="(img, idxImg) in alatDetail.images"
+								:key="`gambar-alat-${idxImg}`"
+							>
+								<b-card overlay :img-src="img.image_data" class="mb-3">
+									<icon-component
+										iconName="full-screen"
+										:size="128"
+										colorIcon="#fff"
+									/>
+								</b-card>
+							</b-col>
+						</b-row>
+					</template>
+				</div>
 			</div>
-			<table class="table smil-table">
-				<thead class="smil-thead">
-					<tr>
-						<th
-							v-for="(head, indexHds) in headsAlatLab"
-							:key="`header-table-${head.id}-${indexHds}`"
-						>
-							{{ head.label }}
-							<base-filter
-								filter_class="d-none d-lg-block"
-								@changeValue="changeFilterValue"
-								@filterAction="getListDetailAlat"
-								:filter_type="head.filter_type"
-								:default_value="filterAlat[head.model]"
-								:placeholder="head.placeholder"
-								:options="head.options"
-								:modelFilter="head.model"
-							/>
-						</th>
-					</tr>
-				</thead>
-				<tbody class="smil-tbody" v-if="listAlatLab.length === 0">
-					<tr>
-						<td :colspan="headsAlatLab.length" class="text-center empty-table">
-							<icon-component
-								iconName="empty-files"
-								:size="64"
-								colorIcon="#c5c5c5"
-								iconClass="icon-table"
-							/>
-							<span class="empty-table-description">
-								Tidak ada data yang dapat ditampilkan
-							</span>
-						</td>
-					</tr>
-				</tbody>
-				<tbody class="smil-tbody" v-else>
-					<tr
-						v-for="(rows, indexRow) in listTable"
-						:key="`content-table-${indexRow}`"
+			<!-- END: CONTENT DETAIL -->
+
+			<!-- START: TABEL DETAIL ALAT -->
+			<div class="table-detail-content table-responsive-sm">
+				<div class="table-title d-flex align-items-center">
+					<h4>List Alat Terdaftar</h4>
+					<button
+						class="smil-btn smil-bg-primary ml-auto"
+						@click="openPopup('add')"
 					>
-						<td
-							v-for="(content, indexContent) in rows"
-							:key="`column-${content}${indexContent}`"
-							:width="indexContent === rows.length - 1 ? 10 : null"
-						>
-							<template v-if="indexContent === rows.length - 1">
-								<b-dropdown
-									size="lg"
-									right
-									variant="smil-drop-dots"
-									toggle-class="text-decoration-none"
-									no-caret
-									class="drop-dropdown smil-dot"
+						Tambah Alat
+					</button>
+				</div>
+				<table class="table smil-table">
+					<thead class="smil-thead">
+						<tr>
+							<th
+								v-for="(head, indexHds) in headsTable"
+								:key="`header-table-${head.id}-${indexHds}`"
+							>
+								{{ head.label }}
+								<base-filter
+									filter_class="d-none d-lg-block mt-2"
+									@changeValue="changeFilterValue"
+									@filterAction="getListDetailAlat"
+									:filter_type="head.filter_type"
+									:default_value="filterData[head.model]"
+									:placeholder="head.placeholder"
+									:options="head.options"
+									:modelFilter="head.model"
+								/>
+							</th>
+						</tr>
+					</thead>
+
+					<tbody class="smil-tbody">
+						<tr v-if="loadingTable">
+							<td :colspan="headsTable.length" class="text-center empty-table">
+								<b-spinner
+									class="icon-table icon-size"
+									variant="secondary"
+									style=""
+								></b-spinner>
+								<p class="empty-table-description">
+									Sedang Memuat Data...
+								</p>
+							</td>
+						</tr>
+						<template v-else>
+							<tr v-if="listData.length === 0">
+								<td
+									:colspan="headsTable.length"
+									class="text-center empty-table"
 								>
-									<template v-slot:button-content>
-										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+									<icon-component
+										iconName="empty-files"
+										:size="64"
+										colorIcon="#c5c5c5"
+										iconClass="icon-table"
+									/>
+									<span class="empty-table-description">
+										Tidak ada data yang dapat ditampilkan
+									</span>
+								</td>
+							</tr>
+							<tr
+								v-else
+								v-for="(rows, indexRow) in listTable"
+								:key="`content-table-${indexRow}`"
+							>
+								<td
+									v-for="(content, indexContent) in rows"
+									:key="`column-table-${indexContent}`"
+								>
+									<template v-if="indexContent === rows.length - 1">
+										<b-dropdown
+											size="lg"
+											right
+											variant="smil-drop-dots"
+											toggle-class="text-decoration-none"
+											no-caret
+											class="drop-dropdown smil-dot"
+										>
+											<template v-slot:button-content>
+												<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+											</template>
+											<b-dropdown-item @click="seeBarcode(indexRow)">
+												Lihat Barcode Alat
+											</b-dropdown-item>
+											<b-dropdown-item @click="changeCondition(indexRow)">
+												Ubah Kondisi Alat
+											</b-dropdown-item>
+											<b-dropdown-item @click="deleteNotif('detail', indexRow)">
+												<span class="smil-text-danger">
+													Hapus Data Alat
+												</span>
+											</b-dropdown-item>
+										</b-dropdown>
 									</template>
-									<b-dropdown-item @click="lihatDetail(content)">
-										Lihat Detail Alat
-									</b-dropdown-item>
-									<b-dropdown-item
-										@click="
-											$router.push({
-												name: 'UploadFotoAlat',
-												params: { alat_id: 1 },
-											})
-										"
-									>
-										Upload Foto Alat
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Edit Data Alat
-									</b-dropdown-item>
-									<b-dropdown-item>
-										<span class="smil-text-danger">
-											Hapus Data Alat
+									<template v-else-if="indexContent == 1 || indexContent == 2">
+										<span class="smil-status" :class="content.background">
+											{{ content.text }}
 										</span>
-									</b-dropdown-item>
-								</b-dropdown>
-							</template>
-							<template v-else>
-								{{ content }}
-							</template>
-						</td>
-					</tr>
-					<tr>
-						<td
-							:colspan="Object.keys(headsAlatLab).length"
-							:style="{ 'padding-bottom': `${listAlatLab.length * 50}px` }"
-						></td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-
-		<!-- START: PAGINATION INFO SECTION -->
-		<div class="pagination-section">
-			<div class="table-counter">
-				{{ `${listAlatLab.length} dari ${listAlatLab.length} Data` }}
+									</template>
+									<template v-else>
+										{{ content }}
+									</template>
+								</td>
+							</tr>
+						</template>
+					</tbody>
+				</table>
 			</div>
-			<div class="table-pagination">
-				<ul>
-					<li>
-						<span
-							:style="listInfo.pageNo === 1 ? '' : 'cursor: pointer'"
-							@click="previousPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === 1"
-						>
-							<icon-component
-								iconName="arrow-left"
-								:size="24"
-								:colorIcon="listInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
-							/>
-						</span>
-					</li>
-					<li v-for="num in listInfo.pageSize" :key="num">
-						<a
-							style="cursor: pointer"
-							class="smil-link"
-							@click="jumpPage(num)"
-							:class="[num === listInfo.pageNo ? 'active' : '']"
-							>{{ num }}
-						</a>
-					</li>
-					<li>
-						<span
-							:style="
-								listInfo.pageSize === listInfo.pageNo ? '' : 'cursor: pointer'
-							"
-							@click="nextPage"
-							v-if="listInfo.pageSize > 1"
-							:disabled="listInfo.pageNo === listInfo.pageSize"
-						>
-							<icon-component
-								iconName="arrow-right"
-								:size="24"
-								:colorIcon="
-									listInfo.pageNo === listInfo.pageSize ? `#C5C5C5` : `#101939`
+			<!-- END: TABEL DETAIL ALAT -->
+
+			<!-- START: PAGINATION INFO SECTION -->
+			<div class="pagination-section">
+				<div class="table-counter">
+					{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
+				</div>
+				<div class="table-pagination">
+					<ul v-if="listData.length > 0">
+						<li>
+							<span
+								:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
+								@click="previousPage"
+								v-if="tableInfo.totalPage > 1"
+								:disabled="tableInfo.pageNo === 1"
+							>
+								<icon-component
+									iconName="arrow-left"
+									:size="24"
+									:colorIcon="tableInfo.pageNo === 1 ? `#C5C5C5` : `#101939`"
+								/>
+							</span>
+						</li>
+						<li v-for="num in tableInfo.totalPage" :key="num">
+							<a
+								style="cursor: pointer"
+								class="smil-link"
+								@click="jumpPage(num)"
+								:class="[num === tableInfo.pageNo ? 'active' : '']"
+							>
+								{{ num }}
+							</a>
+						</li>
+						<li>
+							<span
+								:style="
+									tableInfo.totalPage === tableInfo.pageNo
+										? ''
+										: 'cursor: pointer'
 								"
-							/>
-						</span>
-					</li>
-				</ul>
+								@click="nextPage"
+								v-if="tableInfo.totalPage > 1"
+								:disabled="tableInfo.pageNo === tableInfo.totalPage"
+							>
+								<icon-component
+									iconName="arrow-right"
+									:size="24"
+									:colorIcon="
+										tableInfo.pageNo === tableInfo.totalPage
+											? `#C5C5C5`
+											: `#101939`
+									"
+								/>
+							</span>
+						</li>
+					</ul>
+				</div>
+				<div class="table-count">
+					Tampilkan
+					<select
+						class="custom-select"
+						v-model="tableInfo.listSize"
+						@change="getListDetailAlat"
+					>
+						<option
+							:value="count"
+							v-for="count in tableCount"
+							:key="`page-size-${count}`"
+							>{{ count }}</option
+						>
+					</select>
+				</div>
 			</div>
-			<div class="table-count">
-				Tampilkan
-				<select class="custom-select" v-model="listInfo.listSize">
-					<option value="5">5</option>
-					<option value="10">10</option>
-					<option value="15">15</option>
-					<option value="20">20</option>
-					<option value="25">25</option>
-					<option value="30">30</option>
-				</select>
-			</div>
-		</div>
-		<!-- END: PAGINATION INFO SECTION -->
-
-		<!-- END: TABEL DETAIL ALAT -->
+			<!-- END: PAGINATION INFO SECTION -->
+		</template>
 
 		<!-- START: MODAL POPUP -->
 		<b-modal
@@ -248,15 +326,30 @@
 			hide-footer
 			hide-header
 			centered
-			no-close-on-backdrop
-			no-close-on-esc
+			:no-close-on-backdrop="baseModalType !== 'barcode'"
+			:no-close-on-esc="baseModalType !== 'barcode'"
 		>
 			<base-modal-add
-				v-if="baseModalType === 'add'"
-				modalTitle="Tambah Alat Baru"
-				:formList="formAdd"
-				:closeFunction="closeModalPopup"
-				:formFilled="buttonActive"
+				v-if="baseModalType === 'add' || baseModalType === 'condition'"
+				:modalTitle="formList.title"
+				:formList="formList.list"
+				:submitFunction="submitAction"
+				:closeFunction="closeAction"
+				:formFilled="formListFilled"
+				@reset="setPageAlatDetail"
+			/>
+
+			<base-modal-alert
+				v-if="baseModalType === 'alert'"
+				:isProcess="isProcess"
+				:isSuccess="isSuccess"
+				:message="message"
+				:closeAlert="closePopup"
+			/>
+			<base-modal-barcode
+				v-if="baseModalType === 'barcode'"
+				:barcodeValue="selectedRowData.barcode_alat"
+				:displayText="selectedRowData.alat_model.alat_name"
 			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
@@ -268,33 +361,37 @@
 	import IconComponent from '@/components/IconComponent.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
+	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalBarcode from '@/components/BaseModal/BaseModalBarcode.vue'
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
+	import TableMixins from '@/mixins/TableMixins'
+	import ModalMixins from '@/mixins/ModalMixins'
+
+	// API
+	import api from '@/api/admin_api'
+
 	export default {
 		name: 'detail-alat-lab',
-		components: { IconComponent, BaseFilter, BaseModalAdd },
-		mixins: [FormInputMixins],
+		components: {
+			IconComponent,
+			BaseFilter,
+			BaseModalAdd,
+			BaseModalAlert,
+			BaseModalBarcode,
+		},
+		mixins: [FormInputMixins, TableMixins, ModalMixins],
 		data() {
 			return {
-				alatDetail: {
-					nama: 'Busa Peredam',
-					jenis_alat: 'Camera / Multimedia',
-					asal_pengadaan: 'Barang Hibah Pemerintah',
-					tahun_pengadaan: '2020',
-					supplier: 'PEMERINTAH KOTA DEPOK',
-					jumlah: 2,
-					created_at: this.formatDate(new Date(), 'DD MMMM YYYY HH:ss A'),
-					updated_at: null,
-					image: [],
-				},
+				alatDetail: {},
 				// Detail Alat Tabel
-				headsAlatLab: [
+				headsTable: [
 					{
 						id: 1,
 						label: 'Barcode Alat',
 						filter_type: 'search',
 						placeholder: 'Filter Barcode Alat',
-						model: 'barcode',
+						model: 'barcode_alat',
 						options: null,
 					},
 					{
@@ -302,12 +399,48 @@
 						label: 'Kondisi Alat',
 						filter_type: 'select',
 						placeholder: 'Filter Kondisi Alat',
-						model: 'kondisi_alat',
+						model: 'condition_status',
 						options: [
 							{
 								id: null,
 								name: 'All',
 								value: null,
+								disabled: false,
+							},
+							{
+								id: 1,
+								name: 'Pending',
+								value: 1,
+								disabled: false,
+							},
+							{
+								id: 2,
+								name: 'Baik',
+								value: 2,
+								disabled: false,
+							},
+							{
+								id: 3,
+								name: 'Rusak',
+								value: 3,
+								disabled: false,
+							},
+							{
+								id: 4,
+								name: 'Habis',
+								value: 4,
+								disabled: false,
+							},
+							{
+								id: 5,
+								name: 'Diperbaiki',
+								value: 5,
+								disabled: false,
+							},
+							{
+								id: 6,
+								name: 'Apkir',
+								value: 6,
 								disabled: false,
 							},
 						],
@@ -316,12 +449,30 @@
 						id: 3,
 						label: 'Ketersediaan Alat',
 						filter_type: 'select',
-						model: 'ketersediaan_alat',
+						model: 'available_status',
 						options: [
 							{
 								id: null,
 								name: 'All',
 								value: null,
+								disabled: false,
+							},
+							{
+								id: 1,
+								name: 'Pending',
+								value: 1,
+								disabled: false,
+							},
+							{
+								id: 2,
+								name: 'Tersedia',
+								value: 2,
+								disabled: false,
+							},
+							{
+								id: 3,
+								name: 'Tidak Tersedia',
+								value: 3,
 								disabled: false,
 							},
 						],
@@ -331,48 +482,19 @@
 						label: 'Lokasi Penyimpanan',
 						filter_type: 'select',
 						model: 'lokasi_id',
-						options: [
-							{
-								id: null,
-								text: 'All',
-								value: null,
-								disabled: false,
-							},
-						],
+						options: [],
 					},
 
 					'',
 				],
-				listAlatLab: [
-					{
-						id: 1,
-						nama_alat: 'iPhone 7 Plus',
-						asal_alat: 'BHP',
-
-						jenis_alat_id: 1,
-					},
-					{
-						id: 2,
-						nama_alat: 'ASUS A412DA',
-						asal_alat: 'HTA',
-
-						jenis_alat_id: 2,
-					},
-				],
-				listInfo: {
-					listSize: 5,
-					listTotal: 0,
-					pageNo: 1,
-					pageSize: 10,
-				},
-				filterAlat: {
-					barcode: '',
-					kondisi_alat: '',
-					ketersediaan_alat: '',
-					lokasi_id: '',
+				filterData: {
+					barcode_alat: '',
+					condition_status: null,
+					available_status: null,
+					lokasi_id: null,
 				},
 				// Popup Interaction
-				formAdd: [
+				formAddDetailAlat: [
 					{
 						id: 1,
 						label: 'Jumlah Alat',
@@ -386,84 +508,443 @@
 						id: 2,
 						label: 'Lokasi Penyimpanan',
 						type: 'select',
-						options: [
-							{
-								id: 1,
-								text: 'Pilih Lokasi Penyimpanan',
-								value: '',
-								disabled: true,
-							},
-						],
-						model: [{ id: 1, value: '', disabled: false }],
+						options: [],
+						model: null,
+						disabled: true,
 						canAddValue: false,
 					},
 				],
-				baseModalType: '',
+				formChangeCondition: [
+					{
+						id: 1,
+						label: 'Barcode Alat',
+						type: 'text',
+						disabled: true,
+						model: '',
+						canAddValue: false,
+					},
+					{
+						id: 2,
+						label: 'Kondisi Alat',
+						type: 'select',
+						options: [
+							{
+								id: null,
+								name: 'Pilih Kondisi Alat Saat Ini',
+								value: null,
+								disabled: true,
+							},
+							{
+								id: 1,
+								name: 'Pending',
+								value: 1,
+								disable: false,
+							},
+							{
+								id: 2,
+								name: 'Baik',
+								value: 2,
+								disable: false,
+							},
+							{
+								id: 3,
+								name: 'Rusak',
+								value: 3,
+								disable: false,
+							},
+							{
+								id: 4,
+								name: 'Habis',
+								value: 4,
+								disable: false,
+							},
+							{
+								id: 5,
+								name: 'Diperbaiki',
+								value: 5,
+								disable: false,
+							},
+							{
+								id: 6,
+								name: 'Apkir',
+								value: 6,
+								disable: false,
+							},
+						],
+						model: null,
+						canAddValue: false,
+					},
+				],
 				buttonActive: false,
+				refreshData: false,
 			}
 		},
-		mounted() {
-			this.getListDetailAlat()
-			this.getListLokasi()
+		async mounted() {
+			await this.setPageAlatDetail()
+		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getListDetailAlat()
+				},
+			},
+			formAddDetailAlat: {
+				deep: true,
+				handler: function() {
+					let payload = this.submitDetailAlat
+					if (payload.total_alat !== null) {
+						this.getLokasiBaseOnTotalAlat(payload.total_alat)
+					} else {
+						this.formAddDetailAlat[1].disabled = true
+					}
+				},
+			},
 		},
 		methods: {
 			// API
-			async getListDetailAlat() {
-				// alert(`Get Data Alat ${this.filterAlat.asal_alat}`)
-				this.listInfo.pageSize =
-					this.listAlatLab.length < this.listInfo.listSize
-						? 1
-						: this.listAlatLab.length / this.listInfo.listSize
-				this.listInfo.listTotal = this.listAlatLab.length
+			async getAlatDetail() {
 				// Nembak API Get List Alat
-			},
-			async getListLokasi() {},
-			// DETAIL TABEL CONTENT
-			changeFilterValue(objFilter) {
-				this.filterAlat[objFilter.model] = objFilter.value
-			},
-			nextPage() {
-				if (this.listInfo.pageNo !== this.listInfo.pageSize) {
-					this.listInfo.pageNo += 1
+				try {
+					const response = await api.getPlainData('alat', this.alatId)
+					this.alatDetail = response.data.data
+					this.alatDetail.alat_specs =
+						this.alatDetail.alat_specs !== ''
+							? JSON.parse(this.alatDetail.alat_specs)
+							: ''
+				} catch (e) {
+					console.log(e)
+					this.showAlert(false, false, e)
 				}
 			},
-			previousPage() {
-				if (this.listInfo.pageNo !== 1) {
-					this.listInfo.pageNo -= 1
+			async getListDetailAlat() {
+				this.loadingTable = true
+				// Nembak API Get List Alat
+				try {
+					const response = await api.getFilterDetailAlat(
+						this.alatId,
+						this.tableInfo.pageNo,
+						this.filterPayload
+					)
+
+					this.listData = response.data.result
+					let page = response.data.page
+					this.tableInfo.totalPage = page.total
+					this.tableInfo.listTotal = page.data_total
+				} catch (e) {
+					console.log(e)
+				}
+				this.loadingTable = false
+			},
+			async getListLokasi() {
+				try {
+					const response = await api.getPlainData('lokasi')
+					let lokasi = response.data.data
+					let list = [
+						{
+							id: null,
+							name: 'All',
+							value: null,
+							disabled: false,
+						},
+					]
+					lokasi.forEach((lk) => {
+						let data = {
+							id: lk.id,
+							name: lk.lokasi_name,
+							value: lk.id,
+						}
+						list.push(data)
+					})
+					this.headsTable[3].options = list
+				} catch (e) {
+					console.log(e)
 				}
 			},
-			jumpPage(pageNo) {
-				this.listInfo.pageNo = pageNo
+			async getLokasiBaseOnTotalAlat(totalNeed) {
+				// Panggil API Lokasi Alat
+
+				try {
+					const response = await api.getLokasiNeed(totalNeed)
+					let lokasi = response.data.data
+					let listAdd = [
+						{
+							id: null,
+							name: 'Pilih Lokasi Penyimpanan',
+							value: null,
+							disabled: true,
+						},
+					]
+					if (response.data.response.code == 200) {
+						lokasi.forEach((lok) => {
+							let lk = {
+								id: lok.id,
+								name: lok.lokasi_name,
+								value: lok.id,
+								disabled: false,
+							}
+
+							listAdd.push(lk)
+						})
+						this.formAddDetailAlat[1].options = listAdd
+						if (listAdd.length > 0) {
+							this.formAddDetailAlat[1].disabled = false
+						} else {
+							this.formAddDetailAlat[1].disabled = true
+						}
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				}
 			},
-			// Popup Interaction
-			openModalPopup(type) {
-				this.baseModalType = type
-				this.$refs['modal-popup'].show()
+			async deleteAlatDetail(alatId) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('alat', alatId)
+					if (response.data.response.code === 200) {
+						this.showAlert(false, true, response.data.response.message)
+						setTimeout(() => {
+							this.$router.push({ name: 'ListAlatLaboratorium' })
+						}, 2000)
+					}
+				} catch (e) {
+					if (process.env.NODE_ENV == 'development') {
+						console.log(e)
+					}
+					this.showAlert(false, false, e)
+				}
 			},
-			closeModalPopup() {
-				this.baseModalType = ''
-				this.$refs['modal-popup'].hide()
+			async deleteDetailAlat(detailAlatId) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('detail-alat', detailAlatId)
+					if (response.data.response.code === 200) {
+						this.showAlert(false, true, response.data.response.message)
+						this.setPageAlatDetail()
+					}
+				} catch (e) {
+					if (process.env.NODE_ENV == 'development') {
+						console.log(e)
+					}
+					this.showAlert(false, false, e)
+				}
+			},
+			async createDetailAlat() {
+				this.showAlert(true)
+				try {
+					const response = await api.createNewData(
+						'detail-alat',
+						this.submitDetailAlat
+					)
+					if (response.data.response.code === 201) {
+						this.showAlert(false, true, response.data.response.message)
+						this.setPageAlatDetail()
+					}
+				} catch (e) {
+					if (process.env.NODE_ENV == 'development') {
+						console.log(e)
+					}
+					this.showAlert(false, false, e)
+				}
+			},
+			async changeConditionDetailAlat() {
+				this.showAlert(true)
+				try {
+					let payload = {
+						condition_status: this.formChangeCondition[1].model,
+					}
+					const response = await api.changeStatusDetailAlat(
+						'condition',
+						this.selectedRowData.id,
+						payload
+					)
+					if (response.data.response.code === 200) {
+						this.showAlert(
+							false,
+							true,
+							`Kondisi alat dengan barcode ${this.selectedRowData.barcode_alat} berhasil diubah`
+						)
+					}
+				} catch (e) {
+					if (process.env.NODE_ENV === 'development') {
+						console.log(e)
+					}
+					this.showAlert(false, false, e)
+				}
+			},
+			async setPageAlatDetail() {
+				this.refreshData = true
+				await this.getAlatDetail()
+				await this.getListDetailAlat()
+				await this.getListLokasi()
+				this.refreshData = false
+			},
+			// Value Change
+			getKondisiAlat(conditionStatus) {
+				let listKondisi = [
+					{
+						id: 1,
+						text: 'Pending',
+						background: 'smil-bg-pending',
+					},
+					{
+						id: 2,
+						text: 'Baik',
+						background: 'smil-bg-success',
+					},
+					{
+						id: 3,
+						text: 'Rusak',
+						background: 'smil-bg-danger',
+					},
+					{
+						id: 4,
+						text: 'Habis',
+						background: 'smil-bg-warning',
+					},
+					{
+						id: 5,
+						text: 'Diperbaiki',
+						background: 'smil-bg-info',
+					},
+					{
+						id: 6,
+						text: 'Apkir',
+						background: 'smil-bg-danger',
+					},
+				]
+
+				return listKondisi.find((kondisi) => kondisi.id === conditionStatus)
+			},
+			getKetersediaanAlat(availableStatus) {
+				let listKetersediaan = [
+					{
+						id: 1,
+						text: 'Pending',
+						background: 'smil-bg-pending',
+					},
+					{
+						id: 2,
+						text: 'Tersedia',
+						background: 'smil-bg-info',
+					},
+					{
+						id: 3,
+						text: 'Tidak Tersedia',
+						background: 'smil-bg-danger',
+					},
+				]
+
+				return listKetersediaan.find(
+					(available) => available.id === availableStatus
+				)
+			},
+			deleteNotif(type, index = null) {
+				let data = index !== null ? this.listData[index] : this.alatDetail
+				let message = {
+					alat: `Apakah anda yakin ingin menghapus alat ${data.alat_name} ? Seluruh data yang berhubungan dengan alat ini akan ikut terhapus`,
+					detail: `Apakah anda yakin ingin menghapus alat dengan barcode ${data.barcode_alat}`,
+				}
+				let confirmDelete = confirm(message[type])
+				if (confirmDelete) {
+					if (type == 'alat') {
+						this.deleteAlatDetail(data.id)
+					} else {
+						this.deleteDetailAlat(data.id)
+					}
+				}
+			},
+			changeCondition(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.formChangeCondition[0].model = this.selectedRowData.barcode_alat
+				this.openPopup('condition')
+			},
+			seeBarcode(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('barcode')
+			},
+			// Modal
+			submitAction() {
+				if (this.baseModalType === 'add') {
+					this.createDetailAlat()
+				} else if (this.baseModalType === 'condition') {
+					this.changeConditionDetailAlat()
+				}
+			},
+			closeAction() {
+				if (this.baseModalType === 'add') {
+					this.formAddDetailAlat[1].options = []
+				}
+				this.closePopup()
 			},
 		},
 		computed: {
 			alatId() {
 				return this.$route.params.alat_id
+					? parseInt(this.$route.params.alat_id)
+					: null
 			},
 			listTable() {
 				let listTable = []
-				this.listAlatLab.forEach((list, indexList) => {
-					let rowTable = [
-						list.id, //ID Alat
-						list.nama_alat, //Nama Alat
-						list.jenis_alat_id, //Jenis Alat (Ambil berdasarkan table jenis alat)
-						list.asal_alat, //Asal Pengadaan
-						indexList, //Index Data
-					]
+				if (this.listData.length > 0) {
+					this.listData.forEach((list, indexList) => {
+						let rowTable = [
+							list.barcode_alat, //Barcode Alat
+							this.getKondisiAlat(list.condition_status), //Kondisi
+							this.getKetersediaanAlat(list.available_status), //Ketersediaan,
+							list.lokasi_model.lokasi_name,
+							indexList, //Index Data
+						]
 
-					listTable.push(rowTable)
-				})
+						listTable.push(rowTable)
+					})
+				}
 
 				return listTable
+			},
+			filterPayload() {
+				let tableInfo = this.tableInfo
+				return {
+					page_size: tableInfo.listSize,
+					sort_by: 'id',
+					sort_direction: 'ASC',
+					...this.filterData,
+				}
+			},
+			submitDetailAlat() {
+				let form = this.formAddDetailAlat
+				return {
+					alat_id: this.alatId,
+					total_alat: form[0].model !== '' ? parseInt(form[0].model) : null,
+					lokasi_id: form[1].model,
+				}
+			},
+			formList() {
+				if (this.baseModalType === 'add') {
+					return {
+						title: 'Tambah Alat Baru',
+						list: this.formAddDetailAlat,
+					}
+				} else if (this.baseModalType === 'condition') {
+					return {
+						title: 'Ubah Kondisi Alat',
+						list: this.formChangeCondition,
+					}
+				} else {
+					return []
+				}
+			},
+			formListFilled() {
+				if (this.baseModalType === 'add') {
+					let payload = this.submitDetailAlat
+					if (payload.total_alat !== null && payload.lokasi_id !== null) {
+						return true
+					} else {
+						return false
+					}
+				} else if (this.baseModalType === 'condition') {
+					return this.formChangeCondition[1].model !== null
+				}
 			},
 		},
 	}
@@ -471,7 +952,7 @@
 
 <style lang="scss" scoped>
 	.detail-alat-lab {
-		height: 100vh;
+		// height: 100vh;
 		.header {
 			display: flex;
 			align-items: center;
@@ -553,6 +1034,28 @@
 						td {
 							padding-top: 0;
 						}
+					}
+				}
+			}
+		}
+		.card {
+			.card-body {
+				opacity: 0;
+				display: flex;
+				text-align: center;
+				flex-direction: column;
+				transition: all 0.3s ease-in;
+				.icon-component {
+					align-items: center;
+					margin: auto;
+				}
+
+				&:hover {
+					opacity: 1;
+					background: rgba(0, 0, 0, 0.6);
+
+					.card-title {
+						color: #fff;
 					}
 				}
 			}

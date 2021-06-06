@@ -428,8 +428,24 @@
 				</clipPath>
 			</defs>
 		</svg>
-
 		<!-- END: INPUT -->
+
+		<!-- START: FULLSCREEN -->
+		<svg
+			v-if="iconName === 'full-screen'"
+			:width="size"
+			:height="size"
+			viewBox="0 0 24 24"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			<path
+				d="M5 5H10V3H3V10H5V5ZM10 19H5V14H3V21H10V19ZM21 14H19V19H14V21H21V14ZM19 10H21V3H14V5H19V10Z"
+				:fill="colorIcon"
+			/>
+		</svg>
+
+		<!-- END: FULLSCREEN -->
 	</div>
 </template>
 

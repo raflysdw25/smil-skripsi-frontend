@@ -209,8 +209,7 @@
 		},
 		mounted() {
 			// Cek if Admin already login
-
-			this.checkUserAuthorize()
+			// this.checkUserAuthorize()
 		},
 		computed: {
 			isKaLab() {
@@ -256,11 +255,12 @@
 		methods: {
 			// Authorize
 
-			checkUserAuthorize() {
-				if (Object.keys(this.adminData).length === 0) {
-					this.$router.push({ name: 'LoginAdmin' })
-				}
-			},
+			// checkUserAuthorize() {
+
+			// 	if (Object.keys(this.adminData).length === 0) {
+			// 		this.$router.push({ name: 'LoginAdmin' })
+			// 	}
+			// },
 			async logoutAdmin() {
 				this.showAlert(true)
 				try {

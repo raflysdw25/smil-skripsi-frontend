@@ -37,75 +37,90 @@
 						</th>
 					</tr>
 				</thead>
-				<tbody class="smil-tbody" v-if="listData.length === 0">
-					<tr>
+
+				<tbody class="smil-tbody">
+					<tr v-if="loadingTable">
 						<td :colspan="headsTable.length" class="text-center empty-table">
-							<icon-component
-								iconName="empty-files"
-								:size="64"
-								colorIcon="#c5c5c5"
-								iconClass="icon-table"
-							/>
-							<span class="empty-table-description">
-								Tidak ada data yang dapat ditampilkan
-							</span>
+							<b-spinner
+								class="icon-table icon-size"
+								variant="secondary"
+								style=""
+							></b-spinner>
+							<p class="empty-table-description">
+								Sedang Memuat Data...
+							</p>
 						</td>
 					</tr>
-				</tbody>
-				<tbody class="smil-tbody" v-else>
-					<tr
-						v-for="(rows, indexRow) in listTable"
-						:key="`content-table-${indexRow}`"
-					>
-						<td
-							v-for="(content, indexContent) in rows"
-							:key="`column-${content}${indexContent}`"
-							:width="indexContent === rows.length - 1 ? 10 : 200"
-						>
-							<template v-if="indexContent === rows.length - 1">
-								<b-dropdown
-									size="lg"
-									right
-									variant="smil-drop-dots"
-									toggle-class="text-decoration-none"
-									no-caret
-									class="drop-dropdown smil-dot"
-								>
-									<template v-slot:button-content>
-										<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
-									</template>
-									<b-dropdown-item @click="tindakPeminjaman(true, indexRow)">
-										Approve Request
-									</b-dropdown-item>
-									<b-dropdown-item @click="tindakPeminjaman(false, indexRow)">
-										Reject Request
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Detail Peminjaman
-									</b-dropdown-item>
-									<b-dropdown-item>
-										List Alat Dipinjam
-									</b-dropdown-item>
-									<b-dropdown-item>
-										Informasi Peminjam
-									</b-dropdown-item>
-									<b-dropdown-item>
-										<span class="smil-text-danger">
-											Hapus Peminjaman
-										</span>
-									</b-dropdown-item>
-								</b-dropdown>
-							</template>
-							<template v-else-if="indexContent === rows.length - 2">
-								<span class="smil-status" :class="content.background">
-									{{ content.text }}
+					<template v-else>
+						<tr v-if="listData.length === 0">
+							<td :colspan="headsTable.length" class="text-center empty-table">
+								<icon-component
+									iconName="empty-files"
+									:size="64"
+									colorIcon="#c5c5c5"
+									iconClass="icon-table"
+								/>
+								<span class="empty-table-description">
+									Tidak ada data yang dapat ditampilkan
 								</span>
-							</template>
-							<template v-else>
-								{{ content }}
-							</template>
-						</td>
-					</tr>
+							</td>
+						</tr>
+
+						<tr
+							v-else
+							v-for="(rows, indexRow) in listTable"
+							:key="`content-table-${indexRow}`"
+						>
+							<td
+								v-for="(content, indexContent) in rows"
+								:key="`column-${content}${indexContent}`"
+								:width="indexContent === rows.length - 1 ? 10 : 200"
+							>
+								<template v-if="indexContent === rows.length - 1">
+									<b-dropdown
+										size="lg"
+										right
+										variant="smil-drop-dots"
+										toggle-class="text-decoration-none"
+										no-caret
+										class="drop-dropdown smil-dot"
+									>
+										<template v-slot:button-content>
+											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
+										</template>
+										<b-dropdown-item @click="tindakPeminjaman(true, indexRow)">
+											Approve Request
+										</b-dropdown-item>
+										<b-dropdown-item @click="tindakPeminjaman(false, indexRow)">
+											Reject Request
+										</b-dropdown-item>
+										<b-dropdown-item>
+											Detail Peminjaman
+										</b-dropdown-item>
+										<b-dropdown-item>
+											List Alat Dipinjam
+										</b-dropdown-item>
+										<b-dropdown-item>
+											Informasi Peminjam
+										</b-dropdown-item>
+										<b-dropdown-item>
+											<span class="smil-text-danger">
+												Hapus Peminjaman
+											</span>
+										</b-dropdown-item>
+									</b-dropdown>
+								</template>
+								<template v-else-if="indexContent === rows.length - 2">
+									<span class="smil-status" :class="content.background">
+										{{ content.text }}
+									</span>
+								</template>
+								<template v-else>
+									{{ content }}
+								</template>
+							</td>
+						</tr>
+					</template>
 				</tbody>
 			</table>
 		</div>
@@ -114,10 +129,10 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listData.length} dari ${listData.length} Data` }}
+				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
@@ -132,13 +147,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 10 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -167,7 +185,11 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="tableInfo.listSize">
+				<select
+					class="custom-select"
+					v-model="tableInfo.listSize"
+					@change="getListPeminjaman"
+				>
 					<option
 						:value="count"
 						v-for="count in tableCount"
@@ -233,10 +255,14 @@
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
 	import BaseModalApprove from '@/components/BaseModal/BaseModalApprove.vue'
 	import BaseModalListSupport from '@/components/BaseModal/BaseModalListSupport.vue'
+	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+
+	// API
+	import api from '@/api/admin_api'
 	export default {
 		name: 'list-peminjaman-alat',
 		mixins: [ModalMixins, TableMixins],
@@ -247,6 +273,7 @@
 			BaseModalAlert,
 			BaseModalApprove,
 			BaseModalListSupport,
+			BaseModalDetail,
 		},
 		data() {
 			return {
@@ -262,7 +289,7 @@
 						label: 'Waktu Pengembalian',
 						filter_type: 'date',
 						placeholder: 'Filter Waktu Pengembalian',
-						model: 'real_return_date',
+						model: 'expected_return_date',
 						options: null,
 					},
 					{
@@ -306,18 +333,9 @@
 					},
 					'',
 				],
-				listData: [
-					{
-						id: 1,
-						created_at: new Date(),
-						real_return_date: new Date(),
-						nomor_induk: 'Muhammad Rafly Sadewa',
-						pjm_status: 2,
-					},
-				],
 				filterData: {
 					created_at: '',
-					real_return_date: '',
+					expected_return_date: '',
 					nomor_induk: '',
 					pjm_status: null,
 				},
@@ -333,7 +351,7 @@
 					{
 						label: 'Tanggal Pengembalian Alat',
 						type: 'date',
-						model: 'real_return_date',
+						model: 'expected_return_date',
 						description: '',
 						placeholder: 'Filter Tanggal Pengembalian Alat',
 						isRequired: false,
@@ -385,13 +403,21 @@
 				isApprove: '',
 			}
 		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getListPeminjaman()
+				},
+			},
+		},
 		computed: {
 			listTable() {
 				let listTable = []
 				this.listData.forEach((list, indexList) => {
 					let rowTable = [
 						list.created_at, //ID Lokasi
-						list.real_return_date, //Nama Lokasi
+						list.expected_return_date, //Nama Lokasi
 						list.nomor_induk, //kapasitas
 						this.statusPeminjaman(list.pjm_status), //jenis
 						'',
@@ -402,6 +428,16 @@
 
 				return listTable
 			},
+			filterPayload() {
+				let tableInfo = this.tableInfo
+
+				return {
+					page_size: tableInfo.listSize,
+					sort_by: 'created_at',
+					sort_direction: 'DESC',
+					...this.filterData,
+				}
+			},
 		},
 		async mounted() {
 			await this.getListPeminjaman()
@@ -411,13 +447,24 @@
 		methods: {
 			// Call API
 			async getListPeminjaman() {
-				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
-				this.tableInfo.totalPage =
-					this.listData.length < this.tableInfo.listSize
-						? 1
-						: this.listData.length / this.tableInfo.listSize
-				this.tableInfo.listTotal = this.listData.length
+				this.loadingTable = true
 				// Nembak API Get List Alat
+				try {
+					const response = await api.getFilterData(
+						'peminjaman',
+						this.tableInfo.pageNo,
+						this.filterPayload
+					)
+					console.log(response)
+					this.listData = response.data.result
+					let page = response.data.page
+					this.tableInfo.totalPage = page.total
+					this.tableInfo.listTotal = page.data_total
+				} catch (e) {
+					console.log(e)
+				} finally {
+					this.loadingTable = false
+				}
 			},
 			// Value Change
 			statusPeminjaman(status_id) {

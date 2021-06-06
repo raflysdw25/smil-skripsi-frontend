@@ -1,25 +1,32 @@
 <template>
-	<div class="list-civitas-jurusan">
+	<div v-if="isReload" class="d-flex flex-column align-items-center">
+		<b-spinner
+			variant="secondary"
+			style="width: 150px; height: 150px; margin-bottom: 20px"
+		></b-spinner>
+		<p class="empty-table-description">
+			Sedang Memuat Data...
+		</p>
+	</div>
+	<div v-else class="list-civitas-jurusan">
 		<button class="smil-btn smil-bg-info ml-auto" @click="openPopup('prodi')">
 			Program Studi
 		</button>
 		<div class="tabs-menu">
-			<b-tabs content-class="mt-3" lazy>
-				<!-- <b-tab title="Staff Jurusan" active>
-					<list-staff-jurusan />
-				</b-tab>
-				<b-tab title="Mahasiswa"> </b-tab> -->
-				<b-tab
-					:title="tab.title"
-					v-for="(tab, idxTab) in tabs"
-					:key="`tab-menu-${idxTab}`"
-					:active="activeTab === tab.id"
-					@click="setActiveTab(tab.id)"
-				>
-					<list-staff-jurusan v-if="activeTab === 1" />
-					<list-mahasiswa v-if="activeTab === 2" />
-				</b-tab>
-			</b-tabs>
+			<template v-if="!isReload">
+				<b-tabs content-class="mt-3" lazy>
+					<b-tab
+						:title="tab.title"
+						v-for="(tab, idxTab) in tabs"
+						:key="`tab-menu-${idxTab}`"
+						:active="activeTab === tab.id"
+						@click="setActiveTab(tab.id)"
+					>
+						<list-staff-jurusan v-if="activeTab === 1" :listProdi="listProdi" />
+						<list-mahasiswa v-if="activeTab === 2" :listProdi="listProdi" />
+					</b-tab>
+				</b-tabs>
+			</template>
 		</div>
 
 		<b-modal
@@ -35,7 +42,7 @@
 				v-if="baseModalType === 'prodi'"
 				title="Program Studi TIK"
 				supportType="prodi"
-				:closeModal="closePopup"
+				:closeModal="closeSupport"
 			/>
 		</b-modal>
 	</div>
@@ -49,6 +56,9 @@
 
 	// Mixin
 	import ModalMixins from '@/mixins/ModalMixins'
+
+	// API
+	import api from '@/api/admin_api'
 
 	export default {
 		name: 'list-civitas-jurusan',
@@ -67,10 +77,49 @@
 					},
 				],
 				activeTab: 1,
+				listProdi: [],
+				isReload: false,
 			}
 		},
 		computed: {},
+		async mounted() {
+			await this.getProdi()
+		},
 		methods: {
+			// Call API
+			async getProdi() {
+				// Hit API List Jabatan from Jabatan Table
+				this.isReload = true
+				try {
+					const response = await api.getPlainData('prodi')
+					let prodi = response.data.data
+					let options = [
+						{
+							id: null,
+							name: 'All',
+							value: null,
+							disabled: false,
+						},
+					]
+					prodi.forEach((pd, indexJns) => {
+						options.push({
+							id: pd.id,
+							name: pd.prodi_name,
+							value: pd.id,
+							disabled: false,
+						})
+					})
+
+					this.listProdi = options
+					this.isReload = false
+				} catch (e) {
+					console.log(e)
+				}
+			},
+			closeSupport() {
+				this.getProdi()
+				this.closePopup()
+			},
 			setActiveTab(id) {
 				this.activeTab = id
 			},

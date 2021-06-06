@@ -1,17 +1,30 @@
 <template>
-	<div class="add-alat-lab">
+	<div class="icon-class text-center" v-if="loadingForm">
+		<b-spinner
+			variant="secondary"
+			style="width: 140px; height: 140px; margin-bottom: 20px"
+		></b-spinner>
+		<p class="empty-table-description">
+			Sedang Memuat Data...
+		</p>
+	</div>
+	<div v-else class="add-alat-lab">
 		<!-- START: BUTTON GROUP -->
 		<div class="button-group d-flex align-items-center justify-content-end">
 			<button
 				class="smil-btn smil-bg-danger mr-4"
-				@click="$router.push({ name: 'ListAlatLaboratorium' })"
+				@click="
+					alatId !== null
+						? $router.go(-1)
+						: $router.push({ name: 'ListAlatLaboratorium' })
+				"
 			>
 				Batal
 			</button>
 			<button
 				class="smil-btn smil-bg-primary"
 				:disabled="!formFilled"
-				@click="sendAddAlat"
+				@click="sendNotif"
 			>
 				Simpan
 			</button>
@@ -20,6 +33,8 @@
 
 		<!-- FORM GROUP -->
 		<section class="section-form-group">
+			<!-- ALAT INFO SECTION -->
+			<p class="attention-form">* Data Wajib Diisi</p>
 			<div class="smil-row">
 				<div
 					class="form-group col-lg-6 col-12"
@@ -43,7 +58,9 @@
 						v-model="form.model"
 						:placeholder="form.placeholder"
 						:required="form.isRequired"
-						@change="changeValue"
+						:disabled="!form.isRequired"
+						@change="changeValue(idxInput)"
+						@keypress="formConstraint($event, form.type)"
 					/>
 					<!-- END: INPUT TAG -->
 
@@ -52,21 +69,25 @@
 						v-model="form.model"
 						class="custom-select"
 						v-if="form.type === 'select'"
-						@change="changeValue"
+						@change="changeValue(idxInput)"
+						:disabled="form.disabled"
 					>
-						<option value="" disabled> Pilih {{ form.label }} </option>
+						<option :value="null" :disabled="form.isRequired">
+							Pilih {{ form.label }}
+						</option>
 						<option
 							:value="ops.id"
 							v-for="(ops, idxOps) in form.options"
 							:key="`options-${idxOps}`"
 						>
-							{{ ops.text }}
+							{{ ops.name }}
 						</option>
 					</select>
 
 					<!-- END: SELECT TAG -->
 				</div>
 			</div>
+			<!-- ALAT INFO SECTION -->
 			<!-- START: SPESIFIKASI SECTION -->
 			<div class="spesifikasi-section">
 				<h5 class="label">Spesifikasi Alat</h5>
@@ -84,6 +105,7 @@
 								type="text"
 								class="form-control"
 								@change="changeSpec($event, spec)"
+								v-model="spesifikasi[spec].value"
 								:placeholder="spesifikasi[spec].label"
 							/>
 						</div>
@@ -129,21 +151,15 @@
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
+
+	// API
+	import api from '@/api/admin_api'
 	export default {
 		name: 'add-alat-lab',
 		components: { BaseModalAlert },
 		mixins: [FormInputMixins, ModalMixins],
 		data() {
 			return {
-				formInput: {
-					nama: '',
-					asal: '',
-					tahun: '',
-					supplier: '',
-					jumlahAlat: 0,
-					jenisAlat: '',
-					spesifikasi: {},
-				},
 				formGroupList: [
 					{
 						label: 'Nama Alat',
@@ -156,11 +172,12 @@
 					{
 						label: 'Asal Pengadaan Alat',
 						type: 'select',
-						model: '',
+						model: null,
 						description: '',
 						placeholder: 'Pilih Asal Pengadaan Alat',
 						isRequired: true,
 						options: [],
+						disabled: false,
 					},
 					{
 						label: 'Tahun Pengadaan Alat',
@@ -173,11 +190,12 @@
 					{
 						label: 'Supplier Alat',
 						type: 'select',
-						model: '',
+						model: null,
 						description: '',
 						placeholder: 'Pilih Supplier Alat',
 						isRequired: false,
 						options: [],
+						disabled: false,
 					},
 					{
 						label: 'Jumlah Alat',
@@ -190,29 +208,37 @@
 					{
 						label: 'Jenis Alat',
 						type: 'select',
-						model: '',
+						model: null,
 						description: '',
 						placeholder: 'Pilih Jenis Alat',
 						isRequired: true,
 						options: [],
+						disabled: false,
 					},
 					{
 						label: 'Lokasi Penyimpanan',
 						type: 'select',
-						model: '',
+						model: null,
 						description: '',
 						placeholder: 'Pilih Lokasi Penyimpanan',
 						isRequired: true,
 						options: [],
+						disabled: true,
 					},
 				],
 				spesifikasi: {},
 			}
 		},
-		mounted() {
-			this.getJenisAlat()
-			this.supplierList()
-			this.getAsalAlat()
+		async mounted() {
+			this.loadingForm = true
+			await this.getJenisAlat()
+			await this.supplierList()
+			await this.getAsalAlat()
+
+			if (this.alatId !== null) {
+				await this.getAlatDetail()
+			}
+			this.loadingForm = false
 		},
 		watch: {
 			spesifikasi: {
@@ -224,144 +250,238 @@
 		computed: {
 			formFilled() {
 				return (
-					this.submitRequest.alat_name !== '' &&
-					this.submitRequest.asal_pengadaan_id !== '' &&
+					this.submitRequest.alat_name !== null &&
+					this.submitRequest.asal_pengadaan_id !== null &&
 					this.submitRequest.alat_year !== '' &&
-					this.submitRequest.alat_total !== '' &&
+					this.submitRequest.alat_total !== null &&
 					this.submitRequest.jenis_alat_id !== '' &&
 					this.submitRequest.lokasi_id !== ''
 				)
 			},
 			submitRequest() {
 				let form = this.formGroupList
-
-				return {
-					alat_name: form[0].model,
-					asal_pengadaan_id: form[1].model,
-					alat_year: form[2].model,
-					supplier_id: form[3].model,
-					alat_total: form[4].model,
-					jenis_alat_id: form[5].model,
-					lokasi_id: form[6].model,
-					alat_specs: null,
+				if (this.alatId !== null) {
+					return {
+						alat_name: form[0].model,
+						asal_pengadaan_id: form[1].model,
+						alat_year: form[2].model,
+						supplier_id: form[3].model,
+						alat_total: form[4].model !== '' ? parseInt(form[4].model) : null,
+						jenis_alat_id: form[5].model,
+						alat_specs: null,
+					}
+				} else {
+					return {
+						alat_name: form[0].model,
+						asal_pengadaan_id: form[1].model,
+						alat_year: form[2].model,
+						supplier_id: form[3].model,
+						alat_total: form[4].model !== '' ? parseInt(form[4].model) : null,
+						jenis_alat_id: form[5].model,
+						alat_specs: null,
+						lokasi_id: form[6].model,
+					}
 				}
+			},
+			alatId() {
+				return this.$route.params.alat_id ? this.$route.params.alat_id : null
 			},
 		},
 		methods: {
 			// Call API
-			supplierList() {
-				// Akan memanggil API Supplier
-				let listSupplier = [
-					{
-						id: 1,
-						text: 'PT Anugerah Sejahtera',
-						disabled: false,
-					},
-				]
+			async supplierList() {
+				try {
+					const response = await api.getPlainData('supplier')
+					let supplier = response.data.data
 
-				this.formGroupList[3].options = listSupplier
+					if (response.data.response.code == 200) {
+						let list = []
+						supplier.forEach((supp) => {
+							let sp = {
+								id: supp.id,
+								name: supp.supplier_name,
+							}
+
+							list.push(sp)
+						})
+						this.formGroupList[3].options = list
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				}
 			},
-			getJenisAlat() {
+			async getJenisAlat() {
 				// Akan memanggil API Jenis Alat
-				let listJenis = [
-					{
-						id: 1,
-						text: 'Laptop',
-						attr_spek: ['Processor', 'Ukuran Layar', 'RAM', 'VGA'],
-						disabled: false,
-					},
-					{
-						id: 2,
-						text: 'Smartphone',
-						attr_spek: [
-							'Processor',
-							'Resolusi Kamera',
-							'RAM',
-							'Android Version',
-						],
-						disabled: false,
-					},
-				]
+				try {
+					const response = await api.getPlainData('jenis')
+					let jenisAlat = response.data.data
 
-				this.formGroupList[5].options = listJenis
+					if (response.data.response.code == 200) {
+						let list = []
+						jenisAlat.forEach((jenis) => {
+							let jn = {
+								id: jenis.id,
+								name: jenis.jenis_name,
+								attr_spek: jenis.spec_attributes,
+							}
+
+							list.push(jn)
+						})
+						this.formGroupList[5].options = list
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				}
 			},
-			getAsalAlat() {
+			async getAsalAlat() {
 				// Memanggil API Asal Alat
-				let listAsal = [
-					{
-						id: 1,
-						text: 'Barang Habis Pakai',
-						disabled: false,
-					},
-					{
-						id: 2,
-						text: 'Hibah Tugas Akhir',
-						disabled: false,
-					},
-					{
-						id: 3,
-						text: 'Supplier',
-						disabled: false,
-					},
-					{
-						id: 4,
-						text: 'PNJ',
-						disabled: false,
-					},
-					{
-						id: 5,
-						text: 'Hibah Pemerintah',
-						disabled: false,
-					},
-				]
+				try {
+					const response = await api.getPlainData('asal')
+					let asalPengadaan = response.data.data
 
-				this.formGroupList[1].options = listAsal
+					if (response.data.response.code == 200) {
+						let list = []
+						asalPengadaan.forEach((asal) => {
+							let ap = {
+								id: asal.id,
+								name: asal.asal_pengadaan_name,
+							}
+
+							list.push(ap)
+						})
+						this.formGroupList[1].options = list
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				}
 			},
-			getLokasiAlat() {
+			async getLokasiBaseOnTotalAlat(totalNeed) {
 				// Panggil API Lokasi Alat
-				let listLokasi = [
-					{
-						id: 1,
-						text: 'Lemari A',
-						disabled: false,
-					},
-					{
-						id: 2,
-						text: 'Lemari A Test',
-						disabled: false,
-					},
-				]
-				this.formGroupList[6].options = listLokasi
+
+				try {
+					const response = await api.getLokasiNeed(totalNeed)
+					let lokasi = response.data.data
+
+					if (response.data.response.code == 200) {
+						let list = []
+						lokasi.forEach((lok) => {
+							let lk = {
+								id: lok.id,
+								name: lok.lokasi_name,
+							}
+
+							list.push(lk)
+						})
+						this.formGroupList[6].options = list
+						if (list.length > 0) {
+							this.formGroupList[6].disabled = false
+						} else {
+							this.formGroupList[6].disabled = true
+						}
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				}
 			},
-			sendAddAlat() {
+			async getAlatDetail() {
+				try {
+					const response = await api.getPlainData('alat', this.alatId)
+					let data = response.data.data
+
+					if (response.data.response.code === 200) {
+						// this.formGroupList.pop()
+						let form = this.formGroupList
+						form[0].model = data.alat_name
+						form[1].model = data.asal_pengadaan_id
+						form[2].model = data.alat_year
+						form[3].model = data.supplier_id !== null ? data.supplier_id : null
+						form[4].model = data.alat_total
+						form[4].isRequired = false
+						form[5].model = data.jenis_alat_id
+
+						this.spesifikasi =
+							data.alat_specs !== '' ? JSON.parse(data.alat_specs) : {}
+					}
+				} catch (e) {
+					console.log(e)
+					this.showAlert(false, false, e)
+				} finally {
+					this.formGroupList.splice(6, 1)
+				}
+			},
+			async sendAddAlat() {
+				this.isCreate = true
 				this.submitRequest.alat_specs = JSON.stringify(this.spesifikasi)
-				alert(this.submitRequest.alat_specs)
+				this.showAlert(true)
+				try {
+					const response = await api.createNewData('alat', this.submitRequest)
+					if (response.data.response.code === 201) {
+						this.showAlert(false, true, response.data.response.message)
+						setTimeout(() => {
+							this.$router.push({ name: 'ListAlatLaboratorium' })
+						}, 2000)
+					}
+				} catch (e) {
+					this.isCreate = false
+					if (process.env.NODE_ENV == 'development') {
+						console.log(e)
+					}
+					this.showAlert(false, false, e)
+				}
+			},
+			async sendUpdatedAlat() {
+				this.isCreate = true
+				this.submitRequest.alat_specs = JSON.stringify(this.spesifikasi)
+				this.showAlert(true)
+				try {
+					const response = await api.editData(
+						'alat',
+						this.alatId,
+						this.submitRequest
+					)
+					if (response.data.response.code === 200) {
+						this.showAlert(false, true, response.data.response.message)
+						setTimeout(() => {
+							this.$router.go(-1)
+						}, 2000)
+					}
+				} catch (e) {
+					this.isCreate = false
+					if (process.env.NODE_ENV == 'development') {
+						console.log(e)
+					}
+					this.showAlert(false, false, e)
+				}
 			},
 			// Form Interaction
-			changeValue() {
+			async changeValue(index) {
 				let form = this.formGroupList
 				let payload = this.submitRequest
 				// Ketika Jenis Alat Disi
-				if (payload.jenis_alat_id !== '' && payload.jenis_alat_id !== null) {
-					this.spesifikasi = {}
-					let getJenisAlat = form[5].options.find(
-						(jal) => jal.id === payload.jenis_alat_id
-					)
+				if (index == 4 || index == 5) {
+					if (payload.jenis_alat_id !== null) {
+						this.spesifikasi = {}
+						let getJenisAlat = form[5].options.find(
+							(jal) => jal.id === payload.jenis_alat_id
+						)
 
-					getJenisAlat.attr_spek.forEach((spek) => {
-						let key = spek.replace(/\s/, '_').toLowerCase() //Mengubah spek yg terdapat spasi dengan _
-						this.spesifikasi[key] = {
-							label: spek,
-							value: '',
-						}
-					})
-				}
+						let splitSpek = getJenisAlat.attr_spek.split(', ')
+						splitSpek.forEach((spek) => {
+							let key = spek.replace(/\s/, '_').toLowerCase() //Mengubah spek yg terdapat spasi dengan _
+							this.spesifikasi[key] = {
+								label: spek,
+								value: '',
+							}
+						})
+					}
 
-				// Total Alat
-				if (payload.alat_total !== '' && payload.alat_total !== null) {
-					this.getLokasiAlat()
-				} else {
-					this.formGroupList[6].options = []
+					// Total Alat
+					if (payload.alat_total !== null) {
+						await this.getLokasiBaseOnTotalAlat(payload.alat_total)
+					} else {
+						this.formGroupList[6].options = []
+						this.formGroupList[6].disabled = true
+					}
 				}
 			},
 			changeSpec(event, key) {
@@ -369,12 +489,29 @@
 					this.spesifikasi[key]['value'] = event.target.value
 				}
 			},
+			// Notif
+			sendNotif() {
+				let confirmSend = confirm(`Apakah anda yakin ingin menyimpan data ini?`)
+				if (confirmSend) {
+					if (this.alatId !== null) {
+						this.sendUpdatedAlat()
+					} else {
+						this.sendAddAlat()
+					}
+				}
+			},
 		},
 		beforeRouteLeave(to, from, next) {
-			let confirmCancel = confirm(
-				'Apakah anda yakin ingin membatalkan tambah data?'
-			)
-			if (confirmCancel) {
+			if (!this.isCreate) {
+				let confirmCancel = confirm(
+					`Apakah anda yakin ingin membatalkan ${
+						this.alatId !== null ? 'ubah' : 'tambah'
+					} data? Data tidak akan tersimpan`
+				)
+				if (confirmCancel) {
+					next()
+				}
+			} else {
 				next()
 			}
 		},

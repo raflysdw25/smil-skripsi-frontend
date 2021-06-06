@@ -14,6 +14,8 @@ import 'bootstrap-vue/dist/bootstrap-vue.css'
 import DatePicker from 'vue2-datepicker'
 import 'vue2-datepicker/index.css'
 
+// Print HTML to Paper
+
 // Make BootstrapVue available throughout your project
 Vue.use(BootstrapVue)
 // Optionally install the BootstrapVue icon components plugin

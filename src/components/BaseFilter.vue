@@ -31,7 +31,7 @@
 		</div>
 		<date-picker
 			v-else-if="filter_type === 'date'"
-			format="DD-MM-YYYY"
+			format="YYYY-MM-DD"
 			value-type="format"
 			placeholder="All"
 			v-model="filter_value"

@@ -90,8 +90,8 @@
 										>
 											Tindakan Laporan
 										</b-dropdown-item>
-										<b-dropdown-item>
-											Detail Laporan
+										<b-dropdown-item @click="lihatDetailAlat(indexRow)">
+											Informasi Alat
 										</b-dropdown-item>
 										<b-dropdown-item @click="deleteNotif(indexRow)">
 											<span class="smil-text-danger">
@@ -106,7 +106,7 @@
 									</span>
 								</template>
 								<template v-else-if="indexContent === 3">
-									<span class="text-limit">
+									<span class="text-limit" :title="content">
 										{{ content }}
 									</span>
 								</template>
@@ -127,7 +127,7 @@
 				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
@@ -225,6 +225,14 @@
 				:formFilled="formTindakanFill"
 			/>
 
+			<base-modal-detail
+				v-if="baseModalType === 'detail'"
+				title="Informasi Alat"
+				:headsData="headsAlatDetail"
+				:valueData="alatDetail"
+				:closeModal="closePopup"
+			/>
+
 			<base-modal-alert
 				v-if="baseModalType === 'alert'"
 				:isProcess="isProcess"
@@ -245,6 +253,7 @@
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
@@ -261,6 +270,7 @@
 			BaseFilter,
 			BaseModalAdd,
 			BaseModalAlert,
+			BaseModalDetail,
 		},
 		mixins: [FormInputMixins, ModalMixins, TableMixins],
 		data() {
@@ -339,7 +349,7 @@
 						report_status: 1,
 						chronology:
 							'Laptop tiba-tiba blue screen, dan terdengar bunyi di mesin laptop',
-						report_action: null,
+						report_action_date: null,
 						report_notes: '',
 						created_at: new Date().toString(),
 						deleted_at: null,
@@ -450,12 +460,11 @@
 						id: 4,
 						label: 'Tindakan',
 						type: 'radio',
-
 						model: '',
 						canAddValue: false,
 						child: [
-							{ id: 1, text: 'Diperbaiki', value: 2, disabled: false },
-							{ id: 2, text: 'Tidak Diperbaiki', value: 3, disabled: false },
+							{ id: 1, name: 'Diperbaiki', value: 2, disabled: false },
+							{ id: 2, name: 'Tidak Diperbaiki', value: 3, disabled: false },
 						],
 					},
 					{
@@ -467,9 +476,38 @@
 						canAddValue: false,
 					},
 				],
-				// Selected Data
-				selected_data: {},
+				// Detail Popup
+				headsAlatDetail: [
+					{
+						label: 'Nama Alat',
+						key: 'alat_name',
+					},
+					{
+						label: 'Jenis Alat',
+						key: 'jenis_name',
+					},
+					{
+						label: 'Asal Pengadaan',
+						key: 'asal_pengadaan_name',
+					},
+					{
+						label: 'Tahun',
+						key: 'alat_year',
+					},
+					{
+						label: 'Supplier Alat',
+						key: 'supplier_name',
+					},
+				],
 			}
+		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getLaporanKerusakan()
+				},
+			},
 		},
 		computed: {
 			listTable() {
@@ -525,6 +563,23 @@
 					report_notes: form[4].model,
 				}
 			},
+			alatDetail() {
+				let data = this.selectedRowData.barcode_alat_rusak.alat_model
+				if (data) {
+					return {
+						alat_name: data.alat_name,
+						jenis_name: data.jenis_alat_model.jenis_name,
+						asal_pengadaan_name: data.asal_pengadaan_model.asal_pengadaan_name,
+						alat_year: data.alat_year,
+						supplier_name:
+							data.supplier_model !== null
+								? data.supplier_model.supplier_name
+								: '-',
+					}
+				} else {
+					return {}
+				}
+			},
 		},
 		async mounted() {
 			await this.getLaporanKerusakan()
@@ -545,10 +600,11 @@
 					let page = response.data.page
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
-				} catch (e) {
-					console.log(e)
-				} finally {
 					this.loadingTable = false
+				} catch (e) {
+					this.loadingTable = false
+					console.log(e)
+					this.showAlert(false, false, e)
 				}
 			},
 			async sendTindakanLaporan() {
@@ -559,9 +615,7 @@
 						this.selectedRowId,
 						this.submitTindakanRequest
 					)
-					if (response.data.response.code === 200) {
-						this.showAlert(false, true, 'Tindakan berhasil dikirimkan')
-					}
+					this.showAlert(false, true, 'Tindakan berhasil dikirimkan')
 				} catch (e) {
 					console.log(e)
 				}
@@ -616,9 +670,9 @@
 				this.openPopup('action')
 			},
 			// Action Dropdown
-			lihatDetail(indexData) {
-				let data = this.listData[indexData]
-				console.log(data)
+			lihatDetailAlat(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('detail')
 			},
 			// Notification
 			deleteNotif(index) {
@@ -644,12 +698,5 @@
 		button {
 			margin-right: 15px;
 		}
-	}
-	.text-limit {
-		display: block;
-		width: 230px;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
 </style>

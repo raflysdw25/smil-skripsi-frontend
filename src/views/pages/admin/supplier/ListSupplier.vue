@@ -89,7 +89,7 @@
 										<template v-slot:button-content>
 											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 										</template>
-										<b-dropdown-item @click="lihatDetail(content)">
+										<b-dropdown-item @click="lihatDetail(indexRow)">
 											Lihat Detail Supplier
 										</b-dropdown-item>
 										<b-dropdown-item @click="editRowData(indexRow)">
@@ -119,7 +119,7 @@
 				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
@@ -210,6 +210,13 @@
 				:message="message"
 				:closeAlert="closePopup"
 			/>
+			<base-modal-detail
+				v-if="baseModalType === 'detail'"
+				title="Detail Supplier"
+				:headsData="headsDetail"
+				:valueData="detailData"
+				:closeModal="closePopup"
+			/>
 		</b-modal>
 		<!-- END: MODAL FILTER DATA FOR MOBILE -->
 	</div>
@@ -221,6 +228,7 @@
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
@@ -230,7 +238,13 @@
 	import api from '@/api/admin_api'
 	export default {
 		name: 'list-supplier',
-		components: { IconComponent, FormFilterData, BaseFilter, BaseModalAlert },
+		components: {
+			IconComponent,
+			FormFilterData,
+			BaseFilter,
+			BaseModalAlert,
+			BaseModalDetail,
+		},
 		mixins: [ModalMixins, TableMixins],
 		data() {
 			return {
@@ -289,6 +303,28 @@
 						isRequired: false,
 					},
 				],
+				headsDetail: [
+					{
+						label: 'Nama Supplier',
+						key: 'supplier_name',
+					},
+					{
+						label: 'Nomor Telephone Supplier',
+						key: 'supplier_phone',
+					},
+					{
+						label: 'Email Supplier',
+						key: 'supplier_email',
+					},
+					{
+						label: 'Person In Charge',
+						key: 'person_in_charge',
+					},
+					{
+						label: 'Alamat Supplier',
+						key: 'supplier_address',
+					},
+				],
 			}
 		},
 		computed: {
@@ -314,6 +350,20 @@
 					sort_by: 'id',
 					sort_direction: 'ASC',
 					...this.filterData,
+				}
+			},
+			detailData() {
+				let row = this.selectedRowData
+				if (Object.keys(this.selectedRowData).length > 0) {
+					return {
+						supplier_name: row.supplier_name,
+						supplier_phone: row.supplier_phone,
+						supplier_email: row.supplier_email,
+						person_in_charge: row.person_in_charge,
+						supplier_address: row.supplier_address,
+					}
+				} else {
+					return {}
 				}
 			},
 		},
@@ -373,7 +423,10 @@
 			},
 
 			// Action Dropdown
-			lihatDetail(indexData) {},
+			lihatDetail(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('detail')
+			},
 			editRowData(index) {
 				let data = this.listData[index]
 				this.$router.push({

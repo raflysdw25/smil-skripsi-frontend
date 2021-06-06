@@ -96,18 +96,22 @@
 										<template v-slot:button-content>
 											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 										</template>
-										<b-dropdown-item>
-											Cetak QR Code
+										<b-dropdown-item @click="lihatDetail(indexRow)">
+											Detail Staff Laboratorium
 										</b-dropdown-item>
-										<b-dropdown-item>
-											List Alat Tersimpan
-										</b-dropdown-item>
-										<b-dropdown-item>
-											Edit Data Lokasi
+										<b-dropdown-item
+											@click="
+												$router.push({
+													name: 'EditJabatanStaffLaboratorium',
+													params: { user_id: listData[indexRow].id },
+												})
+											"
+										>
+											Edit Data Jabatan
 										</b-dropdown-item>
 										<b-dropdown-item>
 											<span class="smil-text-danger">
-												Hapus Data Lokasi
+												Hapus Data Staff
 											</span>
 										</b-dropdown-item>
 									</b-dropdown>
@@ -134,7 +138,7 @@
 				{{ `${listData.length} dari ${listData.length} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
@@ -184,7 +188,11 @@
 			</div>
 			<div class="table-count">
 				Tampilkan
-				<select class="custom-select" v-model="tableInfo.listSize">
+				<select
+					class="custom-select"
+					v-model="tableInfo.listSize"
+					@change="getListStaffLab"
+				>
 					<option
 						:value="count"
 						v-for="count in tableCount"
@@ -231,6 +239,14 @@
 				@submitFilter="getListStaffLab"
 				:activeButton="filterActive"
 			/>
+
+			<base-modal-detail
+				v-if="baseModalType === 'detail'"
+				title="Detail Staff Laboratorium"
+				:headsData="headsDetail"
+				:valueData="detailData"
+				:closeModal="closePopup"
+			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
 	</div>
@@ -244,11 +260,15 @@
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
 	import BaseModalListSupport from '@/components/BaseModal/BaseModalListSupport.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import TableMixins from '@/mixins/TableMixins'
+
+	// API
+	import api from '@/api/admin_api'
 	export default {
 		name: 'list-staff-laboratorium',
 		mixins: [ModalMixins, FormInputMixins, TableMixins],
@@ -259,6 +279,7 @@
 			BaseModalAdd,
 			BaseModalListSupport,
 			BaseModalAlert,
+			BaseModalDetail,
 		},
 		data() {
 			return {
@@ -275,14 +296,7 @@
 						filter_type: 'select',
 						placeholder: 'Filter Jabatan Staff',
 						model: 'jabatan_id',
-						options: [
-							{
-								id: null,
-								name: 'All',
-								value: null,
-								disabled: false,
-							},
-						],
+						options: [],
 					},
 					{
 						label: 'Hak Akses Admin',
@@ -310,7 +324,24 @@
 					},
 					'',
 				],
-				listJabatan: [],
+				headsDetail: [
+					{
+						label: 'Nama Staff',
+						key: 'staff_fullname',
+					},
+					{
+						label: 'Jabatan',
+						key: 'jabatan_name',
+					},
+					{
+						label: 'Waktu Mulai Jabatan',
+						key: 'active_period',
+					},
+					{
+						label: 'Waktu Akhir Jabatan',
+						key: 'expire_period',
+					},
+				],
 				filterData: {
 					nip: '',
 					jabatan_id: null,
@@ -374,16 +405,18 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				this.listData.forEach((list, indexList) => {
-					let rowTable = [
-						list.nip, //Nip Peminjam Alat
-						list.jabatan_user.jabatan_name, //kapasitas
-						this.statusAkunStaff(list.active_period, list.first_login), //jenis
-						'',
-					]
+				if (this.listData.length > 0) {
+					this.listData.forEach((list, indexList) => {
+						let rowTable = [
+							list.nip, //Nip Peminjam Alat
+							list.jabatan_model.jabatan_name, //kapasitas
+							this.statusAkunStaff(list.expire_period, list.first_login), //jenis
+							'',
+						]
 
-					listTable.push(rowTable)
-				})
+						listTable.push(rowTable)
+					})
+				}
 
 				return listTable
 			},
@@ -396,11 +429,35 @@
 				)
 			},
 			filterPayload() {
+				let tableInfo = this.tableInfo
+
 				return {
-					nip: this.filterData.nip,
-					jabatan_id: this.filterData.jabatan_id,
-					hak_akses: this.filterData.hak_akses,
+					page_size: tableInfo.listSize,
+					sort_by: 'id',
+					sort_direction: 'ASC',
+					...this.filterData,
 				}
+			},
+			detailData() {
+				let data = this.selectedRowData
+				if (data !== null) {
+					return {
+						staff_fullname: data.staff_model.staff_fullname,
+						jabatan_name: data.jabatan_model.jabatan_name,
+						active_period: this.formatDate(data.active_period, 'DD MMMM YYYY'),
+						expire_period: this.formatDate(data.expire_period, 'DD MMMM YYYY'),
+					}
+				} else {
+					return {}
+				}
+			},
+		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getListStaffLab()
+				},
 			},
 		},
 		async mounted() {
@@ -411,80 +468,80 @@
 		methods: {
 			// Call API
 			async getListStaffLab() {
-				// alert(`Get Data Alat ${this.filterData.asal_alat}`)
-				this.tableInfo.totalPage =
-					this.listData.length < this.tableInfo.listSize
-						? 1
-						: this.listData.length / this.tableInfo.listSize
-				this.tableInfo.listTotal = this.listData.length
+				this.loadingTable = true
 				// Nembak API Get List Alat
+				try {
+					const response = await api.getFilterData(
+						'user',
+						this.tableInfo.pageNo,
+						this.filterPayload
+					)
+					console.log(response)
+					this.listData = response.data.result
+					let page = response.data.page
+					this.tableInfo.totalPage = page.total
+					this.tableInfo.listTotal = page.data_total
+				} catch (e) {
+					console.log(e)
+				} finally {
+					this.loadingTable = false
+				}
 			},
 			async getListJabatan() {
 				// Hit API List Jabatan from Jabatan Table
 				let jabatanStaff = [
 					{
-						id: 1,
-						jabatan_name: 'Kepala Laboratorium',
-						value: 1,
-					},
-					{
-						id: 2,
-						jabatan_name: 'Pranata Laboratorium Pendidikan',
-						value: 2,
+						id: null,
+						name: 'All',
+						value: null,
+						disabled: false,
 					},
 				]
-
-				this.listJabatan = jabatanStaff
-
-				jabatanStaff.forEach((jabatan) => {
-					this.headsTable[1].options.push({
-						id: jabatan.id,
-						name: jabatan.jabatan_name,
-						value: jabatan.id,
+				try {
+					const response = await api.getPlainData('jabatan')
+					let listJabatan = response.data.data
+					listJabatan.forEach((jabatan) => {
+						let jb = {
+							id: jabatan.id,
+							name: jabatan.jabatan_name,
+							value: jabatan.id,
+						}
+						jabatanStaff.push(jb)
 					})
-					this.formFilter[1].options.push({
-						id: jabatan.id,
-						name: jabatan.jabatan_name,
-						value: jabatan.id,
-					})
-				})
-
-				let filter
+					this.headsTable[1].options = jabatanStaff
+					this.formFilter[1].options = jabatanStaff
+				} catch (e) {}
 			},
 
 			// Value Change
-			statusAkunStaff(activePeriod, isFirstLogin) {
+			statusAkunStaff(endPeriod, isFirstLogin) {
 				// Menentukan status dari akun berdasarkan active_period akun
-				let currentDate = this.formatDate(new Date())
+				let currentDate = this.formatDate(new Date(), 'YYYY-MM-DD')
 				let rangeDate = this.dateRange(
 					currentDate,
-					this.formatDate(activePeriod)
+					this.formatDate(endPeriod, 'YYYY-MM-DD')
 				)
+
 				let status_id = null
 				if (rangeDate > 0) {
-					status_id = isFirstLogin ? 4 : 2
+					status_id = isFirstLogin ? 3 : 1
 				} else {
-					status_id = 3
+					status_id = 2
 				}
 
 				let listStatus = [
 					{
 						id: 1,
-						text: 'Pending',
-						background: 'smil-bg-pending',
-					},
-					{
-						id: 2,
 						text: 'Punya Akses',
 						background: 'smil-bg-success',
 					},
 					{
-						id: 3,
+						id: 2,
 						text: 'Kadaluarsa',
 						background: 'smil-bg-danger',
 					},
 					{
-						id: 4,
+						id: 3,
 						text: 'Belum Login',
 						background: 'smil-bg-pending',
 					},
@@ -492,15 +549,12 @@
 
 				return listStatus.find((status) => status.id === status_id)
 			},
-			getJabatan(jabatanId) {
-				if (this.listJabatan.length > 0) {
-					return this.listJabatan.find((jabatan) => jabatan.id === jabatanId)
-						.jabatan_name
-				}
-			},
 
 			// Action Dropdown
-			lihatDetail(indexData) {},
+			lihatDetail(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('detail')
+			},
 		},
 	}
 </script>

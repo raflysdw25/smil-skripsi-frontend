@@ -50,6 +50,9 @@ body {
 		width: 80px;
 		height: 30px;
 		font-size: 10px;
+		span {
+			font-size: 10px;
+		}
 	}
 
 	// Large Button
@@ -133,6 +136,10 @@ body {
 	font-size: 12px;
 }
 
+.smil-text-white {
+	color: #fff;
+}
+
 .smil-text-warning {
 	color: #f6d35c;
 	font-size: 12px;
@@ -142,11 +149,10 @@ body {
 .smil-link {
 	position: relative;
 	cursor: pointer;
-	color: #fff;
+	font-size: 14px;
 }
 
 .smil-link:hover {
-	color: #fff;
 	font-weight: 700;
 }
 
@@ -252,6 +258,14 @@ button.btn-smil-drop:before {
 	}
 }
 
+.text-limit {
+	display: block;
+	width: 230px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .icon-class {
 	margin-left: auto;
 	margin-right: auto;
@@ -268,6 +282,8 @@ button.btn-smil-drop:before {
 	.table-counter {
 		width: 33.33%;
 		text-align: left;
+		padding: 10px;
+		padding-left: 0;
 	}
 	.table-pagination {
 		width: 66.66%;
@@ -282,6 +298,7 @@ button.btn-smil-drop:before {
 			padding: 0 200px;
 
 			li {
+				display: flex;
 				a {
 					padding: 0 10px;
 					display: flex;
@@ -310,6 +327,12 @@ button.btn-smil-drop:before {
 			padding: 5px 10px;
 			width: 60px;
 		}
+	}
+
+	.page-limit {
+		white-space: nowrap;
+		overflow: scroll;
+		text-overflow: ellipsis;
 	}
 }
 .btn-smil-drop-dots {
@@ -349,17 +372,22 @@ button.btn-smil-drop:before {
 }
 
 // FORM
+.attention-form {
+	padding: 0 15px;
+	color: #dc3545;
+	font-weight: bold;
+}
 
 // Mobile Style
 @media screen and (max-width: 992px) {
 	.smil-status {
 		width: 50px;
 		// height: 30px;
-		text-align: center;
 		padding: 5px;
 		text-align: center;
 		font-weight: bold;
 		font-size: 8px;
+		display: block;
 	}
 	.smil-table {
 		.smil-thead {
@@ -388,11 +416,23 @@ button.btn-smil-drop:before {
 			max-width: 50vw;
 		}
 
+		.table-counter {
+			font-size: 12px;
+		}
+
 		.table-pagination {
 			margin: 0 auto;
 			ul {
 				padding: 0;
 				margin-bottom: 0;
+			}
+		}
+
+		.table-count {
+			select {
+				&.custom-select {
+					font-size: 11px;
+				}
 			}
 		}
 	}

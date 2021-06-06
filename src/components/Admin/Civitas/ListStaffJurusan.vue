@@ -85,7 +85,7 @@
 										<template v-slot:button-content>
 											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 										</template>
-										<b-dropdown-item>
+										<b-dropdown-item @click="lihatDetail(indexRow)">
 											Detail Staff
 										</b-dropdown-item>
 										<b-dropdown-item @click="editRowData(indexRow)">
@@ -117,7 +117,7 @@
 				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
-				<ul>
+				<ul v-if="listData.length > 0">
 					<li>
 						<span
 							:style="tableInfo.pageNo === 1 ? '' : 'cursor: pointer'"
@@ -192,6 +192,7 @@
 			centered
 			no-close-on-backdrop
 			no-close-on-esc
+			:size="baseModalType === 'detail' ? 'lg' : 'md'"
 		>
 			<form-filter-data
 				v-if="baseModalType === 'filter'"
@@ -208,6 +209,14 @@
 				:message="message"
 				:closeAlert="closePopup"
 			/>
+
+			<base-modal-detail
+				v-if="baseModalType === 'detail'"
+				title="Detail Staff Jurusan"
+				:headsData="headsDetail"
+				:valueData="detailData"
+				:closeModal="closePopup"
+			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
 	</div>
@@ -219,6 +228,7 @@
 	import FormFilterData from '@/components/FormFilterData.vue'
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
@@ -234,6 +244,10 @@
 			FormFilterData,
 			BaseFilter,
 			BaseModalAlert,
+			BaseModalDetail,
+		},
+		props: {
+			listProdi: Array,
 		},
 		data() {
 			return {
@@ -257,14 +271,7 @@
 						filter_type: 'select',
 						placeholder: 'Filter Program Studi',
 						model: 'prodi_id',
-						options: [
-							{
-								id: null,
-								name: 'All',
-								value: null,
-								disabled: false,
-							},
-						],
+						options: [],
 					},
 					{
 						label: 'Email',
@@ -274,6 +281,32 @@
 						options: null,
 					},
 					'',
+				],
+				headsDetail: [
+					{
+						label: 'Nomor Induk Pegawai',
+						key: 'nip',
+					},
+					{
+						label: 'Nama Lengkap',
+						key: 'staff_fullname',
+					},
+					{
+						label: 'Email',
+						key: 'email',
+					},
+					{
+						label: 'Nomor Telepon',
+						key: 'phone_number',
+					},
+					{
+						label: 'Alamat Tempat Tinggal',
+						key: 'address',
+					},
+					{
+						label: 'Program Studi',
+						key: 'prodi_name',
+					},
 				],
 				filterData: {
 					nip: '',
@@ -300,7 +333,7 @@
 					},
 					{
 						label: 'Program Studi',
-						type: 'text',
+						type: 'select',
 						model: 'prodi_id',
 						description: '',
 						placeholder: 'Filter Program Studi',
@@ -344,10 +377,32 @@
 					...this.filterData,
 				}
 			},
+			detailData() {
+				if (Object.keys(this.selectedRowData).length > 0) {
+					let data = this.selectedRowData
+					return {
+						nip: data.nip,
+						staff_fullname: data.staff_fullname,
+						email: data.email,
+						phone_number: data.phone_number,
+						address: data.address,
+						prodi_name:
+							data.prodi_model !== null ? data.prodi_model.prodi_name : '-',
+					}
+				}
+			},
+		},
+		watch: {
+			'tableInfo.pageNo': {
+				deep: true,
+				handler: function() {
+					this.getListStaffJurusan()
+				},
+			},
 		},
 		async mounted() {
 			await this.getListStaffJurusan()
-			await this.getProdi()
+			this.getProdi()
 			// this.showAlert(false, true, 'Alert Berhasil')
 		},
 		methods: {
@@ -372,28 +427,9 @@
 					this.loadingTable = false
 				}
 			},
-			async getProdi() {
-				// Hit API List Jabatan from Jabatan Table
-				try {
-					const response = await api.getListData('prodi')
-					let prodi = response.data.data
-					prodi.forEach((pd, indexJns) => {
-						this.headsTable[2].options.push({
-							id: pd.id,
-							name: pd.prodi_name,
-							value: pd.id,
-							disabled: false,
-						})
-						this.formFilter[2].options.push({
-							id: pd.id,
-							name: pd.prodi_name,
-							value: pd.id,
-							disabled: false,
-						})
-					})
-				} catch (e) {
-					console.log(e)
-				}
+			getProdi() {
+				this.headsTable[2].options = this.listProdi
+				this.formFilter[2].options = this.listProdi
 			},
 			async deleteStaffJurusan(nip) {
 				this.showAlert(true)
@@ -411,7 +447,10 @@
 				}
 			},
 			// Action Dropdown
-			lihatDetail(indexData) {},
+			lihatDetail(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('detail')
+			},
 			editRowData(index) {
 				let data = this.listData[index]
 				this.$router.push({

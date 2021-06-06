@@ -28,6 +28,7 @@
 						v-if="form.type === 'select'"
 						class="custom-select"
 						v-model="form.model"
+						:disabled="form.disabled"
 					>
 						<option
 							v-for="(op, indexOp) in form.options"
@@ -35,7 +36,7 @@
 							:value="op.value"
 							:disabled="op.disabled"
 						>
-							{{ op.text }}
+							{{ op.name }}
 						</option>
 					</select>
 					<textarea
@@ -69,7 +70,7 @@
 							v-for="(radio, indexStatus) in form.child"
 							:key="`radio-add-${radio.text}-${indexStatus}`"
 						>
-							{{ radio.text }}
+							{{ radio.name }}
 						</b-form-radio>
 					</div>
 				</template>
@@ -128,7 +129,7 @@
 			<div class="button-group d-flex justify-content-end">
 				<button
 					class="smil-btn smil-btn-small smil-bg-secondary mr-2"
-					@click="closeModal"
+					@click="closeModal(false)"
 				>
 					Cancel
 				</button>
@@ -199,13 +200,19 @@
 				} else {
 					await this.submitFunction()
 				}
-				this.closeModal()
+				this.closeModal(true)
 			},
-			closeModal() {
-				this.$emit('reset')
+			closeModal(isSubmit) {
+				if (isSubmit) {
+					this.$emit('reset')
+				}
 				this.formList.forEach((form) => {
-					if (typeof form.model !== 'object') {
-						form.model = ''
+					if (!form.canAddValue) {
+						if (form.type == 'select') {
+							form.model = null
+						} else {
+							form.model = ''
+						}
 					} else {
 						form.model = [
 							{
