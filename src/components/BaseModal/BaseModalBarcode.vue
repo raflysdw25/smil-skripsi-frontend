@@ -14,7 +14,7 @@
 				class="barcode"
 			/>
 		</div>
-		<div class="button-group" v-if="environment === 'production'">
+		<div class="button-group" v-if="environment === 'development'">
 			<button class="smil-btn smil-bg-primary" @click="printBarcode">
 				Cetak Barcode
 			</button>
