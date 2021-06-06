@@ -14,7 +14,7 @@
 				class="barcode"
 			/>
 		</div>
-		<div class="button-group" v-if="process.env.NODE_ENV === 'developement'">
+		<div class="button-group" v-if="environment === 'production'">
 			<button class="smil-btn smil-bg-primary" @click="printBarcode">
 				Cetak Barcode
 			</button>
@@ -34,6 +34,11 @@
 		},
 		methods: {
 			async printBarcode() {},
+		},
+		computed: {
+			environment() {
+				return process.env.NODE_ENV
+			},
 		},
 	}
 </script>

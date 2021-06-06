@@ -581,6 +581,7 @@
 		},
 		async mounted() {
 			await this.setPageAlatDetail()
+			console.log(process.env.NODE_ENV)
 		},
 		watch: {
 			'tableInfo.pageNo': {
