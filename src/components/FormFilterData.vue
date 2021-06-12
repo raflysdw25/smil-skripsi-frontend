@@ -49,7 +49,7 @@
 					<!-- START: DATE PICKER -->
 					<date-picker
 						v-else-if="fr.type === 'date'"
-						format="DD-MM-YYYY"
+						format="YYYY-MM-DD"
 						value-type="format"
 						placeholder="All"
 						v-model="inputData[fr.model]"
@@ -78,6 +78,7 @@
 			<button
 				class="smil-btn smil-btn-small smil-bg-primary"
 				@click="implementFilter()"
+				:disabled="!activeButton"
 			>
 				Terapkan
 			</button>

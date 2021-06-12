@@ -31,7 +31,7 @@
 		name: 'base-modal-approve',
 		props: {
 			isApprove: Boolean,
-			peminjamanId: Number,
+			approveAction: Function,
 			closeModal: Function,
 		},
 		data() {
@@ -57,8 +57,7 @@
 			},
 			submitApprovalRequest() {
 				return {
-					pjm_id: this.peminjamanId,
-					pjm_status: this.isApprove ? 4 : 3,
+					is_approved: this.isApprove,
 					pjm_notes: this.requestNotes,
 				}
 			},
@@ -66,12 +65,9 @@
 		methods: {
 			// Call API
 			sendApprovalRequest() {
-				alert(this.submitApprovalRequest)
-				this.$emit('approvalAlert', {
-					isProcess: false,
-					isSuccess: true,
-					message: 'Approval Berhasil Disimpan',
-				})
+				this.approveAction(this.submitApprovalRequest)
+				this.requestNotes = ''
+				this.closeModal()
 			},
 		},
 	}

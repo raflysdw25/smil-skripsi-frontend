@@ -136,7 +136,7 @@
 					console.log(response)
 					// Get Data Admin via API
 					let admin = response.data
-					if (admin.response.code === 200) {
+					if (admin.response.code === 200 && admin.data !== null) {
 						let adminData = {
 							id: admin.data.id,
 							staff_model: admin.data.staff_model,
@@ -161,6 +161,8 @@
 						setTimeout(() => {
 							this.$router.go({ name: 'DashboardAdmin' })
 						}, 1000)
+					} else {
+						this.showAlert(false, false, admin.response.message)
 					}
 				} catch (e) {
 					this.showAlert(false, false, e.response.data.message)

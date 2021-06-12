@@ -21,6 +21,14 @@ export default {
 				if (/^[0-9]+$/.test(char)) return true
 				// Match with regex
 				else e.preventDefault() // If not match, don't add to input text
+			} else if (type === 'barcode-input') {
+				let timer = 0
+				clearTimeout(timer)
+				timer = setTimeout(() => {
+					if (e.target.value.length < 2) {
+						e.target.value = ''
+					}
+				}, 66)
 			} else {
 				return true
 			}

@@ -432,6 +432,8 @@
 					attribute = { name: 'jabatan_name', header: 'Jabatan' }
 				} else if (this.supportType == 'ruangan') {
 					attribute = { name: 'ruangan_name', header: 'Ruangan' }
+				} else if (this.supportType == 'satuan') {
+					attribute = { name: 'satuan_jumlah_name', header: 'Satuan' }
 				}
 
 				this.filterData[attribute.name] = ''

@@ -184,7 +184,7 @@
 									v-for="(content, indexContent) in row"
 									:key="`column-kerusakan-${indexContent}`"
 								>
-									<template v-if="indexContent === row.length - 1">
+									<template v-if="indexContent === 4">
 										<span class="smil-status" :class="content.background">
 											{{ content.text }}
 										</span>
@@ -308,9 +308,7 @@
 			}
 		},
 		async mounted() {
-			this.loadingPage = true
 			await this.dashboardData()
-			this.loadingPage = false
 		},
 		computed: {
 			currentDate() {
@@ -324,17 +322,17 @@
 
 			bodysPeminjaman() {
 				let table = []
-				if (this.listPeminjaman.length > 0) {
+				if (this.listPeminjaman && this.listPeminjaman.length > 0) {
 					this.listPeminjaman.forEach((list, idxList) => {
 						let peminjam =
-							list.nim_mahasiswa !== ''
+							list.nim_mahasiswa !== null
 								? list.mahasiswa_peminjam_model.mahasiswa_fullname
 								: list.staff_peminjam_model.staff_fullname
 						let row = [
-							this.formatDate(list.created_at),
-							list.expected_return_date,
+							this.formatDate(list.created_date),
+							this.formatDate(list.expected_return_date),
 							peminjam,
-							this.statusPeminjaman(list.report_status),
+							this.statusPeminjaman(list.pjm_status),
 							'',
 						]
 
@@ -345,8 +343,8 @@
 			},
 			bodysKerusakan() {
 				let table = []
-				if (this.listKerusakan.length > 0) {
-					this.listKerusakan.forEach((list, idxList) => {
+				if (this.listKerusakan && this.listKerusakan.length > 0) {
+					this.listKerusakan.forEach((list) => {
 						let pelapor =
 							list.nim_mahasiswa !== ''
 								? list.mahasiswa_lapor_model.mahasiswa_fullname
@@ -368,6 +366,7 @@
 		methods: {
 			// CALL API
 			async dashboardData() {
+				this.loadingPage = true
 				try {
 					const response = await api.dashboardAdmin()
 					let dashboard = response.data.data
@@ -377,8 +376,10 @@
 						})
 						this.listPeminjaman = dashboard.recent_peminjaman
 						this.listKerusakan = dashboard.recent_report
+						this.loadingPage = false
 					}
 				} catch (e) {
+					this.loadingPage = false
 					this.showAlert(false, false, e)
 				}
 			},
@@ -388,22 +389,22 @@
 					{
 						id: 1,
 						text: 'Butuh Persetujuan',
-						background: 'smil-bg-warning',
+						background: ' smil-bg-warning',
 					},
 					{
 						id: 2,
 						text: 'Berhasil',
-						background: 'smil-bg-info',
+						background: ' smil-bg-info',
 					},
 					{
 						id: 3,
 						text: 'Ditolak',
-						background: 'smil-bg-danger',
+						background: ' smil-bg-danger',
 					},
 					{
 						id: 4,
 						text: 'Belum Kembali',
-						background: 'smil-bg-warning',
+						background: ' smil-bg-warning',
 					},
 					{
 						id: 5,
@@ -419,17 +420,17 @@
 					{
 						id: 1,
 						text: 'Menunggu Tindakan',
-						background: 'smil-bg-pending',
+						background: ' smil-bg-pending',
 					},
 					{
 						id: 2,
 						text: 'Diperbaiki',
-						background: 'smil-bg-success',
+						background: ' smil-bg-success',
 					},
 					{
 						id: 3,
 						text: 'Tidak Diperbaiki',
-						background: 'smil-bg-danger',
+						background: ' smil-bg-danger',
 					},
 				]
 

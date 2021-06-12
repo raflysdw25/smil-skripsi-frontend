@@ -17,7 +17,10 @@
 					<p class="last-action">
 						{{
 							alatDetail.updated_at === alatDetail.created_at
-								? `Ditambahkan pada ${alatDetail.created_at}`
+								? `Ditambahkan pada ${formatDate(
+										alatDetail.created_at,
+										'DD MMMM YYYY'
+								  )}`
 								: `Diubah pada ${alatDetail.updated_at}`
 						}}
 					</p>
@@ -94,12 +97,23 @@
 						</tr>
 						<tr>
 							<th>Jumlah Alat</th>
-							<td>{{ alatDetail.alat_total }}</td>
+							<td>
+								{{
+									`${alatDetail.alat_total} ${
+										alatDetail.satuan_jumlah_model
+											? alatDetail.satuan_jumlah_model.satuan_jumlah_name
+											: ''
+									}`
+								}}
+							</td>
 						</tr>
 						<tr>
 							<th>Spesifikasi</th>
 							<td>
-								<button class="smil-btn smil-bg-info">
+								<button
+									class="smil-btn smil-bg-info"
+									@click="openPopup('detail')"
+								>
 									Lihat Spesifikasi
 								</button>
 							</td>
@@ -351,6 +365,13 @@
 				:barcodeValue="selectedRowData.barcode_alat"
 				:displayText="selectedRowData.alat_model.alat_name"
 			/>
+			<base-modal-detail
+				v-if="baseModalType === 'detail'"
+				title="Spesifikasi"
+				:headsData="headsSpecs"
+				:valueData="valueSpecs"
+				:closeModal="closePopup"
+			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
 	</div>
@@ -363,6 +384,7 @@
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
 	import BaseModalBarcode from '@/components/BaseModal/BaseModalBarcode.vue'
+	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import TableMixins from '@/mixins/TableMixins'
@@ -379,6 +401,7 @@
 			BaseModalAdd,
 			BaseModalAlert,
 			BaseModalBarcode,
+			BaseModalDetail,
 		},
 		mixins: [FormInputMixins, TableMixins, ModalMixins],
 		data() {
@@ -864,6 +887,9 @@
 				this.selectedRowData = this.listData[indexData]
 				this.openPopup('barcode')
 			},
+			capitalizeFirstLetter(string) {
+				return string.charAt(0).toUpperCase() + string.slice(1)
+			},
 			// Modal
 			submitAction() {
 				if (this.baseModalType === 'add') {
@@ -946,6 +972,31 @@
 				} else if (this.baseModalType === 'condition') {
 					return this.formChangeCondition[1].model !== null
 				}
+			},
+			headsSpecs() {
+				let specs = this.alatDetail.alat_specs
+				let heads = []
+				Object.keys(specs).forEach((key) => {
+					let setLabel = key.replace('_', ' ').split(' ')
+					setLabel.forEach((label, index) => {
+						setLabel[index] = this.capitalizeFirstLetter(label)
+					})
+
+					let head = {
+						label: setLabel.join(' '),
+						key: key,
+					}
+					heads.push(head)
+				})
+				return heads
+			},
+			valueSpecs() {
+				let specs = this.alatDetail.alat_specs
+				let value = {}
+				Object.keys(specs).forEach((key) => {
+					value[key] = specs[key].value
+				})
+				return value
 			},
 		},
 	}

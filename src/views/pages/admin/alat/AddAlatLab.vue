@@ -83,8 +83,31 @@
 							{{ ops.name }}
 						</option>
 					</select>
-
 					<!-- END: SELECT TAG -->
+
+					<!-- RADIO Input -->
+					<template v-if="form.type === 'radio'">
+						<div
+							class="custom-control custom-radio"
+							v-for="(ops, idxOps) in form.options"
+							:key="`form-radio-ops-${idxOps}`"
+						>
+							<input
+								type="radio"
+								class="custom-control-input"
+								:id="`radio-${idxOps}-${ops.id}`"
+								:value="ops.value"
+								v-model="form.model"
+							/>
+							<label
+								class="custom-control-label"
+								:for="`radio-${idxOps}-${ops.id}`"
+							>
+								{{ ops.name }}
+							</label>
+						</div>
+					</template>
+					<!-- RADIO Input -->
 				</div>
 			</div>
 			<!-- ALAT INFO SECTION -->
@@ -225,6 +248,37 @@
 						options: [],
 						disabled: true,
 					},
+					{
+						label: 'Satuan Jumlah',
+						type: 'select',
+						model: null,
+						description: '',
+						placeholder: 'Pilih Satuan Jumlah',
+						isRequired: true,
+						options: [],
+						disabled: false,
+					},
+					{
+						label: 'Alat Habis Pakai',
+						type: 'radio',
+						model: null,
+						description: '',
+						placeholder: '',
+						isRequired: true,
+						options: [
+							{
+								id: 1,
+								name: 'Ya',
+								value: true,
+							},
+							{
+								id: 2,
+								name: 'Tidak',
+								value: false,
+							},
+						],
+						disabled: false,
+					},
 				],
 				spesifikasi: {},
 			}
@@ -234,6 +288,7 @@
 			await this.getJenisAlat()
 			await this.supplierList()
 			await this.getAsalAlat()
+			await this.getSatuanJumlah()
 
 			if (this.alatId !== null) {
 				await this.getAlatDetail()
@@ -254,8 +309,10 @@
 					this.submitRequest.asal_pengadaan_id !== null &&
 					this.submitRequest.alat_year !== '' &&
 					this.submitRequest.alat_total !== null &&
-					this.submitRequest.jenis_alat_id !== '' &&
-					this.submitRequest.lokasi_id !== ''
+					this.submitRequest.jenis_alat_id !== null &&
+					this.submitRequest.lokasi_id !== null &&
+					this.submitRequest.satuan_id !== null &&
+					this.submitRequest.habis_pakai !== null
 				)
 			},
 			submitRequest() {
@@ -269,6 +326,8 @@
 						alat_total: form[4].model !== '' ? parseInt(form[4].model) : null,
 						jenis_alat_id: form[5].model,
 						alat_specs: null,
+						satuan_id: form[6].model,
+						habis_pakai: form[7].model,
 					}
 				} else {
 					return {
@@ -280,6 +339,8 @@
 						jenis_alat_id: form[5].model,
 						alat_specs: null,
 						lokasi_id: form[6].model,
+						satuan_id: form[7].model,
+						habis_pakai: form[8].model,
 					}
 				}
 			},
@@ -328,6 +389,28 @@
 							list.push(jn)
 						})
 						this.formGroupList[5].options = list
+					}
+				} catch (e) {
+					this.showAlert(false, false, e)
+				}
+			},
+			async getSatuanJumlah() {
+				// Memanggil API Asal Alat
+				try {
+					const response = await api.getPlainData('satuan')
+					let satuanJumlah = response.data.data
+
+					if (response.data.response.code == 200) {
+						let list = []
+						satuanJumlah.forEach((satuan) => {
+							let ap = {
+								id: satuan.id,
+								name: satuan.satuan_jumlah_name,
+							}
+
+							list.push(ap)
+						})
+						this.formGroupList[7].options = list
 					}
 				} catch (e) {
 					this.showAlert(false, false, e)
@@ -398,6 +481,8 @@
 						form[4].model = data.alat_total
 						form[4].isRequired = false
 						form[5].model = data.jenis_alat_id
+						form[7].model = data.satuan_id
+						form[8].model = data.habis_pakai
 
 						this.spesifikasi =
 							data.alat_specs !== '' ? JSON.parse(data.alat_specs) : {}

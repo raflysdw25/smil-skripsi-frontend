@@ -8,7 +8,10 @@
 			>
 				Filter Data
 			</button>
-			<button class="smil-btn smil-bg-secondary" @click="openPopup('ruangan')">
+			<button
+				class="smil-btn smil-bg-secondary ml-auto"
+				@click="openPopup('ruangan')"
+			>
 				Ruangan Kampus
 			</button>
 		</div>
@@ -88,22 +91,36 @@
 										<template v-slot:button-content>
 											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 										</template>
-										<b-dropdown-item @click="tindakPeminjaman(true, indexRow)">
+										<b-dropdown-item
+											@click="tindakPeminjaman(true, indexRow)"
+											v-if="listData[indexRow].pjm_status === 1"
+										>
 											Approve Request
 										</b-dropdown-item>
-										<b-dropdown-item @click="tindakPeminjaman(false, indexRow)">
+										<b-dropdown-item
+											@click="tindakPeminjaman(false, indexRow)"
+											v-if="listData[indexRow].pjm_status === 1"
+										>
 											Reject Request
 										</b-dropdown-item>
-										<b-dropdown-item>
+										<b-dropdown-item
+											v-if="listData[indexRow].pjm_status === 2"
+											@click="registerAlat(indexRow)"
+										>
+											Daftar Alat Dipinjam
+										</b-dropdown-item>
+										<b-dropdown-item
+											@click="lihatDetail('peminjaman', indexRow)"
+										>
 											Detail Peminjaman
 										</b-dropdown-item>
 										<b-dropdown-item>
 											List Alat Dipinjam
 										</b-dropdown-item>
-										<b-dropdown-item>
+										<b-dropdown-item @click="lihatDetail('peminjam', indexRow)">
 											Informasi Peminjam
 										</b-dropdown-item>
-										<b-dropdown-item>
+										<b-dropdown-item @click="deleteNotif(indexRow)">
 											<span class="smil-text-danger">
 												Hapus Peminjaman
 											</span>
@@ -222,9 +239,8 @@
 			<base-modal-approve
 				v-if="baseModalType === 'approval'"
 				:isApprove="isApprove"
-				:peminjamanId="selected_pjm.pjm_id"
+				:approveAction="approveAction"
 				:closeModal="closePopup"
-				@approvalAlert="approvalAlert"
 			/>
 
 			<form-filter-data
@@ -233,13 +249,29 @@
 				:closeModal="closePopup"
 				:formInput="filterData"
 				:form="formFilter"
-				@submitFilter="getListPeminjaman"
+				:submitFunction="getListPeminjaman"
+				:activeButton="mobileFilterActive"
 			/>
 
 			<base-modal-list-support
 				v-if="baseModalType === 'ruangan'"
 				title="Ruangan Kampus"
 				supportType="ruangan"
+				:closeModal="closePopup"
+			/>
+
+			<base-modal-detail
+				v-if="baseModalType === 'detail'"
+				:title="details.title"
+				:headsData="details.heads"
+				:valueData="details.value"
+				:closeModal="closePopup"
+			/>
+
+			<base-modal-register-alat
+				v-if="baseModalType === 'register-alat'"
+				:detailPeminjaman="selectedRowData.detail_peminjaman_model"
+				:submitRegister="registerAlatDipinjam"
 				:closeModal="closePopup"
 			/>
 		</b-modal>
@@ -256,16 +288,18 @@
 	import BaseModalApprove from '@/components/BaseModal/BaseModalApprove.vue'
 	import BaseModalListSupport from '@/components/BaseModal/BaseModalListSupport.vue'
 	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
+	import BaseModalRegisterAlat from '@/components/BaseModal/BaseModalRegisterAlat.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+	import FormInputMixins from '@/mixins/FormInputMixins'
 
 	// API
 	import api from '@/api/admin_api'
 	export default {
 		name: 'list-peminjaman-alat',
-		mixins: [ModalMixins, TableMixins],
+		mixins: [ModalMixins, TableMixins, FormInputMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
@@ -274,6 +308,7 @@
 			BaseModalApprove,
 			BaseModalListSupport,
 			BaseModalDetail,
+			BaseModalRegisterAlat,
 		},
 		data() {
 			return {
@@ -282,7 +317,7 @@
 						label: 'Waktu Peminjaman',
 						filter_type: 'date',
 						placeholder: 'Filter Waktu Peminjaman',
-						model: 'created_at',
+						model: 'created_date',
 						options: null,
 					},
 					{
@@ -334,7 +369,7 @@
 					'',
 				],
 				filterData: {
-					created_at: '',
+					created_date: '',
 					expected_return_date: '',
 					nomor_induk: '',
 					pjm_status: null,
@@ -343,7 +378,7 @@
 					{
 						label: 'Tanggal Peminjaman Alat',
 						type: 'date',
-						model: 'created_at',
+						model: 'created_date',
 						description: '',
 						placeholder: 'Filter Tanggal Peminjaman Alat',
 						isRequired: false,
@@ -399,8 +434,11 @@
 						],
 					},
 				],
-				selected_pjm: {},
-				isApprove: '',
+				isApprove: null,
+				// Register Alat Dipinjam
+				formAdd: [],
+				// Detail Data
+				typeDetail: '',
 			}
 		},
 		watch: {
@@ -412,13 +450,20 @@
 			},
 		},
 		computed: {
+			environment() {
+				return process.env.NODE_ENV
+			},
 			listTable() {
 				let listTable = []
 				this.listData.forEach((list, indexList) => {
+					let peminjam =
+						list.nim_mahasiswa == null
+							? `${list.nip_staff} - ${list.staff_peminjam_model.staff_fullname}`
+							: `${list.nim_mahasiswa} - ${list.mahasiswa_peminjam_model.mahasiswa_fullname}`
 					let rowTable = [
-						list.created_at, //ID Lokasi
-						list.expected_return_date, //Nama Lokasi
-						list.nomor_induk, //kapasitas
+						this.formatDate(list.created_date, 'DD MMMM YYYY'), //ID Lokasi
+						this.formatDate(list.expected_return_date, 'DD MMMM YYYY'), //Nama Lokasi
+						peminjam, //kapasitas
 						this.statusPeminjaman(list.pjm_status), //jenis
 						'',
 					]
@@ -437,6 +482,121 @@
 					sort_direction: 'DESC',
 					...this.filterData,
 				}
+			},
+			mobileFilterActive() {
+				let filter = this.filterData
+				return (
+					filter.created_date !== '' ||
+					filter.expected_return_date !== '' ||
+					filter.nomor_induk !== '' ||
+					filter.pjm_status !== null
+				)
+			},
+			details() {
+				let detail = {
+					title: '',
+					heads: [],
+					value: {},
+				}
+				let data = this.selectedRowData
+
+				if (this.typeDetail == 'peminjaman') {
+					detail.title = 'Detail Peminjaman'
+					detail.heads = [
+						{
+							label: 'Waktu Peminjaman',
+							key: 'created_date',
+						},
+						{
+							label: 'Waktu Pengembalian',
+							key: 'expected_return_date',
+						},
+						{
+							label: 'Waktu Kembali',
+							key: 'real_return_date',
+						},
+						{
+							label: 'Status Peminjaman',
+							key: 'pjm_status',
+						},
+						{
+							label: 'Tujuan Peminjaman',
+							key: 'pjm_purpose',
+						},
+						{
+							label: 'Dosen Penanggung Jawab',
+							key: 'staff_in_charge_fullname',
+						},
+						{
+							label: 'Ruangan',
+							key: 'ruangan_name',
+						},
+					]
+					detail.value = {
+						created_date: this.formatDate(data.created_date, 'DD MMMM YYYY'),
+						expected_return_date: this.formatDate(
+							data.expected_return_date,
+							'DD MMMM YYYY'
+						),
+						real_return_date:
+							data.real_return_date === ''
+								? ''
+								: this.formatDate(data.real_return_date, 'DD MMMM YYYY'),
+						pjm_status: this.statusPeminjaman(data.pjm_status).text,
+						pjm_purpose: data.pjm_purpose,
+						staff_in_charge_fullname:
+							data.nip_staff_in_charge == null
+								? ''
+								: data.staff_in_charge_model.staff_fullname,
+						ruangan_name:
+							data.ruangan_id === null ? '' : data.ruangan_model.ruangan_name,
+					}
+				} else if (this.typeDetail == 'peminjam') {
+					detail.title = 'Informasi Peminjam'
+					detail.heads = [
+						{
+							label: 'Nomor Induk',
+							key: 'nomor_induk',
+						},
+						{
+							label: 'Nama',
+							key: 'peminjam_name',
+						},
+						{
+							label: 'Nomor Telepon',
+							key: 'phone_number',
+						},
+						{
+							label: 'Email',
+							key: 'email',
+						},
+						{
+							label: 'Status Peminjam',
+							key: 'peminjam_status',
+						},
+					]
+
+					let statusPeminjam =
+						data.nim_mahasiswa == null ? 'Staff / Dosen Jurusan' : 'Mahasiswa'
+					let peminjam =
+						data.nim_mahasiswa == null
+							? data.staff_peminjam_model
+							: data.mahasiswa_peminjam_model
+
+					detail.value = {
+						nomor_induk:
+							data.nim_mahasiswa == null ? data.nip_staff : data.nim_mahasiswa,
+						peminjam_name:
+							data.nim_mahasiswa == null
+								? data.staff_peminjam_model.staff_fullname
+								: data.mahasiswa_peminjam_model.mahasiswa_fullname,
+						phone_number: peminjam.phone_number,
+						email: peminjam.email,
+						peminjam_status: statusPeminjam,
+					}
+				}
+
+				return detail
 			},
 		},
 		async mounted() {
@@ -466,6 +626,74 @@
 					this.loadingTable = false
 				}
 			},
+			async approveAction(payload) {
+				this.showAlert(true)
+				try {
+					const response = await api.approveAction(
+						this.selectedRowData.id,
+						payload
+					)
+					if (response.data.response.code == 200) {
+						this.showAlert(false, true, response.data.response.message)
+						setTimeout(() => {
+							this.getListPeminjaman()
+						}, 2000)
+					}
+				} catch (e) {
+					if (this.environment === 'development') {
+						console.log(e)
+					}
+
+					this.showAlert(false, false, e)
+				}
+			},
+			async deletePeminjaman(peminjamanId) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('peminjaman', peminjamanId)
+					if (response.data.response.code === 200) {
+						this.showAlert(false, true, response.data.response.message)
+						setTimeout(() => {
+							this.getListPeminjaman()
+						}, 2000)
+					}
+				} catch (e) {
+					if (process.env.NODE_ENV == 'development') {
+						console.log(e)
+					}
+					this.showAlert(false, false, e)
+				}
+			},
+			async registerAlatDipinjam(listDetailPeminjaman) {
+				this.showAlert(true)
+				try {
+					let list = []
+					listDetailPeminjaman.forEach((detail) => {
+						let row = {
+							id: detail.id,
+							barcode_alat: detail.model,
+						}
+						list.push(row)
+					})
+					let payload = {
+						list_detail_peminjaman: list,
+					}
+					const response = await api.registerAlatDipinjam(
+						this.selectedRowData.id,
+						payload
+					)
+					console.log(response)
+					if (response.data.response.code === 200) {
+						this.showAlert(false, true, response.data.response.message)
+						setTimeout(() => {
+							this.getListPeminjaman()
+						}, 2000)
+					}
+				} catch (e) {
+					console.log(e)
+					this.showAlert(false, false, e)
+				}
+			},
 			// Value Change
 			statusPeminjaman(status_id) {
 				let listStatus = [
@@ -476,7 +704,7 @@
 					},
 					{
 						id: 2,
-						text: 'Berhasil',
+						text: 'Alat belum diambil',
 						background: 'smil-bg-info',
 					},
 					{
@@ -499,15 +727,30 @@
 				return listStatus.find((status) => status.id === status_id)
 			},
 			// Modal Interaction
-			approvalAlert(alert) {
-				this.showAlert(alert.isProcess, alert.isSuccess, alert.message)
-			},
 			// Action Dropdown
-			lihatDetail(indexData) {},
+			lihatDetail(type, indexData) {
+				this.typeDetail = type
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('detail')
+			},
+			lihatListAlatDipinjam(indexData) {},
 			tindakPeminjaman(tindakan, row) {
-				this.selected_pjm = this.listData[row]
+				this.selectedRowData = this.listData[row]
 				this.isApprove = tindakan
 				this.openPopup('approval')
+			},
+			deleteNotif(index) {
+				let data = this.listData[index]
+				let confirmDelete = confirm(
+					`Apakah anda yakin ingin menghapus peminjaman ini? Seluruh data yang berhubungan dengan peminjaman ini akan ikut terhapus`
+				)
+				if (confirmDelete) {
+					this.deletePeminjaman(data.id)
+				}
+			},
+			registerAlat(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('register-alat')
 			},
 		},
 	}

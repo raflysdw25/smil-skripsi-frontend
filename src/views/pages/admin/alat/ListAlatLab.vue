@@ -14,11 +14,11 @@
 			>
 				Filter Data
 			</button>
-			<button
-				class="smil-btn smil-bg-secondary ml-auto"
-				@click="openPopup('asal')"
-			>
+			<button class="smil-btn smil-bg-info ml-auto" @click="openPopup('asal')">
 				Asal Pengadaan
+			</button>
+			<button class="smil-btn smil-bg-info" @click="openPopup('satuan')">
+				Satuan Jumlah
 			</button>
 		</div>
 		<!-- END: BUTTON GROUP -->
@@ -226,7 +226,7 @@
 			hide-header
 			hide-footer
 			centered
-			:size="baseModalType === 'asal' ? 'lg' : ''"
+			:size="baseModalType === 'asal' || baseModalType === 'satuan' ? 'lg' : ''"
 		>
 			<form-filter-data
 				v-if="baseModalType === 'filter-data'"
@@ -247,9 +247,11 @@
 			/>
 
 			<base-modal-list-support
-				v-if="baseModalType === 'asal'"
-				title="Asal Pengadaan Alat"
-				supportType="asal"
+				v-if="baseModalType === 'asal' || baseModalType === 'satuan'"
+				:title="
+					baseModalType === 'asal' ? 'Asal Pengadaan Alat' : 'Satuan Jumlah'
+				"
+				:supportType="baseModalType"
 				:closeModal="closeSupport"
 			/>
 		</b-modal>

@@ -42,8 +42,20 @@ export default {
 	},
 
 	// Custom CRUD
+
+	// Laporan Kerusakan Alat
 	reportAction(laporanId, reportPayload) {
 		return admin_api.put(`laporan/report-action/${laporanId}`, reportPayload)
+	},
+
+	// Lokasi Penyimpanan
+	getLokasiNeed(totalNeed) {
+		return admin_api.get(`lokasi/available/${totalNeed}`)
+	},
+
+	// Detail Alat
+	changeStatusDetailAlat(type, id, payload) {
+		return admin_api.put(`detail-alat/update-${type}/${id}`, payload)
 	},
 	getFilterDetailAlat(alatId, page, filterPayload) {
 		return admin_api.post(
@@ -52,15 +64,25 @@ export default {
 		)
 	},
 
-	getLokasiNeed(totalNeed) {
-		return admin_api.get(`lokasi/available/${totalNeed}`)
-	},
-
-	changeStatusDetailAlat(type, id, payload) {
-		return admin_api.put(`detail-alat/update-${type}/${id}`, payload)
-	},
-
+	// Jabatan Staff Laboratorium
 	editJabatanStaffLab(id, payload) {
 		return admin_api.put(`user/update-jabatan/${id}`, payload)
+	},
+
+	// Peminjaman
+	approveAction(peminjamanId, approvePayload) {
+		return admin_api.put(
+			`peminjaman/approve-action/${peminjamanId}`,
+			approvePayload
+		)
+	},
+	confirmBarcodeAlat(payload) {
+		return admin_api.post(`peminjaman/cek-alat`, payload)
+	},
+	registerAlatDipinjam(peminjamanId, listPayload) {
+		return admin_api.post(
+			`peminjaman/register-alat-dipinjam/${peminjamanId}`,
+			listPayload
+		)
 	},
 }
