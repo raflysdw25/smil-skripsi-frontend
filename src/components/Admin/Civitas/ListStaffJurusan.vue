@@ -358,7 +358,7 @@
 					let rowTable = [
 						list.nip, //NIP
 						list.staff_fullname, //Nama Staff
-						list.prodi_model.prodi_name, //Program Studi
+						list.prodi_id === null ? '-' : list.prodi_model.prodi_name, //Program Studi
 						list.email, //Email
 						'',
 					]

@@ -345,7 +345,7 @@
 					let rowTable = [
 						list.nim, //NIM
 						list.mahasiswa_fullname, //Nama Mahasiswa
-						list.prodi_model.prodi_name, //Program Studi
+						list.prodi_id == null ? '-' : list.prodi_model.prodi_name, //Program Studi
 						list.email, //Email
 						'',
 					]
