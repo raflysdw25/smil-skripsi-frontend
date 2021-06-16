@@ -412,7 +412,7 @@
 				if (this.listData.length > 0) {
 					this.listData.forEach((list, indexList) => {
 						let rowTable = [
-							list.nip, //Nip Peminjam Alat
+							`${list.nip} - ${list.staff_model.staff_fullname}`, //Nip Peminjam Alat
 							list.jabatan_model.jabatan_name, //kapasitas
 							this.statusAkunStaff(list.expire_period, list.first_login), //jenis
 							'',

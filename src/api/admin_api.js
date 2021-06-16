@@ -68,6 +68,11 @@ export default {
 		)
 	},
 
+	// Staff Jurusan
+	getUnregisterStaff() {
+		return admin_api.get(`staff/unregisterstaff`)
+	},
+
 	// Jabatan Staff Laboratorium
 	editJabatanStaffLab(id, payload) {
 		return admin_api.put(`user/update-jabatan/${id}`, payload)

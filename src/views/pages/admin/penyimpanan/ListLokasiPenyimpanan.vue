@@ -505,9 +505,13 @@
 					]
 					let heads = ['Nama Alat', 'Barcode Alat', 'Kondisi Alat']
 					let contents = []
-					let totalData = data.lokasi_detail_alat.length
-					if (data.lokasi_detail_alat.length > 0) {
-						let reverse = data.lokasi_detail_alat.reverse()
+					let alatTersimpan = data.lokasi_detail_alat.filter(
+						(lks) => lks.condition_status !== 4
+					)
+
+					let totalData = alatTersimpan.length
+					if (alatTersimpan.length > 0) {
+						let reverse = alatTersimpan.reverse()
 						for (let index = 0; index < 5; index++) {
 							let kondisi = listKondisi.find(
 								(list) => list.id == reverse[index].condition_status
@@ -665,7 +669,7 @@
 			seeQrCode(indexData) {
 				let data = this.listData[indexData]
 				this.selectedRowData = {
-					path_url: `${process.env.VUE_APP_BASE_API_SMIL}lokasi/${data.id}`,
+					path_url: `${process.env.VUE_APP_BASE_SMIL}public-access/lokasi/${data.id}`,
 					name: data.lokasi_name,
 					desc: `Kapasitas Tersedia: ${data.available_capacity}`,
 				}
@@ -674,7 +678,7 @@
 			printQRCode(indexData) {
 				let data = this.listData[indexData]
 				this.selectedRowData = {
-					path_url: `${process.env.VUE_APP_BASE_API_SMIL}lokasi/${data.id}`,
+					path_url: `${process.env.VUE_APP_BASE_SMIL}public-access/lokasi/${data.id}`,
 					name: data.lokasi_name,
 					desc: '',
 				}

@@ -195,7 +195,7 @@
 						model: null,
 						description: '',
 						placeholder: 'Jabatan',
-						isRequired: false,
+						isRequired: true,
 						disabled: false,
 						options: [],
 					},
@@ -369,6 +369,7 @@
 			async getListStaffJurusan() {
 				try {
 					const response = await api.getPlainData('staff')
+					// const response = await api.getUnregisterStaff()
 					if (response.data.response.code === 200) {
 						let listStaff = response.data.data
 						let list = []

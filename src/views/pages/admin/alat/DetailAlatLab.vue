@@ -365,6 +365,14 @@
 				@reset="setPageAlatDetail"
 			/>
 
+			<base-modal-detail
+				v-if="baseModalType === 'detail'"
+				title="Informasi Spesifikasi Alat"
+				:headsData="headSpecs"
+				:valueData="valueSpecs"
+				:closeModal="closePopup"
+			/>
+
 			<base-modal-alert
 				v-if="baseModalType === 'alert'"
 				:isProcess="isProcess"
@@ -1151,7 +1159,7 @@
 					return this.formChangeCondition[1].model !== null
 				}
 			},
-			headsSpecs() {
+			headSpecs() {
 				let specs = this.alatDetail.alat_specs
 				let heads = []
 				Object.keys(specs).forEach((key) => {
@@ -1236,6 +1244,21 @@
 			h4 {
 				font-size: 16px;
 				font-weight: 700;
+			}
+		}
+	}
+	@media screen and (max-width: 992px) {
+		.detail-alat-lab {
+			.header {
+				align-items: flex-start;
+				flex-direction: column;
+				.button-group {
+					margin-left: 0;
+					button {
+						margin-left: 0;
+						margin-right: 12px;
+					}
+				}
 			}
 		}
 	}
