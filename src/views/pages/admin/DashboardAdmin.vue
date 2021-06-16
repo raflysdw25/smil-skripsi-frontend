@@ -54,6 +54,7 @@
 						<p class="title-description">Per {{ currentDate }}</p>
 					</div>
 					<button
+						v-if="!isSuperAdmin"
 						class="smil-btn smil-bg-primary ml-auto"
 						@click="$router.push({ name: 'ListPeminjamanAlat' })"
 					>
@@ -136,6 +137,7 @@
 						<p class="title-description">Per {{ currentDate }}</p>
 					</div>
 					<button
+						v-if="!isSuperAdmin"
 						class="smil-btn smil-bg-primary ml-auto"
 						@click="$router.push({ name: 'LaporanKerusakanAlat' })"
 					>
