@@ -21,9 +21,24 @@
 			<p class="user-message">
 				{{ message }}
 			</p>
+			<div
+				class="note-message"
+				:class="notes.length > 4 && 'scrollbar'"
+				v-if="notes.length > 0"
+			>
+				<p class="notes-message" v-if="isSuccess">Dengan Catatan :</p>
+				<ul>
+					<li v-for="(note, idx) in notes" :key="`note-${idx}`">
+						{{ note.title }} <br />
+						<span class="errorMessage">
+							{{ note.message }}
+						</span>
+					</li>
+				</ul>
+			</div>
 			<button
 				class="smil-btn smil-btn-small mx-auto mt-4 smil-bg-secondary"
-				v-if="!isSuccess"
+				v-if="!isSuccess || (isSuccess && notes.length !== 0)"
 				@click="closeAlert"
 			>
 				Tutup
@@ -39,10 +54,16 @@
 			isProcess: Boolean,
 			isSuccess: Boolean,
 			message: String,
+			notes: {
+				default() {
+					return []
+				},
+				type: Array,
+			},
 			closeAlert: Function,
 		},
 		mounted() {
-			if (this.isSuccess) {
+			if (this.isSuccess && this.notes.length == 0) {
 				setTimeout(() => {
 					this.closeAlert()
 				}, 1500)
@@ -52,7 +73,7 @@
 			isSuccess: {
 				immediate: true,
 				handler: function() {
-					if (this.isSuccess) {
+					if (this.isSuccess && this.notes.length == 0) {
 						setTimeout(() => {
 							this.closeAlert()
 						}, 1500)
@@ -87,8 +108,27 @@
 
 <style lang="scss">
 	.base-modal-alert {
-		display: flex;
-		justify-content: center;
+		/* width */
+		::-webkit-scrollbar {
+			width: 7px;
+		}
+
+		/* Track */
+		::-webkit-scrollbar-track {
+			background: #f3f3f3;
+		}
+
+		/* Handle */
+		::-webkit-scrollbar-thumb {
+			background: #e1e1e1;
+			border-radius: 5px;
+			height: 94px;
+		}
+
+		/* Handle on hover */
+		::-webkit-scrollbar-thumb:hover {
+			background: #555;
+		}
 		padding: 51px 53px;
 		box-sizing: border-box;
 		.process-section,
@@ -119,6 +159,37 @@
 			}
 			&.user-message {
 				margin-top: 10px;
+			}
+			&.notes-message {
+				text-align: left;
+				font-weight: 700;
+				margin-bottom: 5px;
+			}
+		}
+
+		.note-message {
+			margin-top: 10px;
+			&.scrollbar {
+				overflow-y: scroll;
+			}
+			height: 240px;
+			background: #f3f3f3;
+			border: 1px solid #e1e1e1;
+			text-align: left;
+
+			padding: 20px 16px;
+			ul {
+				padding-inline-start: 0;
+				list-style-type: none;
+				li {
+					font-size: 12px;
+					margin-bottom: 8px;
+					color: #464646;
+				}
+				.errorMessage {
+					color: #e03120;
+					font-size: 12px;
+				}
 			}
 		}
 	}

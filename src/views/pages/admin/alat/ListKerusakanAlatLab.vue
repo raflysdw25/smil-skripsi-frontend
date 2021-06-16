@@ -142,13 +142,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -259,6 +262,7 @@
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
@@ -272,7 +276,7 @@
 			BaseModalAlert,
 			BaseModalDetail,
 		},
-		mixins: [FormInputMixins, ModalMixins, TableMixins],
+		mixins: [FormInputMixins, ModalMixins, TableMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				headsTable: [
@@ -512,19 +516,27 @@
 		computed: {
 			listTable() {
 				let listTable = []
-				if (this.listData.length !== 0) {
-					this.listData.forEach((list, indexList) => {
+				if (this.listData && this.listData.length > 0) {
+					this.listData.forEach((list) => {
 						let nama_pelapor =
-							list.nim_mahasiswa !== ''
-								? `${list.nim_mahasiswa} - ${list.mahasiswa_lapor_model.mahasiswa_fullname}`
-								: `${list.nip_staff} - ${list.staff_lapor_model.staff_fullname}`
+							list.nim_mahasiswa !== null
+								? `${list.nim_mahasiswa} - ${
+										list.mahasiswa_lapor_model
+											? list.mahasiswa_lapor_model.mahasiswa_fullname
+											: ''
+								  }`
+								: `${list.nip_staff} - ${
+										list.mahasiswa_lapor_model
+											? list.staff_lapor_model.staff_fullname
+											: ''
+								  }`
 						let rowTable = [
 							this.formatDate(list.report_date, 'DD MMMM YYYY'), //Tanggal Laporan
 							nama_pelapor, //Nama Pelapor
 							list.barcode_alat, //Barcode Alat
 							list.chronology,
 							this.statusLaporan(list.report_status),
-							indexList, //Index Data
+							'', //Index Data
 						]
 
 						listTable.push(rowTable)
@@ -582,6 +594,9 @@
 			},
 		},
 		async mounted() {
+			if (this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			await this.getLaporanKerusakan()
 		},
 		methods: {
@@ -603,8 +618,15 @@
 					this.loadingTable = false
 				} catch (e) {
 					this.loadingTable = false
-					console.log(e)
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async sendTindakanLaporan() {
@@ -617,7 +639,15 @@
 					)
 					this.showAlert(false, true, 'Tindakan berhasil dikirimkan')
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async deleteLaporan(id) {
@@ -631,8 +661,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
-				} finally {
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 

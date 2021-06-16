@@ -117,7 +117,47 @@
 		mixins: [ModalMixins],
 		data() {
 			return {
-				menus: [
+				toggleSideBar: false,
+				firstAccess: true,
+			}
+		},
+		watch: {
+			toggleSidebar: {
+				immediate: true,
+				handler: function(newVal) {
+					this.toggleSideBar = newVal
+				},
+			},
+		},
+		mounted() {
+			if (this.adminData.first_login && !this.adminData.skipChangePassword) {
+				this.$router.push({ name: 'FirstLoginAdmin' })
+			}
+		},
+		computed: {
+			isKaLab() {
+				return this.adminData.jabatan_id === 2
+			},
+			isSuperAdmin() {
+				return this.adminData.jabatan_id === 1
+			},
+			isMobile() {
+				const toMatch = [
+					/Android/i,
+					/webOS/i,
+					/iPhone/i,
+					/iPad/i,
+					/iPod/i,
+					/BlackBerry/i,
+					/Windows Phone/i,
+				]
+
+				return toMatch.some((toMatchItem) => {
+					return navigator.userAgent.match(toMatchItem)
+				})
+			},
+			menus() {
+				let regular = [
 					{
 						id: 1,
 						text: 'Dashboard',
@@ -194,41 +234,39 @@
 						icon: { iconName: 'users', size: 32, color: '#fff' },
 						activeMenu: 'staff',
 					},
-				],
-				toggleSideBar: false,
-				firstAccess: true,
-			}
-		},
-		watch: {
-			toggleSidebar: {
-				immediate: true,
-				handler: function(newVal) {
-					this.toggleSideBar = newVal
-				},
-			},
-		},
-		mounted() {
-			// Cek if Admin already login
-			// this.checkUserAuthorize()
-		},
-		computed: {
-			isKaLab() {
-				return true
-			},
-			isMobile() {
-				const toMatch = [
-					/Android/i,
-					/webOS/i,
-					/iPhone/i,
-					/iPad/i,
-					/iPod/i,
-					/BlackBerry/i,
-					/Windows Phone/i,
 				]
 
-				return toMatch.some((toMatchItem) => {
-					return navigator.userAgent.match(toMatchItem)
-				})
+				if (this.isSuperAdmin) {
+					regular = [
+						{
+							id: 1,
+							text: 'Dashboard',
+							to: 'DashboardAdmin',
+							icon: {
+								iconName: 'pie-chart',
+								size: 32,
+								color: '#fff',
+							},
+							activeMenu: '',
+						},
+						{
+							id: 6,
+							text: 'Civitas Jurusan',
+							to: 'ListCivitasJurusan',
+							icon: { iconName: 'graduated', size: 32, color: '#fff' },
+							activeMenu: 'jurusan',
+						},
+						{
+							id: 7,
+							text: 'Staff Laboratorium',
+							to: 'ListStaffLaboratorium',
+							icon: { iconName: 'users', size: 32, color: '#fff' },
+							activeMenu: 'staff',
+						},
+					]
+				}
+
+				return regular
 			},
 			adminData() {
 				return this.$store.getters[types.ADMIN]
@@ -237,30 +275,9 @@
 				let page = this.$route.name
 				return page.split(/(?=[A-Z])/).join(' ')
 			},
-			listMenu() {
-				// Kalo user kepala lab
-				if (this.adminData !== null && this.adminData.jabatan === 1) {
-					this.menus.push({
-						id: 6,
-						text: 'Staff Laboratorium',
-						to: 'ListStaffLaboratorium',
-						icon: { iconName: 'users', size: 32, color: '#fff' },
-						activeMenu: 'staff',
-					})
-				}
-
-				return this.menus
-			},
 		},
 		methods: {
 			// Authorize
-
-			// checkUserAuthorize() {
-
-			// 	if (Object.keys(this.adminData).length === 0) {
-			// 		this.$router.push({ name: 'LoginAdmin' })
-			// 	}
-			// },
 			async logoutAdmin() {
 				this.showAlert(true)
 				try {
@@ -273,15 +290,12 @@
 						this.showAlert(false, true, response.data.response.message)
 						setTimeout(() => {
 							this.$router.push({ name: 'LoginAdmin' })
-						}, 1500)
+						}, 2000)
 					}
 				} catch (e) {
 					console.log(e)
 					this.showAlert(false, false, e.response.data.message)
 				}
-				// let logout = confirm('Apakah anda yakin ingin keluar?')
-				// if (logout) {
-				// }
 			},
 			// Modal Admin
 			actionSidebar(action) {
@@ -298,9 +312,6 @@
 				this.toggleSideBar = false
 			},
 		},
-		// onComplete() {
-		// 	this.$router.go(0)
-		// },
 	}
 </script>
 

@@ -1,6 +1,7 @@
 import { admin_api, auth_admin } from '@/api/config'
 
 export default {
+	// User Auth
 	loginAdmin(loginRequest) {
 		return auth_admin.post(`auth`, loginRequest)
 	},
@@ -9,6 +10,9 @@ export default {
 	},
 	checkUserAuth() {
 		return admin_api.post(`auth/check-auth`)
+	},
+	changePassword(userId, passwordPayload) {
+		return admin_api.post(`auth/change-password/${userId}`, passwordPayload)
 	},
 
 	// Dashboard

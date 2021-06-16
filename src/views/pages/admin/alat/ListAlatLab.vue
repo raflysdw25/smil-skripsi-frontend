@@ -109,6 +109,7 @@
 											Lihat Detail Alat
 										</b-dropdown-item>
 										<b-dropdown-item
+											v-if="listData[indexRow].images.length < 3"
 											@click="
 												$router.push({
 													name: 'UploadFotoAlat',
@@ -167,13 +168,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -243,6 +247,7 @@
 				:isProcess="isProcess"
 				:isSuccess="isSuccess"
 				:message="message"
+				:notes="notes"
 				:closeAlert="closePopup"
 			/>
 
@@ -270,6 +275,7 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
@@ -283,7 +289,7 @@
 			BaseModalAlert,
 			BaseModalListSupport,
 		},
-		mixins: [ModalMixins, TableMixins],
+		mixins: [ModalMixins, TableMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				headsTable: [
@@ -422,9 +428,12 @@
 			},
 		},
 		async mounted() {
+			if (this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
+			await this.getListAlat()
 			await this.getAsalPengadaanAlat()
 			await this.getListJenisAlat()
-			await this.getListAlat()
 		},
 		methods: {
 			// Call API
@@ -443,7 +452,15 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment === 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 				this.loadingTable = false
 			},
@@ -469,7 +486,15 @@
 						filterJenisAlat.options.push(ja)
 					})
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment === 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getAsalPengadaanAlat() {
@@ -500,7 +525,15 @@
 					headsAsalPengadaan.options = options
 					filterAsalPengadaan.options = options
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment === 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async deleteAlat(alatId) {
@@ -514,10 +547,15 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV == 'development') {
+					if (this.environment === 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			// Modal

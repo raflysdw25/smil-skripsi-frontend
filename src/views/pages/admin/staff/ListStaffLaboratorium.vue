@@ -109,7 +109,7 @@
 										>
 											Edit Data Jabatan
 										</b-dropdown-item>
-										<b-dropdown-item>
+										<b-dropdown-item @click="deleteNotif(indexRow)">
 											<span class="smil-text-danger">
 												Hapus Data Staff
 											</span>
@@ -153,13 +153,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -266,12 +269,13 @@
 	import ModalMixins from '@/mixins/ModalMixins'
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import TableMixins from '@/mixins/TableMixins'
+	import ErroHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
 	export default {
 		name: 'list-staff-laboratorium',
-		mixins: [ModalMixins, FormInputMixins, TableMixins],
+		mixins: [ModalMixins, FormInputMixins, TableMixins, ErroHandlerMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
@@ -461,6 +465,9 @@
 			},
 		},
 		async mounted() {
+			if (!this.isKaLab && !this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			await this.getListStaffLab()
 			await this.getListJabatan()
 			// this.showAlert(false, false, 'Alert Berhasil')
@@ -482,7 +489,15 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.loadingTable = false
 				}
@@ -510,9 +525,40 @@
 					})
 					this.headsTable[1].options = jabatanStaff
 					this.formFilter[1].options = jabatanStaff
-				} catch (e) {}
+				} catch (e) {
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
+				}
 			},
-
+			async deleteStaffLab(userId) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('user', userId)
+					if (response.data.response.code == 200) {
+						this.showAlert(false, true, response.data.response.message)
+						this.getListStaffLab()
+					} else {
+						this.showAlert(false, false, response.data.response.message)
+					}
+				} catch (e) {
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
+				}
+			},
 			// Value Change
 			statusAkunStaff(endPeriod, isFirstLogin) {
 				// Menentukan status dari akun berdasarkan active_period akun
@@ -554,6 +600,15 @@
 			lihatDetail(indexData) {
 				this.selectedRowData = this.listData[indexData]
 				this.openPopup('detail')
+			},
+			deleteNotif(index) {
+				let staff_lab = this.listData[index]
+				let confirm = window.confirm(
+					`Apakah anda yakin ingin menghapus Staff Laboratorium ${staff_lab.mahasiswa_fullname}`
+				)
+				if (confirm) {
+					this.deleteStaffLab(staff_lab.id)
+				}
 			},
 		},
 	}

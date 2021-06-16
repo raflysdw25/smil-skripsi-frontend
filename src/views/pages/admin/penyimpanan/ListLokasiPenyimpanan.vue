@@ -90,13 +90,16 @@
 										<template v-slot:button-content>
 											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 										</template>
-										<b-dropdown-item>
+										<b-dropdown-item @click="seeQrCode(indexRow)">
 											Lihat QR Code
 										</b-dropdown-item>
-										<b-dropdown-item>
+										<b-dropdown-item
+											v-if="!isMobile"
+											@click="printQRCode(indexRow)"
+										>
 											Cetak QR Code
 										</b-dropdown-item>
-										<b-dropdown-item>
+										<b-dropdown-item @click="lihatAlatTersimpan(indexRow)">
 											List Alat Tersimpan
 										</b-dropdown-item>
 										<b-dropdown-item @click="editRowData(indexRow)">
@@ -142,13 +145,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -200,8 +206,8 @@
 			hide-footer
 			hide-header
 			centered
-			no-close-on-backdrop
-			no-close-on-esc
+			:no-close-on-backdrop="baseModalType !== 'qrcode'"
+			:no-close-on-esc="baseModalType !== 'qrcode'"
 		>
 			<base-modal-add
 				v-if="baseModalType === 'add' || baseModalType === 'edit'"
@@ -231,8 +237,40 @@
 				:form="formFilter"
 				@submitFilter="getListLokasi"
 			/>
+			<base-modal-list-table
+				v-if="baseModalType == 'list-table'"
+				:title="`Alat Tersimpan: ${tersimpan.lokasi}`"
+				:heads="tersimpan.heads"
+				:contents="tersimpan.contents"
+				:totalData="tersimpan.totalData"
+				:closeModal="closePopup"
+			/>
+			<base-modal-qrcode
+				v-if="baseModalType === 'qrcode'"
+				:qrcodeData="selectedRowData"
+			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
+		<template v-if="getQRCode">
+			<div class="printable-qrcode print" ref="printable-qrcode">
+				<div class="banner">
+					<img src="@/assets/images/Logo_PNJ.png" class="img-barcode" alt="" />
+					<h4 class="text">
+						Laboratorium <br />
+						Teknik Informatika dan <br />
+						Komputer <br />
+						Politeknik Negeri Jakarta
+					</h4>
+				</div>
+				<qrcode-vue
+					:value="selectedRowData.path_url"
+					:size="125"
+					level="L"
+					class="qrcode"
+				/>
+				<p class="qrcode-display">{{ selectedRowData.name }}</p>
+			</div>
+		</template>
 	</div>
 </template>
 
@@ -243,23 +281,34 @@
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
+	import BaseModalListTable from '@/components/BaseModal/BaseModalListTable.vue'
+	import BaseModalQrcode from '@/components/BaseModal/BaseModalQrcode.vue'
+	import QrcodeVue from 'qrcode.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
 
+	// Import Library
+	import html2canvas from 'html2canvas'
+	import jsPDF from 'jspdf'
+
 	export default {
 		name: 'list-lokasi-penyimpanan',
-		mixins: [ModalMixins, TableMixins],
+		mixins: [ModalMixins, TableMixins, ErrorHandlerMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
 			BaseFilter,
 			BaseModalAdd,
 			BaseModalAlert,
+			BaseModalListTable,
+			BaseModalQrcode,
+			QrcodeVue,
 		},
 		data() {
 			return {
@@ -273,14 +322,14 @@
 					},
 					{
 						label: 'Kapasitas Total',
-						filter_type: 'search',
+						filter_type: 'search-number',
 						placeholder: 'Filter Kapasitas Total',
 						model: 'total_capacity',
 						options: null,
 					},
 					{
 						label: 'Kapasitas Tersedia',
-						filter_type: 'search',
+						filter_type: 'search-number',
 						placeholder: 'Filter Kapasitas Tersedia',
 						model: 'available_capacity',
 						options: null,
@@ -340,7 +389,7 @@
 					},
 					{
 						id: 3,
-						label: 'Kapasitas Tersedia Penyimpanan',
+						label: 'Kapasitas Tersedia',
 						type: 'number',
 						disabled: false,
 						model: '',
@@ -349,7 +398,7 @@
 					},
 					{
 						id: 4,
-						label: 'Kapasitas Tersisa',
+						label: 'Kapasitas Terpakai',
 						type: 'number',
 						disabled: false,
 						model: '',
@@ -357,6 +406,7 @@
 						isRequired: false,
 					},
 				],
+				getQRCode: false,
 			}
 		},
 		watch: {
@@ -418,8 +468,79 @@
 					available_capacity: available,
 				}
 			},
+			tersimpan() {
+				let data = this.selectedRowData
+				if (Object.keys(data).length > 0) {
+					let listKondisi = [
+						{
+							id: 1,
+							text: 'Pending',
+							background: 'smil-bg-pending',
+						},
+						{
+							id: 2,
+							text: 'Baik',
+							background: 'smil-bg-success',
+						},
+						{
+							id: 3,
+							text: 'Rusak',
+							background: 'smil-bg-danger',
+						},
+						{
+							id: 4,
+							text: 'Habis',
+							background: 'smil-bg-warning',
+						},
+						{
+							id: 5,
+							text: 'Diperbaiki',
+							background: 'smil-bg-info',
+						},
+						{
+							id: 6,
+							text: 'Apkir',
+							background: 'smil-bg-danger',
+						},
+					]
+					let heads = ['Nama Alat', 'Barcode Alat', 'Kondisi Alat']
+					let contents = []
+					let totalData = data.lokasi_detail_alat.length
+					if (data.lokasi_detail_alat.length > 0) {
+						let reverse = data.lokasi_detail_alat.reverse()
+						for (let index = 0; index < 5; index++) {
+							let kondisi = listKondisi.find(
+								(list) => list.id == reverse[index].condition_status
+							)
+							let row = [
+								reverse[index].alat_model.alat_name,
+								reverse[index].barcode_alat,
+								kondisi,
+							]
+							contents.push(row)
+						}
+					}
+
+					return {
+						lokasi: data.lokasi_name,
+						heads: heads,
+						contents: contents,
+						totalData: totalData,
+					}
+				} else {
+					return {
+						lokasi: '',
+						heads: [],
+						contents: [],
+						totalData: 0,
+					}
+				}
+			},
 		},
 		async mounted() {
+			if (this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			await this.getListLokasi()
 			// this.showAlert(false, false, 'Alert Berhasil')
 		},
@@ -440,7 +561,15 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.loadingTable = false
 				}
@@ -459,7 +588,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async deleteLokasi(id) {
@@ -473,7 +610,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 				}
 			},
@@ -499,13 +644,72 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.selectedRowId = null
 				}
 			},
 			// Action Dropdown
-			lihatDetail(indexData) {},
+			lihatAlatTersimpan(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('list-table')
+			},
+			seeQrCode(indexData) {
+				let data = this.listData[indexData]
+				this.selectedRowData = {
+					path_url: `${process.env.VUE_APP_BASE_API_SMIL}lokasi/${data.id}`,
+					name: data.lokasi_name,
+					desc: `Kapasitas Tersedia: ${data.available_capacity}`,
+				}
+				this.openPopup('qrcode')
+			},
+			printQRCode(indexData) {
+				let data = this.listData[indexData]
+				this.selectedRowData = {
+					path_url: `${process.env.VUE_APP_BASE_API_SMIL}lokasi/${data.id}`,
+					name: data.lokasi_name,
+					desc: '',
+				}
+				this.getQRCode = true
+
+				this.$nextTick(() => {
+					let element = this.$refs['printable-qrcode']
+					this.getQRCode = false
+					this.downloadBarcode(element)
+				})
+			},
+			async downloadBarcode(element) {
+				this.showAlert(true)
+				const pdf = new jsPDF({
+					orientation: 'p',
+					unit: 'px',
+					format: 'a4',
+					hotfixes: ['px_scaling'],
+					compress: false,
+				})
+				html2canvas(element, {
+					useCORS: true,
+					scrollX: 0,
+					scrollY: -window.scrollY,
+				}).then((canvas) => {
+					this.showAlert(false, true, 'QR Code siap diprint')
+					let imgData = canvas.toDataURL('image/png', 1.0)
+					console.log(imgData)
+					pdf.addImage(imgData, 'PNG', 0, 20, canvas.width, canvas.height)
+					pdf.setProperties({
+						title: `${this.selectedRowData.name}`,
+					})
+					window.open(pdf.output('bloburl'))
+				})
+			},
 			// Edit Data
 			editRowData(index) {
 				this.isEditRow = true
@@ -541,4 +745,7 @@
 			margin-right: 15px;
 		}
 	}
+</style>
+<style lang="scss">
+	@import '@/assets/css/barcode.scss';
 </style>

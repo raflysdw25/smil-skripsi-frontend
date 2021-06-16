@@ -24,6 +24,7 @@
 				:placeholder="placeholder"
 				v-model="filter_value"
 				class="form-control"
+				@keypress="searchConstraint($event, filter_type)"
 			/>
 			<div class="input-group-append" @click="filterAction">
 				<icon-component iconName="search" :size="16" colorIcon="#000" />
@@ -85,6 +86,16 @@
 			},
 			setNullString() {
 				this.filter_value = ''
+			},
+			searchConstraint(e, type) {
+				if (type === 'search-number') {
+					let char = String.fromCharCode(e.keyCode) // Get the character
+					if (/^[0-9]+$/.test(char)) return true
+					// Match with regex
+					else e.preventDefault() // If not match, don't add to input text
+				} else {
+					return true
+				}
 			},
 		},
 	}

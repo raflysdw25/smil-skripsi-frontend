@@ -82,9 +82,9 @@
 										<b-dropdown-item @click="lihatDetail(indexRow)">
 											Detail Mahasiswa
 										</b-dropdown-item>
-										<b-dropdown-item>
+										<!-- <b-dropdown-item>
 											Edit Data Mahasiswa
-										</b-dropdown-item>
+										</b-dropdown-item> -->
 
 										<b-dropdown-item @click="deleteNotif(indexRow)">
 											<span class="smil-text-danger">
@@ -126,13 +126,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -226,13 +229,14 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
 
 	export default {
 		name: 'list-mahasiswa',
-		mixins: [ModalMixins, TableMixins],
+		mixins: [ModalMixins, TableMixins, ErrorHandlerMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
@@ -409,7 +413,15 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.loadingTable = false
 				}
@@ -429,8 +441,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
-				} finally {
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			// Action Dropdown

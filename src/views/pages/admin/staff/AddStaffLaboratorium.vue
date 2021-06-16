@@ -145,12 +145,13 @@
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
 	export default {
 		name: 'add-staff-laboratorium',
-		mixins: [FormInputMixins, ModalMixins],
+		mixins: [FormInputMixins, ModalMixins, ErrorHandlerMixins],
 		components: { BaseModalAlert },
 		data() {
 			return {
@@ -247,7 +248,7 @@
 						model: null,
 						description: '',
 						placeholder: 'Waktu Selesai Jabatan',
-						isRequired: false,
+						isRequired: true,
 						disabled: false,
 					},
 					{
@@ -257,7 +258,7 @@
 						model: null,
 						description: '',
 						placeholder: 'Jabatan',
-						isRequired: false,
+						isRequired: true,
 						disabled: false,
 						options: [],
 					},
@@ -266,6 +267,7 @@
 		},
 		computed: {
 			// Form List
+
 			formGroupList() {
 				if (this.userId !== null) {
 					return this.formEditJabatan
@@ -304,6 +306,7 @@
 
 				return {
 					nip: form[0].model,
+					staff_fullname: form[1].model,
 					email: form[2].model,
 					jabatan_id: form[3].model,
 					start_active_period: form[4].model,
@@ -325,6 +328,9 @@
 		},
 
 		async mounted() {
+			if (!this.isKaLab && !this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			await this.getListJabatanAdmin()
 			if (this.userId !== null) {
 				await this.getDataUser()
@@ -349,10 +355,15 @@
 						form[3].model = data.jabatan_id
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV === 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getListStaffJurusan() {
@@ -374,11 +385,15 @@
 						this.formAddStaff[0].options = list
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV === 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getListJabatanAdmin() {
@@ -401,8 +416,14 @@
 						this.formEditJabatan[3].options = list
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV === 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
 					}
 				}
 			},
@@ -421,10 +442,16 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV === 'development') {
+					this.isCreate = false
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async editJabatanStaff() {
@@ -447,10 +474,15 @@
 					}
 				} catch (e) {
 					this.isCreate = false
-					if (process.env.NODE_ENV === 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			// Form Interactions

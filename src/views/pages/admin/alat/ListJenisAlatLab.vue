@@ -94,14 +94,14 @@
 											<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 										</template>
 										<b-dropdown-item @click="editRowData(indexRow)">
-											Edit Data Alat
+											Edit Jenis Alat
 										</b-dropdown-item>
 										<b-dropdown-item>
 											<span
 												class="smil-text-danger"
 												@click="deleteNotif(indexRow)"
 											>
-												Hapus Data Alat
+												Hapus Jenis Alat
 											</span>
 										</b-dropdown-item>
 									</b-dropdown>
@@ -139,13 +139,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -245,6 +248,7 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
@@ -258,7 +262,7 @@
 			BaseModalAdd,
 			BaseModalAlert,
 		},
-		mixins: [ModalMixins, TableMixins],
+		mixins: [ModalMixins, TableMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				headsTable: [
@@ -389,6 +393,9 @@
 			},
 		},
 		async mounted() {
+			if (this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			await this.getListJenisAlat()
 		},
 		methods: {
@@ -408,7 +415,15 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.loadingTable = false
 				}
@@ -427,7 +442,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async deleteJenisAlat(id) {
@@ -441,8 +464,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
-				} finally {
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async editJenisAlat() {
@@ -463,7 +493,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.selectedRowId = null
 				}

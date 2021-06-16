@@ -42,4 +42,12 @@ export default {
 		},
 	},
 	computed: {},
+	watch: {
+		filterData: {
+			deep: true,
+			handler: function() {
+				// this.tableInfo.pageNo = 1
+			},
+		},
+	},
 }

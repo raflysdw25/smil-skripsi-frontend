@@ -19,6 +19,7 @@
 					:class="form.isValid ? 'valid-input' : ''"
 					v-model="form.model"
 					@keydown="formConstraint($event, 'barcode-input')"
+					@paste="formPasteConstraint($event, 'barcode-input')"
 					@change="confirmAlat(idxForm)"
 					:disabled="form.isValid"
 					autocomplete="off"
@@ -41,6 +42,7 @@
 			</button>
 			<button
 				class="smil-btn smil-btn-small smil-bg-primary ml-2"
+				:disabled="!registerValid"
 				@click="register"
 			>
 				Register
@@ -51,7 +53,8 @@
 
 <script>
 	// Mixins
-	import FormInputMixixns from '@/mixins/FormInputMixins'
+	import FormInputMixins from '@/mixins/FormInputMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 	// API
 	import api from '@/api/admin_api'
 	export default {
@@ -61,11 +64,21 @@
 			submitRegister: Function,
 			closeModal: Function,
 		},
-		mixins: [FormInputMixixns],
+		mixins: [FormInputMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				formRegister: [],
+				barcodeRegister: [],
 			}
+		},
+		computed: {
+			registerValid() {
+				if (this.formRegister.length > 0) {
+					return this.formRegister.every((alat) => alat.isValid == true)
+				} else {
+					return false
+				}
+			},
 		},
 		mounted() {
 			this.setFormRegister()
@@ -74,23 +87,33 @@
 			// Call API
 			async confirmAlat(indexData) {
 				let form = this.formRegister[indexData]
-				let payload = {
-					barcode_alat: form.model,
-					alat_id: form.alat_id,
-				}
-				try {
-					const response = await api.confirmBarcodeAlat(payload)
-					if (response.data.response.code === 200) {
-						let data = response.data.data
-						if (data.barcode_valid) {
-							form.isValid = true
-						} else {
-							form.model = ''
-							form.isValid = false
-						}
+				if (this.barcodeRegister.includes(form.model)) {
+					form.isValid = false
+					form.model = ''
+				} else {
+					let payload = {
+						barcode_alat: form.model,
+						alat_id: form.alat_id,
 					}
-				} catch (e) {
-					alert(e)
+					try {
+						const response = await api.confirmBarcodeAlat(payload)
+						if (response.data.response.code === 200) {
+							let data = response.data.data
+							if (data.barcode_valid) {
+								form.isValid = true
+								this.barcodeRegister.push(form.model)
+							} else {
+								form.model = ''
+								form.isValid = false
+							}
+						}
+					} catch (e) {
+						if (this.environment === 'development') {
+							console.log(e)
+						}
+						let output = this.getErrorMessage(e, 'alert')
+						alert(output)
+					}
 				}
 			},
 			// Data Change
@@ -108,6 +131,11 @@
 			},
 			changeBarcode(indexData) {
 				let form = this.formRegister[indexData]
+				let indexRegisterBarcde = this.barcodeRegister.findIndex(
+					(barcode) => barcode == form.model
+				)
+
+				this.barcodeRegister.splice(indexRegisterBarcde, 1)
 				form.isValid = false
 				form.model = ''
 			},

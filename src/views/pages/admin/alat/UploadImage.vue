@@ -93,7 +93,8 @@
 				:isProcess="isProcess"
 				:isSuccess="isSuccess"
 				:message="message"
-				:closeAlert="closePopup"
+				:notes="notes"
+				:closeAlert="closeAlert"
 			/>
 		</b-modal>
 		<!-- MODAL POPUP -->
@@ -108,17 +109,19 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import FormInputMixins from '@/mixins/FormInputMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
 	export default {
 		name: 'upload-image',
 		components: { IconComponent, BaseModalAlert },
-		mixins: [ModalMixins, FormInputMixins],
+		mixins: [ModalMixins, FormInputMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				isOverUploadArea: false,
 				uploadFiles: [],
+				imageType: ['jpg', 'png', 'jpeg'],
 			}
 		},
 		methods: {
@@ -133,14 +136,21 @@
 					)
 					if (response.data.response.code === 201) {
 						this.showAlert(false, true, response.data.response.message)
-						this.isCreate = false
 						setTimeout(() => {
 							this.$router.go(-1)
 						}, 2000)
 					}
 				} catch (e) {
 					this.isCreate = false
-					this.showAlert(false, false, e)
+					if (this.environment === 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			// Upload Area Interaction
@@ -156,8 +166,30 @@
 			handleDropUpload(e) {
 				this.setIsOver(false)
 				let uploadedFiles = e.dataTransfer.files
-				console.log(uploadedFiles)
-				this.imageUpload(uploadedFiles)
+				let approvedFiles = []
+				for (let file of uploadedFiles) {
+					let type = file.name
+						.split('.')
+						.slice(-1)
+						.join('.')
+					if (this.imageType.includes(type.toLowerCase())) {
+						approvedFiles.push(file)
+					} else {
+						let message = {
+							title: file.name,
+							message: 'Tipe file tidak sesuai',
+						}
+						this.notes.push(message)
+						this.countError += 1
+					}
+				}
+
+				if (this.countError === uploadedFiles.length) {
+					this.showAlert(false, false, 'Terjadi Kesalahan', this.notes)
+				} else {
+					console.log(approvedFiles)
+					this.imageUpload(approvedFiles)
+				}
 			},
 			handleBrowseUpload() {
 				let uploadedFiles = this.$refs.file_image.files
@@ -170,7 +202,13 @@
 					let uploadFile = {}
 					uploadFile.filename = file.name
 					let fileSize = this.bytesToSize(file.size)
-					if (fileSize.sizes === 'MB' && fileSize.total > 3) {
+					if (fileSize.sizes === 'MB' && fileSize.total > 1) {
+						let message = {
+							title: file.name,
+							message: 'Ukuran gambar lebih dari 1MB',
+						}
+						this.notes.push(message)
+						this.countError += 1
 						continue
 					} else {
 						uploadFile.size = `${fileSize.total} ${fileSize.sizes}`
@@ -179,6 +217,15 @@
 					uploadFile.image = ''
 					this.uploadFiles.push(uploadFile)
 					this.createImage(this.uploadFiles.length - 1, file)
+				}
+				if (this.notes.length === files.length) {
+					this.showAlert(false, false, 'Gambar gagal diunggah', this.notes)
+				} else {
+					if (this.countError > 0) {
+						this.showAlert(false, true, 'Gambar berhasil diunggah', this.notes)
+					} else {
+						this.showAlert(false, true, 'Gambar berhasil diunggah')
+					}
 				}
 			},
 			// Image data manipulation
@@ -213,6 +260,14 @@
 				if (confirmSubmit) {
 					this.submitImage()
 				}
+			},
+			// Modal
+			closeAlert() {
+				if (this.notes.length > 0) {
+					this.setEmptyNotes()
+				}
+
+				this.closePopup()
 			},
 		},
 		computed: {

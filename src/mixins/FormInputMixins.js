@@ -33,6 +33,23 @@ export default {
 				return true
 			}
 		},
+		emailValidate(email) {
+			if (
+				/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(
+					email
+				)
+			) {
+				return true
+			}
+			return false
+		},
+		formPasteConstraint(e, type) {
+			if (type === 'barcode-input') {
+				e.preventDefault()
+			} else {
+				return true
+			}
+		},
 		formatDate(date, format = 'DD-MM-YYYY') {
 			return moment(date).format(format)
 		},

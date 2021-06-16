@@ -73,13 +73,14 @@
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// Vuex
 	import * as types from '@/store/types'
 	export default {
 		name: 'login-admin',
 		components: { BaseModalAlert },
-		mixins: [ModalMixins],
+		mixins: [ModalMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				formGroupList: [
@@ -139,11 +140,19 @@
 					if (admin.response.code === 200 && admin.data !== null) {
 						let adminData = {
 							id: admin.data.id,
+							nip_staff: admin.data.staff_model.nip,
 							staff_model: admin.data.staff_model,
+							jabatan_id: admin.data.jabatan_model.id,
 							jabatan_model: admin.data.jabatan_model,
 							active_period: admin.data.user_active_period,
 							expire_period: admin.data.user_expire_period,
 							first_login: admin.data.first_login,
+						}
+
+						if (adminData.first_login) {
+							admin.skipChangePassword = false
+						} else {
+							admin.skipChangePassword = true
 						}
 
 						// // Save User Data and Token into Local Storage or Cookies
@@ -158,26 +167,22 @@
 
 						// Save data admin into Vuex
 						this.showAlert(false, true, admin.response.message)
+
 						setTimeout(() => {
 							this.$router.go({ name: 'DashboardAdmin' })
-						}, 1000)
+						}, 1500)
 					} else {
 						this.showAlert(false, false, admin.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e.response.data.message)
+					let errorMessage = this.getErrorMessage(e, 'modal')
+					this.showAlert(false, false, errorMessage)
 					this.resetLoginAdmin()
 				}
 			},
-			resetLoginAdmin(form) {
-				Object.keys(form).forEach((key) => {
-					this.formInput[key] = ''
-				})
-			},
-			saveDataAdmin(form) {
-				Object.keys(form).forEach((key) => {
-					this.formInput[key] = form[key]
-				})
+			resetLoginAdmin() {
+				this.formInput.nip = ''
+				this.formInput.password = ''
 			},
 		},
 	}

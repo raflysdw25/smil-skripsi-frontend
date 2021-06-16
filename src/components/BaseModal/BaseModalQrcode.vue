@@ -1,10 +1,6 @@
 <template>
-	<div class="base-modal-barcode">
-		<div
-			class="printable-barcode"
-			id="printable-barcode"
-			ref="printable-barcode"
-		>
+	<div class="base-modal-qrcode">
+		<div class="printable-qrcode" id="printable-qrcode" ref="printable-qrcode">
 			<div class="banner">
 				<img src="@/assets/images/Logo_PNJ.png" class="img-barcode" alt="" />
 				<h4 class="text">
@@ -13,29 +9,32 @@
 					Politeknik Negeri Jakarta
 				</h4>
 			</div>
-			<vue-barcode
-				:value="barcodeValue"
-				:text="`${displayText} - ${barcodeValue}`"
-				width="3"
-				class="barcode"
+			<qrcode-vue
+				:value="qrcodeData.path_url"
+				:size="300"
+				level="L"
+				class="qrcode"
 			/>
+			<p class="qrcode-display">{{ qrcodeData.name }}</p>
+			<p v-if="qrcodeData.desc && qrcodeData.desc !== ''">
+				{{ qrcodeData.desc }}
+			</p>
 		</div>
 	</div>
 </template>
 
 <script>
 	// Package
-	import VueBarcode from 'vue-barcode'
+	import QrcodeVue from 'qrcode.vue'
 
 	export default {
-		name: 'base-modal-barcode',
-		components: { VueBarcode },
+		name: 'base-modal-qrcode',
+		components: { QrcodeVue },
 		data() {
 			return {}
 		},
 		props: {
-			barcodeValue: String,
-			displayText: String,
+			qrcodeData: Object,
 		},
 		async mounted() {},
 		methods: {},
@@ -48,18 +47,14 @@
 </script>
 
 <style lang="scss" scoped>
-	.base-modal-barcode {
+	.base-modal-qrcode {
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
-		// height: 100%;
-		.button-group {
-			display: flex;
-			margin-top: 50px;
-			justify-content: flex-end;
-		}
 	}
 </style>
 <style lang="scss">
-	@import '@/assets/css/barcode.scss';
+	.base-modal-qrcode {
+		@import '@/assets/css/barcode.scss';
+	}
 </style>

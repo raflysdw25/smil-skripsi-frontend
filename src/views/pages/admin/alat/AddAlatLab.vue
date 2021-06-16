@@ -174,13 +174,14 @@
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
 	export default {
 		name: 'add-alat-lab',
 		components: { BaseModalAlert },
-		mixins: [FormInputMixins, ModalMixins],
+		mixins: [FormInputMixins, ModalMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				formGroupList: [
@@ -284,6 +285,9 @@
 			}
 		},
 		async mounted() {
+			if (this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			this.loadingForm = true
 			await this.getJenisAlat()
 			await this.supplierList()
@@ -368,7 +372,15 @@
 						this.formGroupList[3].options = list
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getJenisAlat() {
@@ -391,7 +403,15 @@
 						this.formGroupList[5].options = list
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getSatuanJumlah() {
@@ -413,7 +433,15 @@
 						this.formGroupList[7].options = list
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getAsalAlat() {
@@ -435,7 +463,15 @@
 						this.formGroupList[1].options = list
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getLokasiBaseOnTotalAlat(totalNeed) {
@@ -463,7 +499,15 @@
 						}
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getAlatDetail() {
@@ -486,12 +530,18 @@
 
 						this.spesifikasi =
 							data.alat_specs !== '' ? JSON.parse(data.alat_specs) : {}
+						this.formGroupList.splice(6, 1)
 					}
 				} catch (e) {
-					console.log(e)
-					this.showAlert(false, false, e)
-				} finally {
-					this.formGroupList.splice(6, 1)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async sendAddAlat() {
@@ -508,10 +558,15 @@
 					}
 				} catch (e) {
 					this.isCreate = false
-					if (process.env.NODE_ENV == 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async sendUpdatedAlat() {
@@ -532,10 +587,15 @@
 					}
 				} catch (e) {
 					this.isCreate = false
-					if (process.env.NODE_ENV == 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			// Form Interaction
@@ -561,7 +621,7 @@
 					}
 
 					// Total Alat
-					if (payload.alat_total !== null) {
+					if (payload.alat_total !== null && payload.alat_total > 0) {
 						await this.getLokasiBaseOnTotalAlat(payload.alat_total)
 					} else {
 						this.formGroupList[6].options = []

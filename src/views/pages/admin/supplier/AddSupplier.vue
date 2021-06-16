@@ -50,6 +50,7 @@
 						class="form-control"
 						v-model="form.model"
 						:placeholder="form.placeholder"
+						@keypress="formConstraint($event, form.type)"
 						:required="form.isRequired"
 					/>
 					<!-- END: INPUT TAG -->
@@ -113,20 +114,26 @@
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
 	export default {
 		name: 'add-supplier',
 		components: { BaseModalAlert },
-		mixins: [FormInputMixins, ModalMixins],
+		mixins: [FormInputMixins, ModalMixins, ErrorHandlerMixins],
 		computed: {
 			formFilled() {
 				let submit = this.submitRequest
+				let validateEmail =
+					submit.supplier_email !== ''
+						? this.emailValidate(submit.supplier_email)
+						: true
 				return (
 					submit.supplier_name !== '' &&
 					submit.supplier_phone !== '' &&
-					submit.person_in_charge !== ''
+					submit.person_in_charge !== '' &&
+					validateEmail
 				)
 			},
 			submitRequest() {
@@ -160,7 +167,7 @@
 					{
 						id: 2,
 						label: 'Nomor Telephone',
-						type: 'text',
+						type: 'tel',
 						model: '',
 						description: '',
 						placeholder: 'Nomor Telephone Supplier',
@@ -197,6 +204,9 @@
 			}
 		},
 		mounted() {
+			if (this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			// this.showAlert(false, false, 'Alert Berhasil')
 			if (this.supplierId !== null) {
 				this.getDetailSupplier()
@@ -220,7 +230,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.loadingForm = false
 				}
@@ -242,7 +260,16 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					this.isCreate = false
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async editSupplier() {
@@ -263,7 +290,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.selectedRowId = null
 				}

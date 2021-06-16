@@ -156,13 +156,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -219,6 +222,7 @@
 
 	// Mixins
 	import TableMixins from '@/mixins/TableMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	export default {
 		name: 'base-modal-list-support',
@@ -236,11 +240,12 @@
 					Program Studi: prodi,
 					Jabatan Lab: jabatan,
 					Ruangan : ruangan,
+					Satuan: satuan,
 				*/
 			},
 		},
 		components: { BaseFilter, IconComponent },
-		mixins: [TableMixins],
+		mixins: [TableMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				inputActive: false,
@@ -285,7 +290,11 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment === 'development') {
+						console.log(e)
+					}
+					let output = this.getErrorMessage(e, 'alert')
+					alert(output)
 				} finally {
 					this.loadingTable = false
 				}
@@ -304,23 +313,11 @@
 					}, 500)
 				} catch (e) {
 					this.isCreate = false
-
-					let err = e.response.data
-					if (err.response.code === 400) {
-						let mKey = Object.keys(err.response.message)
-						let message = err.response.message
-						let output = ''
-						mKey.forEach((key, idxKey) => {
-							if (idxKey !== mKey.length - 1) {
-								output += `${message[key]}, `
-							} else {
-								output += `${message[key]}`
-							}
-						})
-						alert(output)
-					} else {
-						alert(e)
+					if (this.environment === 'development') {
+						console.log(e)
 					}
+					let output = this.getErrorMessage(e, 'alert')
+					alert(output)
 				}
 			},
 			async editSupport() {
@@ -333,6 +330,7 @@
 					)
 					if (response.data.response.code === 200) {
 						this.selectedRowId = null
+						this.isCreate = false
 						this.closeInput()
 						setTimeout(() => {
 							this.getSupportData()
@@ -340,22 +338,11 @@
 					}
 				} catch (e) {
 					this.isCreate = false
-					let err = e.response.data
-					if (err.response.code === 400) {
-						let mKey = Object.keys(err.response.message)
-						let message = err.response.message
-						let output = ''
-						mKey.forEach((key, idxKey) => {
-							if (idxKey !== mKey.length - 1) {
-								output += `${message[key]}, `
-							} else {
-								output += `${message[key]}`
-							}
-						})
-						alert(output)
-					} else {
-						alert(e)
+					if (this.environment === 'development') {
+						console.log(e)
 					}
+					let output = this.getErrorMessage(e, 'alert')
+					alert(output)
 				}
 			},
 			async deleteSupport(id) {
@@ -367,7 +354,11 @@
 						alert(response.data.response.message)
 					}
 				} catch (e) {
-					alert(e)
+					if (this.environment === 'development') {
+						console.log(e)
+					}
+					let output = this.getErrorMessage(e, 'alert')
+					alert(output)
 				}
 			},
 			actionSubmit() {

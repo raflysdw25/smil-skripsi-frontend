@@ -56,6 +56,7 @@
 
 	// Mixin
 	import ModalMixins from '@/mixins/ModalMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
@@ -63,7 +64,7 @@
 	export default {
 		name: 'list-civitas-jurusan',
 		components: { ListStaffJurusan, ListMahasiswa, BaseModalListSupport },
-		mixins: [ModalMixins],
+		mixins: [ModalMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				tabs: [
@@ -113,7 +114,15 @@
 					this.listProdi = options
 					this.isReload = false
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			closeSupport() {

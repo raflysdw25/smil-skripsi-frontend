@@ -134,13 +134,16 @@
 							/>
 						</span>
 					</li>
-					<li v-for="num in tableInfo.totalPage" :key="num">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
-							style="cursor: pointer"
+							v-for="num in tableInfo.totalPage"
+							:key="num"
+							style="cursor: pointer;"
 							class="smil-link"
 							@click="jumpPage(num)"
 							:class="[num === tableInfo.pageNo ? 'active' : '']"
-							>{{ num }}
+						>
+							{{ num }}
 						</a>
 					</li>
 					<li>
@@ -233,6 +236,7 @@
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
@@ -245,7 +249,7 @@
 			BaseModalAlert,
 			BaseModalDetail,
 		},
-		mixins: [ModalMixins, TableMixins],
+		mixins: [ModalMixins, TableMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				headsTable: [
@@ -333,7 +337,7 @@
 				this.listData.forEach((list, indexList) => {
 					let rowTable = [
 						list.supplier_name, //Nama Supplier
-						list.supplier_address, //Alamat Supplier
+						list.supplier_address === null ? '-' : list.supplier_address, //Alamat Supplier
 						list.person_in_charge, //Person In Charge
 						'',
 					]
@@ -376,6 +380,9 @@
 			},
 		},
 		async mounted() {
+			if (this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			await this.getListSupplier()
 			// this.showAlert(false, false, 'Alert Berhasil')
 		},
@@ -396,7 +403,15 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.loadingTable = false
 				}
@@ -412,7 +427,15 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 				}
 			},

@@ -93,18 +93,18 @@
 										</template>
 										<b-dropdown-item
 											@click="tindakPeminjaman(true, indexRow)"
-											v-if="listData[indexRow].pjm_status === 1"
+											v-if="listData[indexRow].pjm_status === 1 && isKaLab"
 										>
 											Approve Request
 										</b-dropdown-item>
 										<b-dropdown-item
 											@click="tindakPeminjaman(false, indexRow)"
-											v-if="listData[indexRow].pjm_status === 1"
+											v-if="listData[indexRow].pjm_status === 1 && isKaLab"
 										>
 											Reject Request
 										</b-dropdown-item>
 										<b-dropdown-item
-											v-if="listData[indexRow].pjm_status === 2"
+											v-if="listData[indexRow].pjm_status === 2 && !isMobile"
 											@click="registerAlat(indexRow)"
 										>
 											Daftar Alat Dipinjam
@@ -114,7 +114,10 @@
 										>
 											Detail Peminjaman
 										</b-dropdown-item>
-										<b-dropdown-item>
+										<b-dropdown-item
+											@click="lihatListAlatDipinjam(indexRow)"
+											v-if="listData[indexRow].pjm_status >= 4"
+										>
 											List Alat Dipinjam
 										</b-dropdown-item>
 										<b-dropdown-item @click="lihatDetail('peminjam', indexRow)">
@@ -164,7 +167,7 @@
 							/>
 						</span>
 					</li>
-					<li :class="tableInfo.totalPage > 10 ? `page-limit` : ``">
+					<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 						<a
 							v-for="num in tableInfo.totalPage"
 							:key="num"
@@ -274,6 +277,14 @@
 				:submitRegister="registerAlatDipinjam"
 				:closeModal="closePopup"
 			/>
+			<base-modal-list-table
+				v-if="baseModalType == 'list-table'"
+				title="Alat Dipinjam"
+				:heads="alatDipinjam.heads"
+				:contents="alatDipinjam.contents"
+				:totalData="alatDipinjam.totalData"
+				:closeModal="closePopup"
+			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
 	</div>
@@ -289,17 +300,19 @@
 	import BaseModalListSupport from '@/components/BaseModal/BaseModalListSupport.vue'
 	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 	import BaseModalRegisterAlat from '@/components/BaseModal/BaseModalRegisterAlat.vue'
+	import BaseModalListTable from '@/components/BaseModal/BaseModalListTable.vue'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
 	import TableMixins from '@/mixins/TableMixins'
 	import FormInputMixins from '@/mixins/FormInputMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
 	export default {
 		name: 'list-peminjaman-alat',
-		mixins: [ModalMixins, TableMixins, FormInputMixins],
+		mixins: [ModalMixins, TableMixins, FormInputMixins, ErrorHandlerMixins],
 		components: {
 			IconComponent,
 			FormFilterData,
@@ -309,6 +322,7 @@
 			BaseModalListSupport,
 			BaseModalDetail,
 			BaseModalRegisterAlat,
+			BaseModalListTable,
 		},
 		data() {
 			return {
@@ -450,9 +464,6 @@
 			},
 		},
 		computed: {
-			environment() {
-				return process.env.NODE_ENV
-			},
 			listTable() {
 				let listTable = []
 				this.listData.forEach((list, indexList) => {
@@ -598,8 +609,78 @@
 
 				return detail
 			},
+			alatDipinjam() {
+				let data = this.selectedRowData
+				if (Object.keys(data).length > 0) {
+					let listKondisi = [
+						{
+							id: 1,
+							text: 'Pending',
+							background: 'smil-bg-pending',
+						},
+						{
+							id: 2,
+							text: 'Baik',
+							background: 'smil-bg-success',
+						},
+						{
+							id: 3,
+							text: 'Rusak',
+							background: 'smil-bg-danger',
+						},
+						{
+							id: 4,
+							text: 'Habis',
+							background: 'smil-bg-warning',
+						},
+						{
+							id: 5,
+							text: 'Diperbaiki',
+							background: 'smil-bg-info',
+						},
+						{
+							id: 6,
+							text: 'Apkir',
+							background: 'smil-bg-danger',
+						},
+					]
+					let heads = ['Nama Alat', 'Barcode Alat', 'Kondisi Alat']
+					let contents = []
+					let totalData = data.detail_peminjaman_model.length
+					if (data.detail_peminjaman_model.length > 0) {
+						let reverse = data.detail_peminjaman_model.reverse()
+						for (let index = 0; index < 5; index++) {
+							let kondisi, barcode, alatName
+
+							alatName = reverse[index].barcode_alat_pinjam.alat_model.alat_name
+							kondisi = listKondisi.find(
+								(list) =>
+									list.id == reverse[index].barcode_alat_pinjam.condition_status
+							)
+							barcode = reverse[index].barcode_alat
+							let row = [alatName, barcode, kondisi]
+							contents.push(row)
+						}
+					}
+
+					return {
+						heads: heads,
+						contents: contents,
+						totalData: totalData,
+					}
+				} else {
+					return {
+						heads: [],
+						contents: [],
+						totalData: 0,
+					}
+				}
+			},
 		},
 		async mounted() {
+			if (this.isSuperAdmin) {
+				this.$router.go(-1)
+			}
 			await this.getListPeminjaman()
 
 			// this.showAlert(false, false, 'Alert Berhasil')
@@ -621,7 +702,15 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				} finally {
 					this.loadingTable = false
 				}
@@ -640,8 +729,14 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (this.environment === 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
 					}
 
 					this.showAlert(false, false, e)
@@ -658,10 +753,15 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV == 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async registerAlatDipinjam(listDetailPeminjaman) {
@@ -690,8 +790,15 @@
 						}, 2000)
 					}
 				} catch (e) {
-					console.log(e)
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			// Value Change
@@ -733,7 +840,10 @@
 				this.selectedRowData = this.listData[indexData]
 				this.openPopup('detail')
 			},
-			lihatListAlatDipinjam(indexData) {},
+			lihatListAlatDipinjam(indexData) {
+				this.selectedRowData = this.listData[indexData]
+				this.openPopup('list-table')
+			},
 			tindakPeminjaman(tindakan, row) {
 				this.selectedRowData = this.listData[row]
 				this.isApprove = tindakan

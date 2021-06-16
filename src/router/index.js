@@ -195,11 +195,14 @@ router.beforeEach((to, from, next) => {
 			if (Object.keys(decryptedData).length !== 0) {
 				let adminData = {
 					id: decryptedData.id,
+					nip_staff: decryptedData.staff_model.nip,
 					staff_model: decryptedData.staff_model,
+					jabatan_id: decryptedData.jabatan_model.id,
 					jabatan_model: decryptedData.jabatan_model,
 					active_period: decryptedData.active_period,
 					expire_period: decryptedData.expire_period,
 					first_login: decryptedData.first_login,
+					skipChangePassword: decryptedData.skipChangePassword,
 				}
 				$cookies.set('smilAccessToken', accessToken, '12h')
 				store.dispatch(types.UPDATE_ADMIN, adminData)
@@ -209,6 +212,7 @@ router.beforeEach((to, from, next) => {
 				// }
 				next()
 			} else {
+				$cookies.remove('smilAccessToken')
 				next({ name: 'LoginAdmin' })
 			}
 		} else {

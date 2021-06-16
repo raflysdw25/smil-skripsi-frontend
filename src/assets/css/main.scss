@@ -256,6 +256,11 @@ button.btn-smil-drop:before {
 			}
 		}
 	}
+	&.list-table {
+		.smil-tbody {
+			height: 200px;
+		}
+	}
 }
 
 .text-limit {
@@ -330,8 +335,9 @@ button.btn-smil-drop:before {
 	}
 
 	.page-limit {
+		width: 275px;
 		white-space: nowrap;
-		overflow: scroll;
+		overflow-x: scroll;
 		text-overflow: ellipsis;
 	}
 }

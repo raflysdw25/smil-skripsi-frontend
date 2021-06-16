@@ -96,7 +96,7 @@
 							</td>
 						</tr>
 						<tr>
-							<th>Jumlah Alat</th>
+							<th>Jumlah Alat Terdaftar</th>
 							<td>
 								{{
 									`${alatDetail.alat_total} ${
@@ -134,10 +134,10 @@
 								:key="`gambar-alat-${idxImg}`"
 							>
 								<b-card overlay :img-src="img.image_data" class="mb-3">
-									<icon-component
-										iconName="full-screen"
-										:size="128"
-										colorIcon="#fff"
+									<b-icon
+										class="icon-trash"
+										icon="trash-fill"
+										@click="deleteImageNotif(img.id)"
 									/>
 								</b-card>
 							</b-col>
@@ -232,7 +232,13 @@
 												<b-icon-three-dots-vertical></b-icon-three-dots-vertical>
 											</template>
 											<b-dropdown-item @click="seeBarcode(indexRow)">
-												Lihat Barcode Alat
+												Lihat QR Code Alat
+											</b-dropdown-item>
+											<b-dropdown-item
+												@click="printBarcode(indexRow)"
+												v-if="!isMobile"
+											>
+												Cetak QR Code Alat
 											</b-dropdown-item>
 											<b-dropdown-item @click="changeCondition(indexRow)">
 												Ubah Kondisi Alat
@@ -281,9 +287,11 @@
 								/>
 							</span>
 						</li>
-						<li v-for="num in tableInfo.totalPage" :key="num">
+						<li :class="tableInfo.totalPage > 5 ? `page-limit` : ``">
 							<a
-								style="cursor: pointer"
+								v-for="num in tableInfo.totalPage"
+								:key="num"
+								style="cursor: pointer;"
 								class="smil-link"
 								@click="jumpPage(num)"
 								:class="[num === tableInfo.pageNo ? 'active' : '']"
@@ -340,8 +348,12 @@
 			hide-footer
 			hide-header
 			centered
-			:no-close-on-backdrop="baseModalType !== 'barcode'"
-			:no-close-on-esc="baseModalType !== 'barcode'"
+			:no-close-on-backdrop="
+				baseModalType !== 'barcode' && baseModalType !== 'qrcode'
+			"
+			:no-close-on-esc="
+				baseModalType !== 'barcode' && baseModalType !== 'qrcode'
+			"
 		>
 			<base-modal-add
 				v-if="baseModalType === 'add' || baseModalType === 'condition'"
@@ -365,15 +377,35 @@
 				:barcodeValue="selectedRowData.barcode_alat"
 				:displayText="selectedRowData.alat_model.alat_name"
 			/>
-			<base-modal-detail
-				v-if="baseModalType === 'detail'"
-				title="Spesifikasi"
-				:headsData="headsSpecs"
-				:valueData="valueSpecs"
-				:closeModal="closePopup"
+			<base-modal-qrcode
+				v-if="baseModalType === 'qrcode'"
+				:qrcodeData="selectedRowData"
 			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
+
+		<!-- Barcode -->
+		<template v-if="getBarcode">
+			<div class="printable-qrcode print" ref="printable-qrcode">
+				<div class="banner">
+					<img src="@/assets/images/Logo_PNJ.png" class="img-barcode" alt="" />
+					<h4 class="text">
+						Laboratorium <br />
+						Teknik Informatika dan <br />
+						Komputer <br />
+						Politeknik Negeri Jakarta
+					</h4>
+				</div>
+				<qrcode-vue
+					:value="selectedRowData.path_url"
+					:size="125"
+					level="L"
+					class="qrcode"
+				/>
+				<p class="qrcode-display">{{ selectedRowData.name }}</p>
+			</div>
+		</template>
+		<!-- Barcode -->
 	</div>
 </template>
 
@@ -384,14 +416,22 @@
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
 	import BaseModalBarcode from '@/components/BaseModal/BaseModalBarcode.vue'
+	import BaseModalQrcode from '@/components/BaseModal/BaseModalQrcode.vue'
 	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
+
+	import QrcodeVue from 'qrcode.vue'
 	// Mixins
 	import FormInputMixins from '@/mixins/FormInputMixins'
 	import TableMixins from '@/mixins/TableMixins'
 	import ModalMixins from '@/mixins/ModalMixins'
+	import ErrorHandlerMixins from '@/mixins/ErrorHandlerMixins'
 
 	// API
 	import api from '@/api/admin_api'
+
+	// Import Library
+	import html2canvas from 'html2canvas'
+	import jsPDF from 'jspdf'
 
 	export default {
 		name: 'detail-alat-lab',
@@ -401,9 +441,11 @@
 			BaseModalAdd,
 			BaseModalAlert,
 			BaseModalBarcode,
+			BaseModalQrcode,
 			BaseModalDetail,
+			QrcodeVue,
 		},
-		mixins: [FormInputMixins, TableMixins, ModalMixins],
+		mixins: [FormInputMixins, TableMixins, ModalMixins, ErrorHandlerMixins],
 		data() {
 			return {
 				alatDetail: {},
@@ -600,11 +642,17 @@
 				],
 				buttonActive: false,
 				refreshData: false,
+				// Cetak Barcode
+				alreadyGetLokasi: false,
+				getBarcode: false,
+				barcodePrintable: {
+					value: '',
+					text: '',
+				},
 			}
 		},
 		async mounted() {
 			await this.setPageAlatDetail()
-			console.log(process.env.NODE_ENV)
 		},
 		watch: {
 			'tableInfo.pageNo': {
@@ -618,8 +666,13 @@
 				handler: function() {
 					let payload = this.submitDetailAlat
 					if (payload.total_alat !== null) {
-						this.getLokasiBaseOnTotalAlat(payload.total_alat)
+						if (!this.alreadyGetLokasi) {
+							this.getLokasiBaseOnTotalAlat(payload.total_alat)
+						} else {
+							this.formAddDetailAlat[1].disabled = false
+						}
 					} else {
+						this.alreadyGetLokasi = false
 						this.formAddDetailAlat[1].disabled = true
 					}
 				},
@@ -637,8 +690,15 @@
 							? JSON.parse(this.alatDetail.alat_specs)
 							: ''
 				} catch (e) {
-					console.log(e)
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getListDetailAlat() {
@@ -656,7 +716,15 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 				this.loadingTable = false
 			},
@@ -682,7 +750,15 @@
 					})
 					this.headsTable[3].options = list
 				} catch (e) {
-					console.log(e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async getLokasiBaseOnTotalAlat(totalNeed) {
@@ -700,25 +776,37 @@
 						},
 					]
 					if (response.data.response.code == 200) {
-						lokasi.forEach((lok) => {
-							let lk = {
-								id: lok.id,
-								name: lok.lokasi_name,
-								value: lok.id,
-								disabled: false,
-							}
+						if (lokasi.length > 0) {
+							lokasi.forEach((lok) => {
+								let lk = {
+									id: lok.id,
+									name: lok.lokasi_name,
+									value: lok.id,
+									disabled: false,
+								}
 
-							listAdd.push(lk)
-						})
-						this.formAddDetailAlat[1].options = listAdd
-						if (listAdd.length > 0) {
-							this.formAddDetailAlat[1].disabled = false
+								listAdd.push(lk)
+							})
+
+							this.formAddDetailAlat[1].options = listAdd
 						} else {
-							this.formAddDetailAlat[1].disabled = true
+							alert(
+								'Tidak ada lokasi yang dapat menampung jumlah alat tersebut'
+							)
 						}
 					}
 				} catch (e) {
-					this.showAlert(false, false, e)
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
+				} finally {
+					this.alreadyGetLokasi = true
 				}
 			},
 			async deleteAlatDetail(alatId) {
@@ -732,10 +820,15 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV == 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async deleteDetailAlat(detailAlatId) {
@@ -747,10 +840,35 @@
 						this.setPageAlatDetail()
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV == 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
+				}
+			},
+			async deleteImageAlat(imageId) {
+				this.showAlert(true)
+				try {
+					const response = await api.deleteData('image-alat', imageId)
+					if (response.data.response.code === 200) {
+						this.showAlert(false, true, response.data.response.message)
+						this.setPageAlatDetail()
+					}
+				} catch (e) {
+					if (this.environment == 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async createDetailAlat() {
@@ -765,10 +883,15 @@
 						this.setPageAlatDetail()
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV == 'development') {
+					if (this.environment == 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async changeConditionDetailAlat() {
@@ -790,10 +913,15 @@
 						)
 					}
 				} catch (e) {
-					if (process.env.NODE_ENV === 'development') {
+					if (this.environment === 'development') {
 						console.log(e)
 					}
-					this.showAlert(false, false, e)
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
 				}
 			},
 			async setPageAlatDetail() {
@@ -801,6 +929,7 @@
 				await this.getAlatDetail()
 				await this.getListDetailAlat()
 				await this.getListLokasi()
+				this.alreadyGetLokasi = false
 				this.refreshData = false
 			},
 			// Value Change
@@ -863,6 +992,13 @@
 					(available) => available.id === availableStatus
 				)
 			},
+			deleteImageNotif(imageId) {
+				let message = 'Apakah anda yakin ingin menghapus gambar ini?'
+				let confirmDelete = confirm(message)
+				if (confirmDelete) {
+					this.deleteImageAlat(imageId)
+				}
+			},
 			deleteNotif(type, index = null) {
 				let data = index !== null ? this.listData[index] : this.alatDetail
 				let message = {
@@ -883,9 +1019,50 @@
 				this.formChangeCondition[0].model = this.selectedRowData.barcode_alat
 				this.openPopup('condition')
 			},
+			printBarcode(indexData) {
+				let data = this.listData[indexData]
+				this.selectedRowData.path_url = data.barcode_alat
+				this.selectedRowData.name = data.alat_model.alat_name
+				this.getBarcode = true
+
+				this.$nextTick(() => {
+					let element = this.$refs['printable-qrcode']
+					this.getBarcode = false
+					this.downloadBarcode(element)
+				})
+			},
+			async downloadBarcode(element) {
+				this.showAlert(true)
+				const pdf = new jsPDF({
+					orientation: 'p',
+					unit: 'px',
+					format: 'a4',
+					hotfixes: ['px_scaling'],
+					compress: false,
+				})
+				html2canvas(element, {
+					useCORS: true,
+					scrollX: 0,
+					scrollY: -window.scrollY,
+				}).then((canvas) => {
+					this.showAlert(false, true, 'QR Code Alat Berhasil di Unduh')
+					let imgData = canvas.toDataURL('image/png', 1.0)
+					pdf.addImage(imgData, 'PNG', 0, 20, canvas.width, canvas.height)
+					pdf.setProperties({
+						title: `${this.selectedRowData.name}_${this.selectedRowData.path_url}`,
+					})
+					window.open(pdf.output('bloburl'))
+				})
+			},
 			seeBarcode(indexData) {
-				this.selectedRowData = this.listData[indexData]
-				this.openPopup('barcode')
+				// this.selectedRowData = this.listData[indexData]
+				let data = this.listData[indexData]
+				this.selectedRowData = {
+					path_url: data.barcode_alat,
+					name: data.alat_model.alat_name,
+					desc: '',
+				}
+				this.openPopup('qrcode')
 			},
 			capitalizeFirstLetter(string) {
 				return string.charAt(0).toUpperCase() + string.slice(1)
@@ -900,6 +1077,7 @@
 			},
 			closeAction() {
 				if (this.baseModalType === 'add') {
+					this.alreadyGetLokasi = false
 					this.formAddDetailAlat[1].options = []
 				}
 				this.closePopup()
@@ -1064,6 +1242,7 @@
 </style>
 
 <style lang="scss">
+	@import '@/assets/css/barcode.scss';
 	.detail-alat-lab {
 		.col-lg-12,
 		.col-lg-5,
@@ -1097,9 +1276,16 @@
 				text-align: center;
 				flex-direction: column;
 				transition: all 0.3s ease-in;
-				.icon-component {
+				.icon-trash {
 					align-items: center;
 					margin: auto;
+					width: 128px;
+					height: 128px;
+					color: #fff;
+					&:hover {
+						cursor: pointer;
+						color: #dc3545;
+					}
 				}
 
 				&:hover {
