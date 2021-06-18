@@ -423,7 +423,6 @@
 	import BaseFilter from '@/components/BaseFilter.vue'
 	import BaseModalAdd from '@/components/BaseModal/BaseModalAdd.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert.vue'
-	import BaseModalBarcode from '@/components/BaseModal/BaseModalBarcode.vue'
 	import BaseModalQrcode from '@/components/BaseModal/BaseModalQrcode.vue'
 	import BaseModalDetail from '@/components/BaseModal/BaseModalDetail.vue'
 
@@ -448,7 +447,6 @@
 			BaseFilter,
 			BaseModalAdd,
 			BaseModalAlert,
-			BaseModalBarcode,
 			BaseModalQrcode,
 			BaseModalDetail,
 			QrcodeVue,
@@ -1030,7 +1028,7 @@
 			printBarcode(indexData) {
 				let data = this.listData[indexData]
 				this.selectedRowData.path_url = data.barcode_alat
-				this.selectedRowData.name = data.alat_model.alat_name
+				this.selectedRowData.name = `${data.barcode_alat} - ${data.alat_model.jenis_alat_model.jenis_name}`
 				this.getBarcode = true
 
 				this.$nextTick(() => {
@@ -1067,7 +1065,7 @@
 				let data = this.listData[indexData]
 				this.selectedRowData = {
 					path_url: data.barcode_alat,
-					name: data.alat_model.alat_name,
+					name: `${data.barcode_alat} - ${data.alat_model.alat_name}`,
 					desc: '',
 				}
 				this.openPopup('qrcode')
@@ -1302,8 +1300,8 @@
 				.icon-trash {
 					align-items: center;
 					margin: auto;
-					width: 128px;
-					height: 128px;
+					width: 64px;
+					height: 64px;
 					color: #fff;
 					&:hover {
 						cursor: pointer;

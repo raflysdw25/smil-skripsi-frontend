@@ -1,5 +1,8 @@
 <template>
-	<div class="add-staff-laboratorium">
+	<div class="text-center" v-if="loadingForm">
+		<b-spinner style="width: 120px; height: 120px"></b-spinner>
+	</div>
+	<div class="add-staff-laboratorium" v-else>
 		<!-- START: BUTTON GROUP -->
 		<div class="button-group d-flex align-items-center justify-content-end">
 			<button
@@ -63,7 +66,6 @@
 					<b-form-input
 						v-if="form.type === 'select-datalist'"
 						:list="`input-list-${indexInput}`"
-						id="input-with-list"
 						v-model="form.model"
 						:placeholder="form.placeholder"
 						@change="changeValue(indexInput)"
@@ -105,6 +107,7 @@
 						@closed="setNullString(form.model)"
 						:placeholder="form.placeholder"
 						@change="changeValue(indexInput)"
+						:disabled-date="notBeforeToday"
 					>
 						<template slot="icon-clear">
 							<b-icon-x-circle-fill></b-icon-x-circle-fill>
@@ -132,6 +135,7 @@
 				:isProcess="isProcess"
 				:isSuccess="isSuccess"
 				:message="message"
+				:notes="notes"
 				:closeAlert="closePopup"
 			/>
 		</b-modal>
@@ -328,6 +332,7 @@
 		},
 
 		async mounted() {
+			this.loadingForm = true
 			if (!this.isKaLab && !this.isSuperAdmin) {
 				this.$router.go(-1)
 			}
@@ -337,6 +342,7 @@
 			} else {
 				await this.getListStaffJurusan()
 			}
+			this.loadingForm = false
 			// this.showAlert(false, false, 'Alert Berhasil')
 		},
 		watch: {},
@@ -368,10 +374,20 @@
 			},
 			async getListStaffJurusan() {
 				try {
-					const response = await api.getPlainData('staff')
-					// const response = await api.getUnregisterStaff()
+					// const response = await api.getPlainData('staff')
+					const response = await api.getUnregisterStaff()
 					if (response.data.response.code === 200) {
 						let listStaff = response.data.data
+						if (listStaff.length === 0) {
+							// this.showAlert(
+							// 	false,
+							// 	false,
+							// 	'Tidak ada staff jurusan yang dapat didaftarkan'
+							// )
+							alert('Tidak ada staff jurusan yang dapat didaftarkan')
+							this.isCreate = true
+							this.$router.push({ name: 'ListStaffLaboratorium' })
+						}
 						let list = []
 						listStaff.forEach((staff) => {
 							let st = {
@@ -539,6 +555,9 @@
 	.add-staff-laboratorium {
 		.mx-datepicker {
 			width: 100%;
+		}
+		.button-group {
+			margin-bottom: 30px;
 		}
 	}
 </style>

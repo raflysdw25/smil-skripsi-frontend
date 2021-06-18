@@ -23,6 +23,8 @@
 						:disabled="form.disabled"
 						v-model="form.model"
 						:required="form.isRequired"
+						:min="form.type == 'number' ? 0 : ''"
+						@change="changeValue(indexForm)"
 					/>
 					<select
 						v-if="form.type === 'select'"
@@ -175,6 +177,7 @@
 				type: Function,
 				required: true,
 			},
+
 			isEdit: { type: Boolean, default: false },
 		},
 		mixins: [FormInputMixins],
@@ -210,6 +213,8 @@
 					if (!form.canAddValue) {
 						if (form.type == 'select') {
 							form.model = null
+						} else if (form.type === 'number') {
+							form.model = 0
 						} else {
 							form.model = ''
 						}
@@ -227,6 +232,9 @@
 			},
 			setNullString(form) {
 				form.model = ''
+			},
+			changeValue(index) {
+				this.$emit('changeValueAdd', index)
 			},
 		},
 	}

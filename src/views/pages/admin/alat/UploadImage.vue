@@ -1,5 +1,8 @@
 <template>
-	<div class="upload-image">
+	<div class="text-center" v-if="loadingForm">
+		<b-spinner style="width: 120px; height: 120px"></b-spinner>
+	</div>
+	<div class="upload-image" v-else>
 		<!-- START: BUTTON GROUP -->
 		<div class="button-group d-flex align-items-center justify-content-end">
 			<button class="smil-btn smil-bg-danger mr-4" @click="$router.go(-1)">
@@ -122,7 +125,13 @@
 				isOverUploadArea: false,
 				uploadFiles: [],
 				imageType: ['jpg', 'png', 'jpeg'],
+				maxImage: 3,
 			}
+		},
+		async mounted() {
+			this.loadingForm = true
+			await this.getImageAlat()
+			this.loadingForm = false
 		},
 		methods: {
 			// Call API
@@ -153,18 +162,45 @@
 					}
 				}
 			},
+			async getImageAlat() {
+				try {
+					const response = await api.getImageAlatId(this.alatId)
+
+					let imageUploaded = response.data.data.imageCount
+					if (imageUploaded >= 3) {
+						this.showAlert(
+							false,
+							false,
+							'Batas maksimal unggah gambar telah terpenuhi'
+						)
+					} else {
+						this.maxImage = this.maxImage - imageUploaded
+					}
+				} catch (e) {
+					if (this.environment === 'development') {
+						console.log(e)
+					}
+					let message = this.getErrorMessage(e)
+					if (typeof message == 'object' && message.length > 0) {
+						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+					} else {
+						this.showAlert(false, false, message)
+					}
+				}
+			},
 			// Upload Area Interaction
 			setIsOver(is_over) {
 				this.isOverUploadArea = is_over
 			},
 			browseImage() {
-				if (this.uploadFiles.length < 3) {
+				if (this.uploadFiles.length < this.maxImage) {
 					this.$refs['file_image'].click()
 				}
 			},
 			// Upload Process
 			handleDropUpload(e) {
 				this.setIsOver(false)
+
 				let uploadedFiles = e.dataTransfer.files
 				let approvedFiles = []
 				for (let file of uploadedFiles) {
@@ -199,6 +235,15 @@
 			imageUpload(objectUpload) {
 				let files = objectUpload
 				for (let file of files) {
+					if (this.uploadFiles.length >= this.maxImage) {
+						let message = {
+							title: file.name,
+							message: `Jumlah maksimal unggah gambar telah terpenuhi: ${this.maxImage} gambar`,
+						}
+						this.notes.push(message)
+						this.countError += 1
+						continue
+					}
 					let uploadFile = {}
 					uploadFile.filename = file.name
 					let fileSize = this.bytesToSize(file.size)

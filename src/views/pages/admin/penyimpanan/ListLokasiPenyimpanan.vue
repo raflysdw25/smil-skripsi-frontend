@@ -219,6 +219,7 @@
 				:editFunction="editLokasi"
 				:isEdit="isEditRow"
 				@reset="isEditRow = false"
+				@changeValueAdd="changeValueLokasi"
 			/>
 
 			<base-modal-alert
@@ -383,7 +384,7 @@
 						label: 'Kapasitas Total Lokasi Penyimpanan',
 						type: 'number',
 						disabled: false,
-						model: '',
+						model: 0,
 						canAddValue: false,
 						isRequired: true,
 					},
@@ -392,7 +393,7 @@
 						label: 'Kapasitas Tersedia',
 						type: 'number',
 						disabled: false,
-						model: '',
+						model: 0,
 						canAddValue: false,
 						isRequired: false,
 					},
@@ -401,7 +402,7 @@
 						label: 'Kapasitas Terpakai',
 						type: 'number',
 						disabled: false,
-						model: '',
+						model: 0,
 						canAddValue: false,
 						isRequired: false,
 					},
@@ -437,18 +438,14 @@
 				let form = this.formAdd
 				return {
 					lokasi_name: form[0].model,
-					total_capacity: form[1].model !== '' ? parseInt(form[1].model) : null,
-					available_capacity:
-						form[2].model !== ''
-							? parseInt(form[2].model)
-							: parseInt(form[1].model),
-					stored_capacity:
-						form[3].model !== '' ? parseInt(form[3].model) : null,
+					total_capacity: form[1].model,
+					available_capacity: form[2].model,
+					stored_capacity: form[3].model,
 				}
 			},
 			formAddFilled() {
 				let submit = this.submitRequest
-				return submit.lokasi_name !== '' && submit.total_capacity !== null
+				return submit.lokasi_name !== '' && submit.total_capacity !== 0
 			},
 			filterPayload() {
 				let tableInfo = this.tableInfo
@@ -503,7 +500,7 @@
 							background: 'smil-bg-danger',
 						},
 					]
-					let heads = ['Nama Alat', 'Barcode Alat', 'Kondisi Alat']
+					let heads = ['Nama Alat', 'QRCode Key', 'Kondisi Alat']
 					let contents = []
 					let alatTersimpan = data.lokasi_detail_alat.filter(
 						(lks) => lks.condition_status !== 4
@@ -727,6 +724,30 @@
 				form[3].model = data.stored_capacity
 
 				this.openPopup('edit')
+			},
+			changeValueLokasi(index) {
+				let form = this.formAdd[index]
+				form.model = form.model !== '' ? parseInt(form.model) : 0
+				if (index == 1) {
+					this.formAdd[2].model = form.model
+				} else if (index == 2) {
+					if (form.model > this.formAdd[1].model) {
+						form.model = this.formAdd[1].model
+						this.formAdd[3].model = 0
+					} else if (
+						form.model > this.formAdd[1].model &&
+						this.formAdd[3].model !== ''
+					) {
+						this.formAdd[1].model = form.model + this.formAdd[3].model
+					} else if (
+						form.model > this.formAdd[1].model &&
+						this.formAdd[3].model == ''
+					) {
+						this.formAdd[1].model = form.model
+					}
+				} else if (index == 3) {
+					this.formAdd[2].model = this.formAdd[1].model - form.model
+				}
 			},
 			// Notification
 			deleteNotif(index) {

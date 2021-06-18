@@ -283,13 +283,13 @@
 				try {
 					const response = await api.logoutAdmin()
 					if (response.data.response.code == 200) {
-						this.$store.dispatch(types.UPDATE_ADMIN, null)
 						// localStorage.removeItem('access_token')
 						$cookies.remove('smilAdminAuth')
 						$cookies.remove('smilAccessToken')
 						this.showAlert(false, true, response.data.response.message)
 						setTimeout(() => {
 							this.$router.push({ name: 'LoginAdmin' })
+							this.$store.dispatch(types.UPDATE_ADMIN, null)
 						}, 2000)
 					}
 				} catch (e) {

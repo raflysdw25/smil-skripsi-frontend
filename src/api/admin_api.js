@@ -70,7 +70,7 @@ export default {
 
 	// Staff Jurusan
 	getUnregisterStaff() {
-		return admin_api.get(`staff/unregisterstaff`)
+		return admin_api.get(`staff/list/un-register-staff`)
 	},
 
 	// Jabatan Staff Laboratorium
@@ -93,5 +93,10 @@ export default {
 			`peminjaman/register-alat-dipinjam/${peminjamanId}`,
 			listPayload
 		)
+	},
+
+	// Image Alat
+	getImageAlatId(alatId) {
+		return admin_api.get(`image-alat/get-by-alat-id/${alatId}`)
 	},
 }

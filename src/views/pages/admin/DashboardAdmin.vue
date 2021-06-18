@@ -103,15 +103,7 @@
 									v-for="(content, idxContent) in row"
 									:key="`column-peminjaman-${idxContent}`"
 								>
-									<template v-if="idxContent === row.length - 1">
-										<button
-											class="smil-btn smil-btn-small smil-bg-info"
-											@click="getDetailPeminjaman(indexRow)"
-										>
-											Lihat Detail
-										</button>
-									</template>
-									<template v-else-if="idxContent === 3">
+									<template v-if="idxContent === 3">
 										<span class="smil-status" :class="content.background">
 											{{ content.text }}
 										</span>
@@ -295,7 +287,6 @@
 					'Waktu Pengembalian',
 					'Nama Peminjam',
 					'Status Peminjaman',
-					'Alat Dipinjam',
 				],
 				headKerusakan: [
 					'Tanggal Lapor',

@@ -109,7 +109,7 @@
 											Lihat Detail Alat
 										</b-dropdown-item>
 										<b-dropdown-item
-											v-if="listData[indexRow].images.length < 3"
+											v-if="listData[indexRow].images.length > 3"
 											@click="
 												$router.push({
 													name: 'UploadFotoAlat',

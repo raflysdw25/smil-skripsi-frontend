@@ -7,7 +7,7 @@ export default {
 			// typeDisplayError : alert() -> alert, showAlert() -> modal
 			if (e.response) {
 				let err = e.response.data
-				if (err.response.code === 400) {
+				if (err && err.response.code === 400) {
 					let mKey = Object.keys(err.response.message)
 					let message = err.response.message
 					if (typeDisplayError == 'alert') {

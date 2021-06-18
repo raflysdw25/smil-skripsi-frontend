@@ -29,6 +29,11 @@ export default {
 						e.target.value = ''
 					}
 				}, 66)
+			} else if (type === 'number') {
+				console.log(e.target.value)
+				if (e.target.value < 0) {
+					e.target.value = 0
+				}
 			} else {
 				return true
 			}
@@ -52,6 +57,9 @@ export default {
 		},
 		formatDate(date, format = 'DD-MM-YYYY') {
 			return moment(date).format(format)
+		},
+		notBeforeToday(date) {
+			return date < new Date().setHours(0, 0, 0, 0)
 		},
 		dateRange(start, end) {
 			if (end !== null) {
