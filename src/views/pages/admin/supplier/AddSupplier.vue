@@ -126,9 +126,9 @@
 			formFilled() {
 				let submit = this.submitRequest
 				let validateEmail =
-					submit.supplier_email !== ''
-						? this.emailValidate(submit.supplier_email)
-						: true
+					(submit.supplier_email !== '' &&
+						this.emailValidate(submit.supplier_email)) ||
+					submit.supplier_email == ''
 				return (
 					submit.supplier_name !== '' &&
 					submit.supplier_phone !== '' &&
@@ -224,7 +224,8 @@
 						form[0].model = supplier.supplier_name
 						form[1].model = supplier.supplier_phone
 						form[2].model = supplier.person_in_charge
-						form[3].model = supplier.supplier_email
+						form[3].model =
+							supplier.supplier_email == null ? '' : supplier.supplier_email
 						form[4].model = supplier.supplier_address
 					} else {
 						this.showAlert(false, false, response.data.response.message)
@@ -252,8 +253,8 @@
 						this.submitRequest
 					)
 					if (response.data.response.code === 201) {
+						this.showAlert(false, true, 'Tambah Supplier Berhasil')
 						setTimeout(() => {
-							this.showAlert(false, true, 'Tambah Supplier Berhasil')
 							this.$router.push({ name: 'ListSupplier' })
 						}, 2000)
 					} else {
