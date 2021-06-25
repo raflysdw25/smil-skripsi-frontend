@@ -441,7 +441,7 @@
 						label: 'Tanggal Tindakan',
 						type: 'date',
 						disabled: true,
-						model: this.formatDate(new Date()),
+						model: '',
 						canAddValue: false,
 					},
 					{
@@ -623,28 +623,38 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
 				}
 			},
 			async sendTindakanLaporan() {
-				this.closePopup()
 				this.showAlert(true)
 				try {
-					const response = api.reportAction(
+					const response = await api.reportAction(
 						this.selectedRowId,
 						this.submitTindakanRequest
 					)
-					this.showAlert(false, true, 'Tindakan berhasil dikirimkan')
+					if (response.data.response.code === 200) {
+						setTimeout(() => {
+							this.showAlert(false, true, 'Tindakan berhasil dikirimkan')
+						}, 500)
+						setTimeout(() => {
+							this.getLaporanKerusakan()
+						}, 2000)
+					}
 				} catch (e) {
 					if (this.environment == 'development') {
 						console.log(e)
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -666,7 +676,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -698,6 +710,7 @@
 			tindakLaporan(row) {
 				let report = this.listData[row]
 				this.selectedRowId = report.id
+				this.formAction[0].model = this.formatDate(new Date())
 				this.formAction[1].model =
 					report.barcode_alat_rusak.alat_model.alat_name
 				this.formAction[2].model =

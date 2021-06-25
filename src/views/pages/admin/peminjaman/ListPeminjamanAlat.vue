@@ -363,7 +363,7 @@
 								value: 1,
 							},
 							{
-								name: 'Berhasil',
+								name: 'Alat Belum Diambil',
 								value: 2,
 							},
 							{
@@ -430,7 +430,7 @@
 								value: 1,
 							},
 							{
-								name: 'Berhasil',
+								name: 'Alat Belum Diambil',
 								value: 2,
 							},
 							{
@@ -649,7 +649,9 @@
 					let totalData = data.detail_peminjaman_model.length
 					if (data.detail_peminjaman_model.length > 0) {
 						let reverse = data.detail_peminjaman_model.reverse()
-						for (let index = 0; index < 5; index++) {
+						console.log('Reverse :', reverse)
+						let count = reverse.length > 5 ? 5 : reverse.length
+						for (let index = 0; index < count; index++) {
 							let kondisi, barcode, alatName
 
 							alatName = reverse[index].barcode_alat_pinjam.alat_model.alat_name
@@ -707,7 +709,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -734,7 +738,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -758,7 +764,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -795,7 +803,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}

@@ -77,6 +77,9 @@ export default {
 	editJabatanStaffLab(id, payload) {
 		return admin_api.put(`user/update-jabatan/${id}`, payload)
 	},
+	getJabatanStaffLab() {
+		return admin_api.get(`jabatan/lab/staff-lab`)
+	},
 
 	// Peminjaman
 	approveAction(peminjamanId, approvePayload) {

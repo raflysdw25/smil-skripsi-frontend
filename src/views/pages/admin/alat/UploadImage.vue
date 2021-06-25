@@ -156,7 +156,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -182,7 +184,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}

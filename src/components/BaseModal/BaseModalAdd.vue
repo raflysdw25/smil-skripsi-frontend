@@ -4,6 +4,7 @@
 			{{ modalTitle }}
 		</h4>
 		<div class="form-section">
+			<p class="attention-form">* Data Wajib Diisi</p>
 			<div
 				class="form-section-group"
 				v-for="(form, indexForm) in formList"
@@ -247,6 +248,10 @@
 		}
 		.form-section {
 			margin-top: 17px;
+			.attention-form {
+				padding-left: 0;
+				font-size: 12px;
+			}
 			.form-section-group {
 				margin-top: 20px;
 				.form-label {

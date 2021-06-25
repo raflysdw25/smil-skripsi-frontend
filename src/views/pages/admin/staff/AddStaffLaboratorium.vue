@@ -21,6 +21,7 @@
 		</div>
 		<!-- END: BUTTON GROUP -->
 		<section class="section-form-group">
+			<p class="attention-form">* Data Wajib Diisi</p>
 			<div class="smil-row">
 				<div
 					class="form-group"
@@ -301,6 +302,7 @@
 					return (
 						form.nip !== '' &&
 						form.jabatan_id !== null &&
+						form.start_active_period !== null &&
 						form.end_active_period !== null
 					)
 				}
@@ -366,7 +368,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -407,7 +411,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -415,7 +421,7 @@
 			},
 			async getListJabatanAdmin() {
 				try {
-					const response = await api.getPlainData('jabatan')
+					const response = await api.getJabatanStaffLab()
 					if (response.data.response.code === 200) {
 						let listJabatan = response.data.data
 						let list = []
@@ -438,7 +444,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -465,7 +473,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -496,7 +506,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}

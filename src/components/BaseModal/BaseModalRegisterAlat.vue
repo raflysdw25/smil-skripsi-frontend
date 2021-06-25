@@ -105,6 +105,7 @@
 							} else {
 								form.model = ''
 								form.isValid = false
+								alert('Barcode Alat tidak sesuai')
 							}
 						}
 					} catch (e) {

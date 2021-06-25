@@ -321,8 +321,12 @@
 								value: 2,
 							},
 							{
-								name: 'Belum Login',
+								name: 'Belum Ubah Password',
 								value: 3,
+							},
+							{
+								name: 'Belum Verifikasi Email',
+								value: 4,
 							},
 						],
 					},
@@ -397,8 +401,12 @@
 								value: 2,
 							},
 							{
-								name: 'Belum Login',
+								name: 'Belum Ubah Password',
 								value: 3,
+							},
+							{
+								name: 'Belum Verifikasi Email',
+								value: 4,
 							},
 						],
 					},
@@ -414,7 +422,7 @@
 						let rowTable = [
 							`${list.nip} - ${list.staff_model.staff_fullname}`, //Nip Peminjam Alat
 							list.jabatan_model.jabatan_name, //kapasitas
-							this.statusAkunStaff(list.expire_period, list.first_login), //jenis
+							this.statusAkunStaff(list), //jenis
 							'',
 						]
 
@@ -494,7 +502,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -531,7 +541,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -553,24 +565,35 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
 				}
 			},
 			// Value Change
-			statusAkunStaff(endPeriod, isFirstLogin) {
+			statusAkunStaff(staffObject) {
+				// list.expire_period, list.first_login
+				let { expire_period, first_login, is_verified } = staffObject
 				// Menentukan status dari akun berdasarkan active_period akun
 				let currentDate = this.formatDate(new Date(), 'YYYY-MM-DD')
 				let rangeDate = this.dateRange(
 					currentDate,
-					this.formatDate(endPeriod, 'YYYY-MM-DD')
+					this.formatDate(expire_period, 'YYYY-MM-DD')
 				)
 
 				let status_id = null
 				if (rangeDate > 0) {
-					status_id = isFirstLogin ? 3 : 1
+					// status_id = first_login ? 3 : !is_verified ? 4 : 1
+					if (!is_verified) {
+						status_id = 4
+					} else if (first_login) {
+						status_id = 3
+					} else {
+						status_id = 1
+					}
 				} else {
 					status_id = 2
 				}
@@ -588,8 +611,13 @@
 					},
 					{
 						id: 3,
-						text: 'Belum Login',
+						text: 'Belum Ubah Password',
 						background: 'smil-bg-pending',
+					},
+					{
+						id: 4,
+						text: 'Belum Verifikasi Email',
+						background: 'smil-bg-warning',
 					},
 				]
 
@@ -604,7 +632,7 @@
 			deleteNotif(index) {
 				let staff_lab = this.listData[index]
 				let confirm = window.confirm(
-					`Apakah anda yakin ingin menghapus Staff Laboratorium ${staff_lab.mahasiswa_fullname}`
+					`Apakah anda yakin ingin menghapus Staff Laboratorium ${staff_lab.staff_model.staff_fullname}`
 				)
 				if (confirm) {
 					this.deleteStaffLab(staff_lab.id)

@@ -220,6 +220,7 @@
 				:isProcess="isProcess"
 				:isSuccess="isSuccess"
 				:message="message"
+				:notes="notes"
 				:closeAlert="closePopup"
 			/>
 
@@ -420,7 +421,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -429,25 +432,27 @@
 				}
 			},
 			async sendAddJenisAlat() {
-				this.closePopup()
 				this.showAlert(true)
 				try {
 					const response = await api.createNewData('jenis', this.submitRequest)
 					if (response.data.response.code === 201) {
 						setTimeout(() => {
 							this.showAlert(false, true, 'Tambah Jenis Alat Berhasil')
-							this.getListJenisAlat()
 						}, 500)
-					} else {
-						this.showAlert(false, false, response.data.response.message)
+						setTimeout(() => {
+							this.getListJenisAlat()
+						}, 2000)
 					}
 				} catch (e) {
 					if (this.environment == 'development') {
 						console.log(e)
 					}
 					let message = this.getErrorMessage(e)
-					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+
+					if (typeof message === 'object' && message.length > 0) {
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -469,7 +474,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -498,7 +505,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}

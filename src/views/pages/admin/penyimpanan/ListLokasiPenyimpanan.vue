@@ -567,7 +567,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -594,7 +596,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -616,7 +620,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -650,7 +656,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -727,26 +735,31 @@
 			},
 			changeValueLokasi(index) {
 				let form = this.formAdd[index]
-				form.model = form.model !== '' ? parseInt(form.model) : 0
-				if (index == 1) {
-					this.formAdd[2].model = form.model
-				} else if (index == 2) {
-					if (form.model > this.formAdd[1].model) {
-						form.model = this.formAdd[1].model
-						this.formAdd[3].model = 0
-					} else if (
-						form.model > this.formAdd[1].model &&
-						this.formAdd[3].model !== ''
-					) {
-						this.formAdd[1].model = form.model + this.formAdd[3].model
-					} else if (
-						form.model > this.formAdd[1].model &&
-						this.formAdd[3].model == ''
-					) {
-						this.formAdd[1].model = form.model
+				if (index !== 0) {
+					form.model = form.model !== '' ? parseInt(form.model) : 0
+					if (index == 1) {
+						if (this.formAdd[2].model !== '') {
+							this.formAdd[3].model = 0
+						}
+						this.formAdd[2].model = form.model
+					} else if (index == 2) {
+						if (form.model > this.formAdd[1].model) {
+							form.model = this.formAdd[1].model
+							this.formAdd[3].model = 0
+						} else if (
+							form.model > this.formAdd[1].model &&
+							this.formAdd[3].model !== ''
+						) {
+							this.formAdd[1].model = form.model + this.formAdd[3].model
+						} else if (
+							form.model > this.formAdd[1].model &&
+							this.formAdd[3].model == ''
+						) {
+							this.formAdd[1].model = form.model
+						}
+					} else if (index == 3) {
+						this.formAdd[2].model = this.formAdd[1].model - form.model
 					}
-				} else if (index == 3) {
-					this.formAdd[2].model = this.formAdd[1].model - form.model
 				}
 			},
 			// Notification

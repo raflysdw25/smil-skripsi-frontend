@@ -18,6 +18,7 @@
 		</div>
 		<!-- END: BUTTON GROUP -->
 		<section class="section-form-group">
+			<p class="attention-form">* Data Wajib Diisi</p>
 			<div class="smil-row">
 				<div class="icon-class text-center" v-if="loadingForm">
 					<b-spinner
@@ -236,7 +237,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -267,7 +270,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
@@ -283,8 +288,8 @@
 						this.submitRequest
 					)
 					if (response.data.response.code === 200) {
+						this.showAlert(false, true, 'Edit Supplier berhasil dilakukan')
 						setTimeout(() => {
-							this.showAlert(false, true, 'Edit Supplier berhasil dilakukan')
 							this.$router.push({ name: 'ListSupplier' })
 						}, 2000)
 					} else {
@@ -296,7 +301,9 @@
 					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
-						this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						setTimeout(() => {
+							this.showAlert(false, false, 'Terjadi Kesalahan', message)
+						}, 500)
 					} else {
 						this.showAlert(false, false, message)
 					}
