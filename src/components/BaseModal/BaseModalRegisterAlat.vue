@@ -105,7 +105,7 @@
 							} else {
 								form.model = ''
 								form.isValid = false
-								alert('Barcode Alat tidak sesuai')
+								alert(response.data.response.message)
 							}
 						}
 					} catch (e) {
@@ -113,6 +113,8 @@
 							console.log(e)
 						}
 						let output = this.getErrorMessage(e, 'alert')
+						form.model = ''
+						form.isValid = false
 						alert(output)
 					}
 				}
