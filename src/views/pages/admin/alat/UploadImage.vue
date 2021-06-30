@@ -4,8 +4,14 @@
 	</div>
 	<div class="upload-image" v-else>
 		<!-- START: BUTTON GROUP -->
-		<div class="button-group d-flex align-items-center justify-content-end">
-			<button class="smil-btn smil-bg-danger mr-4" @click="$router.go(-1)">
+		<div class="button-group d-flex align-items-center">
+			<h6 class="font-weight-bold mb-0">
+				{{ alatName }} - {{ maxImage }} Gambar Tersisa
+			</h6>
+			<button
+				class="smil-btn smil-bg-danger mr-4 ml-auto"
+				@click="$router.go(-1)"
+			>
 				Batal
 			</button>
 			<button
@@ -126,6 +132,7 @@
 				uploadFiles: [],
 				imageType: ['jpg', 'png', 'jpeg'],
 				maxImage: 3,
+				alatName: '',
 			}
 		},
 		async mounted() {
@@ -177,6 +184,7 @@
 						)
 					} else {
 						this.maxImage = this.maxImage - imageUploaded
+						this.alatName = response.data.data.alatName
 					}
 				} catch (e) {
 					if (this.environment === 'development') {

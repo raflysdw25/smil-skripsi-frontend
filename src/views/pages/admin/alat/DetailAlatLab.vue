@@ -1083,7 +1083,7 @@
 				let data = this.listData[indexData]
 				this.selectedRowData = {
 					path_url: data.barcode_alat,
-					name: `${data.barcode_alat} - ${data.alat_model.alat_name}`,
+					name: `${data.barcode_alat} - ${data.alat_model.jenis_alat_model.jenis_name}`,
 					desc: '',
 				}
 				this.openPopup('qrcode')
