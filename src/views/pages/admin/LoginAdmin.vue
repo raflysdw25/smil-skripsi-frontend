@@ -181,7 +181,7 @@
 				}
 			},
 			resetLoginAdmin() {
-				this.formInput.nip = ''
+				// this.formInput.nip = ''
 				this.formInput.password = ''
 			},
 		},

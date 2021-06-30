@@ -215,7 +215,7 @@
 				:formList="formAdd"
 				:formFilled="formAddFilled"
 				:submitFunction="sendAddLokasi"
-				:closeFunction="closePopup"
+				:closeFunction="closeLokasiAction"
 				:editFunction="editLokasi"
 				:isEdit="isEditRow"
 				@reset="isEditRow = false"
@@ -664,6 +664,7 @@
 					}
 				} finally {
 					this.selectedRowId = null
+					this.selectedRowData = {}
 				}
 			},
 			// Action Dropdown
@@ -722,14 +723,14 @@
 			// Edit Data
 			editRowData(index) {
 				this.isEditRow = true
-				let data = this.listData[index]
-				this.selectedRowId = data.id
+				this.selectedRowData = this.listData[index]
+				this.selectedRowId = this.selectedRowData.id
 
 				let form = this.formAdd
-				form[0].model = data.lokasi_name
-				form[1].model = data.total_capacity
-				form[2].model = data.available_capacity
-				form[3].model = data.stored_capacity
+				form[0].model = this.selectedRowData.lokasi_name
+				form[1].model = this.selectedRowData.total_capacity
+				form[2].model = this.selectedRowData.available_capacity
+				form[3].model = this.selectedRowData.stored_capacity
 
 				this.openPopup('edit')
 			},
@@ -738,21 +739,29 @@
 				if (index !== 0) {
 					form.model = form.model !== '' ? parseInt(form.model) : 0
 					if (index == 1) {
-						if (this.formAdd[2].model !== '') {
-							this.formAdd[3].model = 0
+						if (this.selectedRowId !== null) {
+							// Jika Edit Data Lokasi
+							this.formAdd[2].model =
+								this.selectedRowData.available_capacity +
+								(form.model - this.selectedRowData.total_capacity) //Sinkron untuk Edit Lokasi
+						} else {
+							if (this.formAdd[2].model !== '') {
+								this.formAdd[3].model = 0
+							}
+
+							this.formAdd[2].model = form.model
 						}
-						this.formAdd[2].model = form.model
 					} else if (index == 2) {
 						if (form.model > this.formAdd[1].model) {
 							form.model = this.formAdd[1].model
 							this.formAdd[3].model = 0
 						} else if (
-							form.model > this.formAdd[1].model &&
+							form.model >= this.formAdd[1].model &&
 							this.formAdd[3].model !== ''
 						) {
 							this.formAdd[1].model = form.model + this.formAdd[3].model
 						} else if (
-							form.model > this.formAdd[1].model &&
+							form.model >= this.formAdd[1].model &&
 							this.formAdd[3].model == ''
 						) {
 							this.formAdd[1].model = form.model
@@ -771,6 +780,14 @@
 				if (confirm) {
 					this.deleteLokasi(lokasi.id)
 				}
+			},
+			// Modal Custom
+			closeLokasiAction() {
+				if (this.selectedRowId !== null) {
+					this.selectedRowId = null
+					this.selectedRowData = {}
+				}
+				this.closePopup()
 			},
 		},
 	}
