@@ -19,6 +19,9 @@ export default {
 	dashboardAdmin() {
 		return admin_api.get(`dashboard`)
 	},
+	listAlatForDashboard(page, filterPayload) {
+		return admin_api.post(`filter/dashboard/alat?page=${page}`, filterPayload)
+	},
 
 	// CRUD API
 	getPlainData(type, id = null) {

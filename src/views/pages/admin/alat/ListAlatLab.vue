@@ -109,10 +109,7 @@
 											Lihat Detail Alat
 										</b-dropdown-item>
 										<b-dropdown-item
-											v-if="
-												listData[indexRow].images &&
-													listData[indexRow].images.length < 3
-											"
+											v-if="listData[indexRow].image_counts < 3"
 											@click="
 												$router.push({
 													name: 'UploadFotoAlat',
@@ -153,7 +150,7 @@
 		<!-- START: PAGINATION INFO SECTION -->
 		<div class="pagination-section">
 			<div class="table-counter">
-				{{ `${listData.length} dari ${listData.length} Data` }}
+				{{ `${listData.length} dari ${tableInfo.listTotal} Data` }}
 			</div>
 			<div class="table-pagination">
 				<ul v-if="listData.length > 0">

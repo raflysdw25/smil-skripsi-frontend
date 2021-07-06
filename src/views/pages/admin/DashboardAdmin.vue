@@ -33,13 +33,18 @@
 						v-for="(stc, indexStc) in statisticCount"
 						:key="`statistic-${indexStc}-card-${stc.id}`"
 					>
-						<div class="statistic-info">
-							<p class="statistic-count">{{ statistic[stc.modelCount] }}</p>
-							<p class="statistic-description">
-								{{ stc.text }}
-							</p>
+						<div class="statistic-body">
+							<div class="statistic-info">
+								<p class="statistic-count">{{ statistic[stc.modelCount] }}</p>
+								<p class="statistic-description">
+									{{ stc.text }}
+								</p>
+							</div>
+							<b-icon :icon="stc.icon" class="ml-auto icon-size"></b-icon>
 						</div>
-						<b-icon :icon="stc.icon" class="ml-auto icon-size"></b-icon>
+						<div class="statistic-footer" v-if="!isSuperAdmin">
+							<p @click="listAlatDashboard(stc.conditionCode)">Lihat Detail</p>
+						</div>
 					</div>
 				</div>
 			</section>
@@ -204,6 +209,7 @@
 			centered
 			no-close-on-backdrop
 			no-close-on-esc
+			:size="baseModalType === 'detail-alat-condition' ? 'lg' : ''"
 		>
 			<base-modal-alert
 				v-if="baseModalType === 'alert'"
@@ -211,6 +217,11 @@
 				:isSuccess="isSuccess"
 				:message="message"
 				:closeAlert="closePopup"
+			/>
+			<base-modal-dashboard-alat
+				v-if="baseModalType === 'detail-alat-condition'"
+				:conditionCode="statistic.selected_condition"
+				:closeModal="closePopup"
 			/>
 		</b-modal>
 		<!-- END: MODAL POPUP -->
@@ -221,6 +232,7 @@
 	// Components
 	import IconComponent from '@/components/IconComponent.vue'
 	import BaseModalAlert from '@/components/BaseModal/BaseModalAlert'
+	import BaseModalDashboardAlat from '@/components/BaseModal/BaseModalDashboardAlat'
 
 	// Mixins
 	import ModalMixins from '@/mixins/ModalMixins'
@@ -234,7 +246,7 @@
 
 	export default {
 		name: 'dashboard-admin',
-		components: { IconComponent, BaseModalAlert },
+		components: { IconComponent, BaseModalAlert, BaseModalDashboardAlat },
 		mixins: [ModalMixins, ErrorHandlerMixins],
 		data() {
 			return {
@@ -260,13 +272,15 @@
 						class: 'smil-bg-success',
 						modelCount: 'count_good',
 						icon: 'check-circle-fill',
+						conditionCode: 2,
 					},
 					{
 						id: 2,
-						text: 'Alat Rusak atau APKIR',
+						text: 'Alat Rusak',
 						class: 'smil-bg-danger',
 						modelCount: 'count_damaged',
 						icon: 'x-circle-fill',
+						conditionCode: 3,
 					},
 					{
 						id: 3,
@@ -274,6 +288,15 @@
 						class: 'smil-bg-info',
 						modelCount: 'count_fix',
 						icon: 'tools',
+						conditionCode: 5,
+					},
+					{
+						id: 4,
+						text: 'Alat Habis',
+						class: 'smil-bg-warning',
+						modelCount: 'count_empty',
+						icon: 'bag-x',
+						conditionCode: 4,
 					},
 				],
 				statistic: {
@@ -281,6 +304,8 @@
 					count_good: 0,
 					count_damaged: 0,
 					count_fix: 0,
+					count_empty: 0,
+					selected_condition: null,
 				},
 				headsPeminjaman: [
 					'Waktu Peminjaman',
@@ -297,8 +322,6 @@
 				],
 				listPeminjaman: [],
 				listKerusakan: [],
-				// Data for Popup Detail
-				headsDetailPeminjaman: [],
 			}
 		},
 		async mounted() {
@@ -443,6 +466,10 @@
 			formatDate(date, format = 'DD-MM-YYYY') {
 				return moment(date).format(format)
 			},
+			listAlatDashboard(conditionCode) {
+				this.statistic.selected_condition = conditionCode
+				this.openPopup('detail-alat-condition')
+			},
 			// Popup
 			getDetailPeminjaman(indexData) {},
 		},
@@ -470,29 +497,44 @@
 			height: 150px;
 			border-radius: 10px;
 			display: flex;
-			align-items: center;
-			justify-content: left;
-			padding: 0 20px;
+			flex-flow: column;
+			justify-content: space-between;
+			padding: 15px 30px;
 			margin-right: 34px;
 			&:last-child {
 				margin-right: 0;
 			}
 
-			.statistic-info {
-				p {
-					margin-bottom: 0;
+			.statistic-body {
+				display: flex;
+				align-items: center;
+				.statistic-info {
+					p {
+						margin-bottom: 0;
+					}
+					.statistic-count {
+						font-size: 40px;
+						font-weight: bold;
+					}
+					.statistic-description {
+						font-size: 20px;
+					}
 				}
-				.statistic-count {
-					font-size: 40px;
-					font-weight: bold;
-				}
-				.statistic-description {
-					font-size: 20px;
+				.icon-size {
+					width: 64px;
+					height: 64px;
 				}
 			}
-			.icon-size {
-				width: 64px;
-				height: 64px;
+			.statistic-footer {
+				p {
+					margin-bottom: 0;
+					font-size: 12px;
+					&:hover {
+						font-weight: bold;
+						cursor: pointer;
+						text-decoration: underline;
+					}
+				}
 			}
 		}
 	}

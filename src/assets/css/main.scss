@@ -242,6 +242,7 @@ button.btn-smil-drop:before {
 		th {
 			border-top: none;
 			border-bottom: 1px solid #101939;
+			color: #101939;
 		}
 	}
 
@@ -252,7 +253,9 @@ button.btn-smil-drop:before {
 				color: #696969;
 			}
 			&:last-child {
-				border-bottom: 1px solid #101939;
+				td {
+					border-bottom: 1px solid #101939;
+				}
 			}
 		}
 	}
