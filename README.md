@@ -1,6 +1,6 @@
 # Frontend - Sistem Manajemen Inventaris Lab TIK Politeknik Negeri Jakarta
 
-This project using Vue JS 2.X as Frontend and Laravel as Backend. New development will be merge to testing branch.
+This project using Vue JS 2.X as Frontend and Laravel as Backend. New development will be merge to production branch.
 ## Vue Js Project setup
 ```
 npm install
