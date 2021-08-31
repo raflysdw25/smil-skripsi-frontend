@@ -7,7 +7,7 @@ export default {
 	methods: {
 		getErrorMessage(e, typeDisplayError = 'modal') {
 			// typeDisplayError : alert() -> alert, showAlert() -> modal
-			console.log('Error: ', e.response)
+
 			if (e.response) {
 				let err = e.response.data
 				if (e.response.status === 401) {

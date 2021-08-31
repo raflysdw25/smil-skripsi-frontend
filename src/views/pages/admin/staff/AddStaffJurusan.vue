@@ -247,9 +247,6 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -275,9 +272,6 @@
 						this.formGroupList[3].options.push(option)
 					})
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -302,9 +296,6 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -333,9 +324,6 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {

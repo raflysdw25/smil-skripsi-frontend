@@ -353,7 +353,7 @@
 			async getDataUser() {
 				try {
 					const response = await api.getPlainData('user', this.userId)
-					console.log(response)
+
 					if (response.data.response.code === 200) {
 						let data = response.data.data
 						let form = this.formEditJabatan
@@ -363,9 +363,6 @@
 						form[3].model = data.jabatan_id
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -406,9 +403,6 @@
 						this.formAddStaff[0].options = list
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -439,9 +433,6 @@
 						this.formEditJabatan[3].options = list
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -468,9 +459,7 @@
 					}
 				} catch (e) {
 					this.isCreate = false
-					if (this.environment == 'development') {
-						console.log(e)
-					}
+
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -501,9 +490,7 @@
 					}
 				} catch (e) {
 					this.isCreate = false
-					if (this.environment == 'development') {
-						console.log(e)
-					}
+
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {

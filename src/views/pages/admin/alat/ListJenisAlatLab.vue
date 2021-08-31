@@ -410,15 +410,12 @@
 						this.tableInfo.pageNo,
 						this.filterPayload
 					)
-					console.log(response)
+
 					this.listData = response.data.result
 					let page = response.data.page
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -444,9 +441,6 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 
 					if (typeof message === 'object' && message.length > 0) {
@@ -469,9 +463,6 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -500,9 +491,6 @@
 						this.showAlert(false, false, response.data.response.message)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -536,7 +524,7 @@
 					object.value = spek
 					form[1].model.push(object)
 				})
-				console.log(form[1].model)
+
 				this.openPopup('edit')
 			},
 			// Notification

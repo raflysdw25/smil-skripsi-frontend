@@ -702,9 +702,6 @@
 							? JSON.parse(this.alatDetail.alat_specs)
 							: ''
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -730,9 +727,6 @@
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -766,9 +760,6 @@
 					})
 					this.headsTable[3].options = list
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -814,9 +805,6 @@
 						}
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -840,9 +828,6 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -862,9 +847,6 @@
 						this.setPageAlatDetail()
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -884,9 +866,6 @@
 						this.setPageAlatDetail()
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -909,9 +888,6 @@
 						this.setPageAlatDetail()
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -941,9 +917,6 @@
 						)
 					}
 				} catch (e) {
-					if (this.environment === 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {

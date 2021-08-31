@@ -284,15 +284,12 @@
 						this.tableInfo.pageNo,
 						fitlerPayload
 					)
-					console.log(response)
+
 					this.listData = response.data.result
 					let page = response.data.page
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					if (this.environment === 'development') {
-						console.log(e)
-					}
 					let output = this.getErrorMessage(e, 'alert')
 					alert(output)
 				} finally {
@@ -313,9 +310,7 @@
 					}, 500)
 				} catch (e) {
 					this.isCreate = false
-					if (this.environment === 'development') {
-						console.log(e)
-					}
+
 					let output = this.getErrorMessage(e, 'alert')
 					alert(output)
 				}
@@ -338,9 +333,7 @@
 					}
 				} catch (e) {
 					this.isCreate = false
-					if (this.environment === 'development') {
-						console.log(e)
-					}
+
 					let output = this.getErrorMessage(e, 'alert')
 					alert(output)
 				}
@@ -354,9 +347,6 @@
 						alert(response.data.response.message)
 					}
 				} catch (e) {
-					if (this.environment === 'development') {
-						console.log(e)
-					}
 					let output = this.getErrorMessage(e, 'alert')
 					alert(output)
 				}

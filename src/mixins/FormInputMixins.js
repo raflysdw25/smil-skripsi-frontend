@@ -30,7 +30,6 @@ export default {
 					}
 				}, 66)
 			} else if (type === 'number') {
-				console.log(e.target.value)
 				if (e.target.value < 0) {
 					e.target.value = 0
 				}

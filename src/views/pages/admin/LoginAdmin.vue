@@ -138,7 +138,7 @@
 				this.showAlert(true)
 				try {
 					const response = await api.loginAdmin(this.formInput)
-					console.log(response)
+
 					// Get Data Admin via API
 					let admin = response.data
 					if (admin.response.code === 200 && admin.data !== null) {

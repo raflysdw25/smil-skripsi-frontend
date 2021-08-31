@@ -649,7 +649,7 @@
 					let totalData = data.detail_peminjaman_model.length
 					if (data.detail_peminjaman_model.length > 0) {
 						let reverse = data.detail_peminjaman_model.reverse()
-						console.log('Reverse :', reverse)
+
 						let count = reverse.length > 5 ? 5 : reverse.length
 						for (let index = 0; index < count; index++) {
 							let kondisi, barcode, alatName
@@ -698,15 +698,12 @@
 						this.tableInfo.pageNo,
 						this.filterPayload
 					)
-					console.log(response)
+
 					this.listData = response.data.result
 					let page = response.data.page
 					this.tableInfo.totalPage = page.total
 					this.tableInfo.listTotal = page.data_total
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -733,9 +730,6 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -759,9 +753,6 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -790,7 +781,7 @@
 						this.selectedRowData.id,
 						payload
 					)
-					console.log(response)
+
 					if (response.data.response.code === 200) {
 						this.showAlert(false, true, response.data.response.message)
 						setTimeout(() => {
@@ -798,9 +789,6 @@
 						}, 2000)
 					}
 				} catch (e) {
-					if (this.environment == 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {

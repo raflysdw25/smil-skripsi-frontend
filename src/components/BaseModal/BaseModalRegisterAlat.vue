@@ -109,9 +109,6 @@
 							}
 						}
 					} catch (e) {
-						if (this.environment === 'development') {
-							console.log(e)
-						}
 						let output = this.getErrorMessage(e, 'alert')
 						form.model = ''
 						form.isValid = false
@@ -143,7 +140,6 @@
 				form.model = ''
 			},
 			register() {
-				// console.log(this.formRegister)
 				this.submitRegister(this.formRegister)
 				// this.$emit('submitRegister', this.formRegister)
 				this.closeModal()

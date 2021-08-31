@@ -158,9 +158,7 @@
 					}
 				} catch (e) {
 					this.isCreate = false
-					if (this.environment === 'development') {
-						console.log(e)
-					}
+
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -187,9 +185,6 @@
 						this.alatName = response.data.data.alatName
 					}
 				} catch (e) {
-					if (this.environment === 'development') {
-						console.log(e)
-					}
 					let message = this.getErrorMessage(e)
 					if (typeof message == 'object' && message.length > 0) {
 						setTimeout(() => {
@@ -235,13 +230,12 @@
 				if (this.countError === uploadedFiles.length) {
 					this.showAlert(false, false, 'Terjadi Kesalahan', this.notes)
 				} else {
-					console.log(approvedFiles)
 					this.imageUpload(approvedFiles)
 				}
 			},
 			handleBrowseUpload() {
 				let uploadedFiles = this.$refs.file_image.files
-				console.log(uploadedFiles)
+
 				this.imageUpload(uploadedFiles)
 			},
 			imageUpload(objectUpload) {

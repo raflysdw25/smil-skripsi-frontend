@@ -293,7 +293,6 @@
 						}, 2000)
 					}
 				} catch (e) {
-					console.log(e)
 					this.showAlert(false, false, e.response.data.message)
 				}
 			},
