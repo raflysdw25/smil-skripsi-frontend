@@ -324,5 +324,13 @@
 				font-weight: 700;
 			}
 		}
+
+		.pagination-section {
+			.table-pagination {
+				ul {
+					padding: 0 30px;
+				}
+			}
+		}
 	}
 </style>

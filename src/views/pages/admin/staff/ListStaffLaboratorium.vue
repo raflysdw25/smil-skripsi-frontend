@@ -583,7 +583,7 @@
 					currentDate,
 					this.formatDate(expire_period, 'YYYY-MM-DD')
 				)
-
+				console.log('Difference in Days: ', rangeDate)
 				let status_id = null
 				if (rangeDate > 0) {
 					// status_id = first_login ? 3 : !is_verified ? 4 : 1

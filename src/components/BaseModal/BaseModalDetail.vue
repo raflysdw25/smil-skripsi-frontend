@@ -10,7 +10,14 @@
 		</div>
 		<div class="table-responsive-sm">
 			<table class="table table-borderless">
-				<tr v-for="(data, idxData) in headsData" :key="`row-data-${idxData}`">
+				<tr v-if="Object.keys(valueData).length === 0">
+					<td :colspan="2" class="text-center">Tidak ada {{ title }}</td>
+				</tr>
+				<tr
+					v-else
+					v-for="(data, idxData) in headsData"
+					:key="`row-data-${idxData}`"
+				>
 					<th>{{ data.label }}</th>
 					<td>
 						{{

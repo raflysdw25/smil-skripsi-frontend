@@ -25,6 +25,8 @@
 				v-model="filter_value"
 				class="form-control"
 				@keypress="searchConstraint($event, filter_type)"
+				@keypress.enter="filterAction"
+				@blur="filterAction"
 			/>
 			<div class="input-group-append" @click="filterAction">
 				<icon-component iconName="search" :size="16" colorIcon="#000" />

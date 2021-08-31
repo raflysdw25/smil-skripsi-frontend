@@ -12,6 +12,12 @@
 		<template v-else>
 			<!-- START: HEADER -->
 			<div class="header">
+				<span
+					class="smil-link mr-4"
+					@click="$router.push({ name: 'ListAlatLaboratorium' })"
+				>
+					<b-icon icon="caret-left-fill" /> Back
+				</span>
 				<div class="header-title">
 					<h1>{{ alatDetail.alat_name }}</h1>
 					<p class="last-action">
@@ -1121,7 +1127,7 @@
 							list.barcode_alat, //Barcode Alat
 							this.getKondisiAlat(list.condition_status), //Kondisi
 							this.getKetersediaanAlat(list.available_status), //Ketersediaan,
-							list.lokasi_model.lokasi_name,
+							list.lokasi_id !== null ? list.lokasi_model.lokasi_name : '-',
 							indexList, //Index Data
 						]
 
@@ -1178,26 +1184,30 @@
 			headSpecs() {
 				let specs = this.alatDetail.alat_specs
 				let heads = []
-				Object.keys(specs).forEach((key) => {
-					let setLabel = key.replace('_', ' ').split(' ')
-					setLabel.forEach((label, index) => {
-						setLabel[index] = this.capitalizeFirstLetter(label)
-					})
+				if (specs !== null) {
+					Object.keys(specs).forEach((key) => {
+						let setLabel = key.replace('_', ' ').split(' ')
+						setLabel.forEach((label, index) => {
+							setLabel[index] = this.capitalizeFirstLetter(label)
+						})
 
-					let head = {
-						label: setLabel.join(' '),
-						key: key,
-					}
-					heads.push(head)
-				})
+						let head = {
+							label: setLabel.join(' '),
+							key: key,
+						}
+						heads.push(head)
+					})
+				}
 				return heads
 			},
 			valueSpecs() {
 				let specs = this.alatDetail.alat_specs
 				let value = {}
-				Object.keys(specs).forEach((key) => {
-					value[key] = specs[key].value
-				})
+				if (specs !== null) {
+					Object.keys(specs).forEach((key) => {
+						value[key] = specs[key].value
+					})
+				}
 				return value
 			},
 		},

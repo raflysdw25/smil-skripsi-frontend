@@ -30,6 +30,7 @@
 						v-model="formInput[form.model]"
 						:placeholder="form.placeholder"
 						:required="form.isRequired"
+						@keypress.enter="loginAdmin"
 					/>
 					<!-- END: INPUT TAG -->
 				</div>
@@ -130,6 +131,9 @@
 		},
 		methods: {
 			async loginAdmin() {
+				if (!this.formFilled) {
+					return false
+				}
 				// Request Login via API
 				this.showAlert(true)
 				try {
